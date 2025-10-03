@@ -1,5 +1,6 @@
 # Ultralytics YOLO 🚀, AGPL-3.0 license
 
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -11,6 +12,251 @@ from ultralytics.utils.torch_utils import autocast
 
 from .metrics import bbox_iou, probiou
 from .tal import bbox2dist
+
+
+class QualityfocalLoss(nn.Module):
+    def __init__(self, beta=2.0):
+        super().__init__()
+        self.beta = beta
+ 
+    def forward(self, pred_score, gt_score, gt_target_pos_mask):
+        # negatives are supervised by 0 quality score
+        pred_sigmoid = pred_score.sigmoid()
+        scale_factor = pred_sigmoid
+        zerolabel = scale_factor.new_zeros(pred_score.shape)
+        with torch.cuda.amp.autocast(enabled=False):
+            loss = F.binary_cross_entropy_with_logits(pred_score, zerolabel, reduction='none') * scale_factor.pow(
+                self.beta)
+ 
+        scale_factor = gt_score[gt_target_pos_mask] - pred_sigmoid[gt_target_pos_mask]
+        with torch.cuda.amp.autocast(enabled=False):
+            loss[gt_target_pos_mask] = F.binary_cross_entropy_with_logits(pred_score[gt_target_pos_mask],
+                                                                          gt_score[gt_target_pos_mask],
+                                                                          reduction='none') * scale_factor.abs().pow(
+                self.beta)
+        return loss
+ 
+ 
+class SlideLoss(nn.Module):
+    def __init__(self, loss_fcn):
+        super(SlideLoss, self).__init__()
+        self.loss_fcn = loss_fcn
+        self.reduction = loss_fcn.reduction
+        self.loss_fcn.reduction = 'none'  # required to apply SL to each element
+ 
+    def forward(self, pred, true, auto_iou=0.5):
+        loss = self.loss_fcn(pred, true)
+        if auto_iou < 0.2:
+            auto_iou = 0.2
+        b1 = true <= auto_iou - 0.1
+        a1 = 1.0
+        b2 = (true > (auto_iou - 0.1)) & (true < auto_iou)
+        a2 = math.exp(1.0 - auto_iou)
+        b3 = true >= auto_iou
+        a3 = torch.exp(-(true - 1.0))
+        modulating_weight = a1 * b1 + a2 * b2 + a3 * b3
+        loss *= modulating_weight
+        if self.reduction == 'mean':
+            return loss.mean()
+        elif self.reduction == 'sum':
+            return loss.sum()
+        else:  # 'none'
+            return loss
+ 
+ 
+class Focal_Loss(nn.Module):
+    # Wraps focal loss around existing loss_fcn(), i.e. criteria = FocalLoss(nn.BCEWithLogitsLoss(), gamma=1.5)
+    def __init__(self, loss_fcn, gamma=1.5, alpha=0.25):
+        super().__init__()
+        self.loss_fcn = loss_fcn  # must be nn.BCEWithLogitsLoss()
+        self.gamma = gamma
+        self.alpha = alpha
+        self.reduction = loss_fcn.reduction
+        self.loss_fcn.reduction = 'none'  # required to apply FL to each element
+ 
+    def forward(self, pred, true):
+        loss = self.loss_fcn(pred, true)
+        # p_t = torch.exp(-loss)
+        # loss *= self.alpha * (1.000001 - p_t) ** self.gamma  # non-zero power for gradient stability
+ 
+        # TF implementation https://github.com/tensorflow/addons/blob/v0.7.1/tensorflow_addons/losses/focal_loss.py
+        pred_prob = torch.sigmoid(pred)  # prob from logits
+        p_t = true * pred_prob + (1 - true) * (1 - pred_prob)
+        alpha_factor = true * self.alpha + (1 - true) * (1 - self.alpha)
+        modulating_factor = (1.0 - p_t) ** self.gamma
+        loss *= alpha_factor * modulating_factor
+ 
+        if self.reduction == 'mean':
+            return loss.mean()
+        elif self.reduction == 'sum':
+            return loss.sum()
+        else:  # 'none'
+            return loss
+ 
+def reduce_loss(loss, reduction):
+    """Reduce loss as specified.
+    Args:
+        loss (Tensor): Elementwise loss tensor.
+        reduction (str): Options are "none", "mean" and "sum".
+    Return:
+        Tensor: Reduced loss tensor.
+    """
+    reduction_enum = F._Reduction.get_enum(reduction)
+    # none: 0, elementwise_mean:1, sum: 2
+    if reduction_enum == 0:
+        return loss
+    elif reduction_enum == 1:
+        return loss.mean()
+    elif reduction_enum == 2:
+        return loss.sum()
+ 
+ 
+def weight_reduce_loss(loss, weight=None, reduction='mean', avg_factor=None):
+    """Apply element-wise weight and reduce loss.
+    Args:
+        loss (Tensor): Element-wise loss.
+        weight (Tensor): Element-wise weights.
+        reduction (str): Same as built-in losses of PyTorch.
+        avg_factor (float): Avarage factor when computing the mean of losses.
+    Returns:
+        Tensor: Processed loss values.
+    """
+    # if weight is specified, apply element-wise weight
+    if weight is not None:
+        loss = loss * weight
+ 
+    # if avg_factor is not specified, just reduce the loss
+    if avg_factor is None:
+        loss = reduce_loss(loss, reduction)
+    else:
+        # if reduction is mean, then average the loss by avg_factor
+        if reduction == 'mean':
+            loss = loss.sum() / avg_factor
+        # if reduction is 'none', then do nothing, otherwise raise an error
+        elif reduction != 'none':
+            raise ValueError('avg_factor can not be used with reduction="sum"')
+    return loss
+ 
+ 
+ 
+def varifocal_loss(pred,
+                   target,
+                   weight=None,
+                   alpha=0.75,
+                   gamma=2.0,
+                   iou_weighted=True,
+                   reduction='mean',
+                   avg_factor=None):
+    """`Varifocal Loss <https://arxiv.org/abs/2008.13367>`_
+    Args:
+        pred (torch.Tensor): The prediction with shape (N, C), C is the
+            number of classes
+        target (torch.Tensor): The learning target of the iou-aware
+            classification score with shape (N, C), C is the number of classes.
+        weight (torch.Tensor, optional): The weight of loss for each
+            prediction. Defaults to None.
+        alpha (float, optional): A balance factor for the negative part of
+            Varifocal Loss, which is different from the alpha of Focal Loss.
+            Defaults to 0.75.
+        gamma (float, optional): The gamma for calculating the modulating
+            factor. Defaults to 2.0.
+        iou_weighted (bool, optional): Whether to weight the loss of the
+            positive example with the iou target. Defaults to True.
+        reduction (str, optional): The method used to reduce the loss into
+            a scalar. Defaults to 'mean'. Options are "none", "mean" and
+            "sum".
+        avg_factor (int, optional): Average factor that is used to average
+            the loss. Defaults to None.
+    """
+    # pred and target should be of the same size
+    assert pred.size() == target.size()
+    pred_sigmoid = pred.sigmoid()
+    target = target.type_as(pred)
+    if iou_weighted:
+        focal_weight = target * (target > 0.0).float() + \
+            alpha * (pred_sigmoid - target).abs().pow(gamma) * \
+            (target <= 0.0).float()
+    else:
+        focal_weight = (target > 0.0).float() + \
+            alpha * (pred_sigmoid - target).abs().pow(gamma) * \
+            (target <= 0.0).float()
+    loss = F.binary_cross_entropy_with_logits(
+        pred, target, reduction='none') * focal_weight
+    loss = weight_reduce_loss(loss, weight, reduction, avg_factor)
+    return loss
+ 
+class Vari_focalLoss(nn.Module):
+ 
+    def __init__(self,
+                 use_sigmoid=True,
+                 alpha=0.75,
+                 gamma=2.0,
+                 iou_weighted=True,
+                 reduction='sum',
+                 loss_weight=1.0):
+        """`Varifocal Loss <https://arxiv.org/abs/2008.13367>`_
+        Args:
+            use_sigmoid (bool, optional): Whether the prediction is
+                used for sigmoid or softmax. Defaults to True.
+            alpha (float, optional): A balance factor for the negative part of
+                Varifocal Loss, which is different from the alpha of Focal
+                Loss. Defaults to 0.75.
+            gamma (float, optional): The gamma for calculating the modulating
+                factor. Defaults to 2.0.
+            iou_weighted (bool, optional): Whether to weight the loss of the
+                positive examples with the iou target. Defaults to True.
+            reduction (str, optional): The method used to reduce the loss into
+                a scalar. Defaults to 'mean'. Options are "none", "mean" and
+                "sum".
+            loss_weight (float, optional): Weight of loss. Defaults to 1.0.
+        """
+        super(Vari_focalLoss, self).__init__()
+        assert use_sigmoid is True, \
+            'Only sigmoid varifocal loss supported now.'
+        assert alpha >= 0.0
+        self.use_sigmoid = use_sigmoid
+        self.alpha = alpha
+        self.gamma = gamma
+        self.iou_weighted = iou_weighted
+        self.reduction = reduction
+        self.loss_weight = loss_weight
+ 
+    def forward(self,
+                pred,
+                target,
+                weight=None,
+                avg_factor=None,
+                reduction_override=None):
+        """Forward function.
+        Args:
+            pred (torch.Tensor): The prediction.
+            target (torch.Tensor): The learning target of the prediction.
+            weight (torch.Tensor, optional): The weight of loss for each
+                prediction. Defaults to None.
+            avg_factor (int, optional): Average factor that is used to average
+                the loss. Defaults to None.
+            reduction_override (str, optional): The reduction method used to
+                override the original reduction method of the loss.
+                Options are "none", "mean" and "sum".
+        Returns:
+            torch.Tensor: The calculated loss
+        """
+        assert reduction_override in (None, 'none', 'mean', 'sum')
+        reduction = (
+            reduction_override if reduction_override else self.reduction)
+        if self.use_sigmoid:
+            loss_cls = self.loss_weight * varifocal_loss(
+                pred,
+                target,
+                weight,
+                alpha=self.alpha,
+                gamma=self.gamma,
+                iou_weighted=self.iou_weighted,
+                reduction=reduction,
+                avg_factor=avg_factor)
+        else:
+            raise NotImplementedError
+        return loss_cls
 
 
 class VarifocalLoss(nn.Module):
@@ -163,7 +409,14 @@ class v8DetectionLoss:
         h = model.args  # hyperparameters
 
         m = model.model[-1]  # Detect() module
+
         self.bce = nn.BCEWithLogitsLoss(reduction="none")
+        "下面的代码注释掉就是正常的损失函数，如果不注释使用的就是使用对应的损失失函数"
+        # self.bce = Focal_Loss(nn.BCEWithLogitsLoss(reduction='none')) # Focal
+        # self.bce = Vari_focalLoss() # VFLoss
+        # self.bce = SlideLoss(nn.BCEWithLogitsLoss(reduction='none')) # SlideLoss
+        # self.bce = QualityfocalLoss()  # 目前仅持者目标检测需要注意！
+
         self.hyp = h
         self.stride = m.stride  # model strides
         self.nc = m.nc  # number of classes
@@ -211,53 +464,74 @@ class v8DetectionLoss:
         pred_distri, pred_scores = torch.cat([xi.view(feats[0].shape[0], self.no, -1) for xi in feats], 2).split(
             (self.reg_max * 4, self.nc), 1
         )
-
+ 
         pred_scores = pred_scores.permute(0, 2, 1).contiguous()
         pred_distri = pred_distri.permute(0, 2, 1).contiguous()
-
+ 
         dtype = pred_scores.dtype
         batch_size = pred_scores.shape[0]
         imgsz = torch.tensor(feats[0].shape[2:], device=self.device, dtype=dtype) * self.stride[0]  # image size (h,w)
         anchor_points, stride_tensor = make_anchors(feats, self.stride, 0.5)
-
+ 
         # Targets
         targets = torch.cat((batch["batch_idx"].view(-1, 1), batch["cls"].view(-1, 1), batch["bboxes"]), 1)
         targets = self.preprocess(targets.to(self.device), batch_size, scale_tensor=imgsz[[1, 0, 1, 0]])
         gt_labels, gt_bboxes = targets.split((1, 4), 2)  # cls, xyxy
-        mask_gt = gt_bboxes.sum(2, keepdim=True).gt_(0.0)
-
-        # Pboxes
+        mask_gt = gt_bboxes.sum(2, keepdim=True).gt_(0)
+ 
+        # pboxes
         pred_bboxes = self.bbox_decode(anchor_points, pred_distri)  # xyxy, (b, h*w, 4)
-        # dfl_conf = pred_distri.view(batch_size, -1, 4, self.reg_max).detach().softmax(-1)
-        # dfl_conf = (dfl_conf.amax(-1).mean(-1) + dfl_conf.amax(-1).amin(-1)) / 2
-
-        _, target_bboxes, target_scores, fg_mask, _ = self.assigner(
-            # pred_scores.detach().sigmoid() * 0.8 + dfl_conf.unsqueeze(-1) * 0.2,
-            pred_scores.detach().sigmoid(),
-            (pred_bboxes.detach() * stride_tensor).type(gt_bboxes.dtype),
-            anchor_points * stride_tensor,
-            gt_labels,
-            gt_bboxes,
-            mask_gt,
-        )
-
+ 
+        target_labels, target_bboxes, target_scores, fg_mask, _ = self.assigner(
+            pred_scores.detach().sigmoid(), (pred_bboxes.detach() * stride_tensor).type(gt_bboxes.dtype),
+            anchor_points * stride_tensor, gt_labels, gt_bboxes, mask_gt)
+ 
         target_scores_sum = max(target_scores.sum(), 1)
-
+ 
         # Cls loss
         # loss[1] = self.varifocal_loss(pred_scores, target_scores, target_labels) / target_scores_sum  # VFL way
-        loss[1] = self.bce(pred_scores, target_scores.to(dtype)).sum() / target_scores_sum  # BCE
-
+        if isinstance(self.bce, (nn.BCEWithLogitsLoss, Vari_focalLoss, Focal_Loss)):
+            loss[1] = self.bce(pred_scores, target_scores.to(dtype)).sum() / target_scores_sum  # BCE VFLoss Focal
+        elif isinstance(self.bce, SlideLoss):
+            if fg_mask.sum():
+                auto_iou = bbox_iou(pred_bboxes[fg_mask], target_bboxes[fg_mask], xywh=False, CIoU=True).mean()
+            else:
+                auto_iou = 0.1
+            loss[1] = self.bce(pred_scores, target_scores.to(dtype), auto_iou).sum() / target_scores_sum  # SlideLoss
+        elif isinstance(self.bce, QualityfocalLoss):
+            if fg_mask.sum():
+                pos_ious = bbox_iou(pred_bboxes, target_bboxes / stride_tensor, xywh=False).clamp(min=1e-6).detach()
+                # 10.0x Faster than torch.one_hot
+                targets_onehot = torch.zeros((target_labels.shape[0], target_labels.shape[1], self.nc),
+                                             dtype=torch.int64,
+                                             device=target_labels.device)  # (b, h*w, 80)
+                targets_onehot.scatter_(2, target_labels.unsqueeze(-1), 1)
+                cls_iou_targets = pos_ious * targets_onehot
+                fg_scores_mask = fg_mask[:, :, None].repeat(1, 1, self.nc)  # (b, h*w, 80)
+                targets_onehot_pos = torch.where(fg_scores_mask > 0, targets_onehot, 0)
+                cls_iou_targets = torch.where(fg_scores_mask > 0, cls_iou_targets, 0)
+            else:
+                cls_iou_targets = torch.zeros((target_labels.shape[0], target_labels.shape[1], self.nc),
+                                              dtype=torch.int64,
+                                              device=target_labels.device)  # (b, h*w, 80)
+                targets_onehot_pos = torch.zeros((target_labels.shape[0], target_labels.shape[1], self.nc),
+                                                 dtype=torch.int64,
+                                                 device=target_labels.device)  # (b, h*w, 80)
+            loss[1] = self.bce(pred_scores, cls_iou_targets.to(dtype), targets_onehot_pos.to(torch.bool)).sum() / max(
+                fg_mask.sum(), 1)
+        else:
+            loss[1] = self.bce(pred_scores, target_scores.to(dtype)).sum() / target_scores_sum  # 确保有损失可用
+ 
         # Bbox loss
         if fg_mask.sum():
             target_bboxes /= stride_tensor
-            loss[0], loss[2] = self.bbox_loss(
-                pred_distri, pred_bboxes, anchor_points, target_bboxes, target_scores, target_scores_sum, fg_mask
-            )
-
+            loss[0], loss[2] = self.bbox_loss(pred_distri, pred_bboxes, anchor_points, target_bboxes, target_scores,
+                                              target_scores_sum, fg_mask)
+ 
         loss[0] *= self.hyp.box  # box gain
         loss[1] *= self.hyp.cls  # cls gain
         loss[2] *= self.hyp.dfl  # dfl gain
-
+ 
         return loss.sum() * batch_size, loss.detach()  # loss(box, cls, dfl)
 
 

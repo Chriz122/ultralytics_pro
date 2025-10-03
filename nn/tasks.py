@@ -11,6 +11,8 @@ import torch
 import torch.nn as nn
 
 from ultralytics.nn.modules import (
+    MP,
+    SP,
     AIFI,
     C1,
     C2,
@@ -26,8 +28,14 @@ from ultralytics.nn.modules import (
     AConv,
     ADown,
     Bottleneck,
+    CSPNeXtBlock,
     BottleneckCSP,
+    BottleneckCSP2,
+    BottleneckCSPA,
+    BottleneckCSPB, 
+    BottleneckCSPC,
     C2f,
+    RTMBlock,
     C2fAttn,
     C2fCIB,
     C2fPSA,
@@ -39,6 +47,9 @@ from ultralytics.nn.modules import (
     Classify,
     Concat,
     Conv,
+    Conv_BCN,
+    FDConv_cfg,
+    DualConv,
     Conv2,
     ConvTranspose,
     Detect,
@@ -61,6 +72,897 @@ from ultralytics.nn.modules import (
     Segment,
     WorldDetect,
     v10Detect,
+    v10IDetect,
+    v10DDetect,
+    SPPCSPC,
+    SPPFCSPC,
+    DepthSepConv,
+    C2f_DCN, 
+    C3_DCN, 
+    DCNv2,
+    SimFusion_4in, 
+    SimFusion_3in, 
+    InjectionMultiSum_Auto_pool,
+    PyramidPoolAgg,
+    TopBasicLayer, 
+    AdvPoolFusion, 
+    IFM, 
+    Shortcut, 
+    DownC,
+    RepConv_v7,
+    ReOrg,
+    SimSPPF,
+    SimConv,
+    RepBlock,
+    RepVGGBlock,
+    Transpose,
+    CBH,
+    LC_Block,
+    Dense,
+    conv_bn_relu_maxpool,
+    Shuffle_Block,
+    DWConvblock,
+    CPCAChannelAttention,
+    C3C2,
+    LayerNorm_s,
+    ConvNextBlock,
+    CNeB,
+    GAMAttention,
+    Res,
+    ResCSPA,
+    ResCSPB,
+    ResCSPC,
+    ResXCSPA,
+    ResXCSPB,
+    ResXCSPC,
+    SegNext_Attention,
+    LayerNormProxy,
+    DAttention,
+    ShuffleAttention,
+    ES_SEModule,
+    ES_Bottleneck, 
+    DepthWiseConv,
+    PointWiseConv,
+    MobileOneBlock,
+    MobileOne,
+    HorLayerNorm,
+    gnconv,
+    HorBlock,
+    CrissCrossAttention,
+    SEAttention,
+    SKAttention,
+    ECAAttention,
+    EffectiveSE,
+    CAConv,
+    BasicConv,
+    ZPool,
+    AttentionGate,
+    TripletAttention,
+    Bottleneck_TripletAt,
+    C2f_TripletAt,
+    C3_TripletAt,
+    DeformConv,
+    deformable_LKA,
+    deformable_LKA_Attention,
+    Bottleneck_DLKA,
+    C2f_DLKA,
+    C3_DLKA,
+    SELayer,
+    conv_bn_hswish,
+    MobileNetV3_InvertedResidual,
+    mobilev3_bneck,
+    SimAM,
+    IDetect,
+    ISegment,
+    IOBB,
+    IPose,
+    ImplicitA,
+    ImplicitM,
+    Silence,
+    RepConvN,
+    RepNCSPELAN4, 
+    OREPANBottleneck,
+    OREPANCSP,
+    OREPANCSPELAN4,
+    DDetect,
+    DOBB,
+    DSegment,
+    DPose,
+    ResSPP,
+    CSPResNet,
+    CSPResNet_CBS,
+    ConvBNLayer,
+    CSPResStage,
+    RepVggBlock,
+    EffectiveSELayer,
+    BasicBlock,
+    AKConv,
+    RepNCSP_AKConv,
+    RepNCSPELAN4AKConv, 
+    KANRepNCSPELAN4,
+    FasterRepNCSPELAN4,
+    PRepNCSPELAN4,
+    PConv,
+    DCNV3_YoLo,
+    DCNV3RepNCSPELAN4,
+    Bottleneck_DCNV3,
+    C2f_DCNV3,
+    ODConv2d_3rd,
+    ODConv_3rd,
+    ConvNextBlock,
+    LayerNorm_s,
+    DropPath,
+    SCConv,
+    Yolov7_Tiny_E_ELAN,
+    Yolov7_Tiny_SPP,
+    Yolov7_Tiny_E_ELANMO,
+    Yolov7_E_ELAN,
+    V7DownSampling,
+    MobileOneBlock_origin,
+    MobileOne_origin,
+    MHSA,
+    BottleneckTransformer,
+    BoT3,
+    ADD,
+    ELAN1,
+    CSPStage,
+    CoordAtt,
+    DySample,
+    CARAFE,
+    CoordConv,
+    RFAConv,
+    RFCBAMConv,
+    RFCAConv,
+    RepViTBlock,
+    LSKblock,
+    PSAFLA,
+    C2f_FLA,
+    C2f_Context,
+    ContextGuidedBlock_Down,
+    MultiDilatelocalAttention, 
+    PSAMSDA,
+    ASPP,
+    C2f_Dual,
+    C2f_WT,
+    BasicRFB,
+    BiLevelRoutingAttention,
+    DiverseBranchBlock, 
+    C2f_DBB,
+    SEAM, 
+    MultiSEAM,
+    FFA,
+    MB_TaylorFormer,
+    CPA_arch,
+    iRMB, 
+    C2f_iRMB,
+    HAT,
+    Down_wt,
+    RetinexFormer,
+    C2f_SCConv,
+    C2f_GhostModule_DynamicConv,
+    C2f_ODConv, 
+    ODConv2d,
+    C2f_DWRSeg,
+    SAConv2d, 
+    C2f_SAConv,
+    C2f_MSBlock,
+    C2f_MSBlockv2,
+    OREPA, 
+    C3_OREPA,
+    C2f_OREPA,
+    RepNCSPELAN4_low,
+    RepNCSPELAN4_high,
+    DynamicConv, 
+    C2f_DynamicConv,
+    IAT,
+    SPDConv,
+    EMA,
+    C2f_FasterBlock,
+    C2f_FasterBlock_EMA,
+    C3_Faster_CGLU, 
+    C2f_Faster_CGLU,
+    C3k2_FasterBlock,
+    C2f_SENetV1, 
+    SELayerV1,
+    C2f_SENetV2, 
+    SELayerV2, 
+    PSASENetV2,
+    Light_HGBlock,
+    GSConv,
+    VoVGSCSP,
+    LSKA,
+    RCSOSA,
+    RepVGG,
+    Bi_FPN,
+    RIDNET,
+    ADNet,
+    mn_conv, 
+    InvertedBottleneck, 
+    MobileNetV3_BLOCK,
+    CSPHet,
+    CSPPC,
+    FocalModulation,
+    Zoom_cat, 
+    Add, 
+    ScalSeq, 
+    attention_model,
+    EVCBlock,
+    Detect_ASFF,
+    Segment_ASFF,
+    Pose_ASFF,
+    OBB_ASFF,
+    DSConv2D,
+    C2f_DSConv,
+    CBAM,
+    VanillaStem, 
+    VanillaBlock,
+    Detect_SEAM, 
+    Detect_MultiSEAM,
+    Pose_SEAM,
+    Pose_MultiSEAM,
+    C3_Star, 
+    C3_Star_CAA,
+    C2f_Star, 
+    C2f_Star_CAA,
+    C3_EMBC, 
+    C2f_EMBC,
+    C3_EMSC, 
+    C2f_EMSC,
+    C3_EMSCP, 
+    C2f_EMSCP,
+    C3_UniRepLKNetBlock, 
+    C2f_UniRepLKNetBlock, 
+    C3_DRB, 
+    C2f_DRB,
+    C2f_DAttention,
+    DilatedReparamBlock, 
+    UniRepLKNetBlock,
+    MobileOneBlockv5,
+    MobileOnev5,
+    C3_RetBlock, 
+    C2f_RetBlock,
+    C3_REPVGGOREPA, 
+    C2f_REPVGGOREPA,
+    C3_RFAConv, 
+    C2f_RFAConv, 
+    C3_RFCBAMConv, 
+    C2f_RFCBAMConv, 
+    C3_RFCAConv, 
+    C2f_RFCAConv,
+    C3_RVB, 
+    C2f_RVB,
+    C3_RVB_EMA, 
+    C2f_RVB_EMA,
+    C2f_UIB,
+    PatchMerging, 
+    PatchEmbed, 
+    SwinStage,
+    Detect_AFPN4, 
+    Segment_AFPN4, 
+    OBB_AFPN4, 
+    Pose_AFPN4,
+    Concat_BiFPN,
+    C3k2_ConvNeXtV2Block, 
+    C3k_ConvNeXtV2Block,
+    C3k2_WTConv,
+    C3k2_SAConv,
+    C3k2_RepVGG,
+    C2PSA_DAT,
+    DAttentionBaseline,
+    LAE, 
+    C2PSA_SENetV2, 
+    SPPFSENetV2,
+    RBFKANConv2d,
+    ReLUKANConv2d, 
+    KANConv2d, 
+    FasterKANConv2d, 
+    WavKANConv2d, 
+    ChebyKANConv2d, 
+    JacobiKANConv2d, 
+    FastKANConv2d, 
+    GRAMKANConv2d,
+    C2PSA_MSDA,
+    OREPA_2, 
+    C3k2_OREPA_backbone, 
+    C3k2_OREPA_neck,
+    stem, 
+    MBConvBlock,
+    C2PSA_CGA, 
+    LocalWindowAttention,
+    C3k2_MLLABlock1, 
+    C3k2_MLLABlock2,
+    C2PSAMLLA,
+    DiTBlock,
+    C2PSA_DiTBlock,
+    C3k2_DiTBlock,
+    C3k2_UIB,
+    RepHDW,
+    AVG,
+    RepHMS,
+    ConvMS,
+    UniRepLKNetBlock_pro,
+    SDFM,
+    MANet,
+    HyperComputeModule,
+    HyperComputeModule_11,
+    ALSS,
+    LCA,
+    EMCAD_block,
+    AAttn,
+    ABlock,
+    A2C2f,
+    MSCAM, 
+    MSCAMv2, 
+    MSCAMv3, 
+    MSCAMv4, 
+    MSCAMv5,
+    LDConv,
+    pvt_v2_b0, 
+    pvt_v2_b1,
+    pvt_v2_b2, 
+    pvt_v2_b3, 
+    pvt_v2_b4, 
+    pvt_v2_b5,
+    MobileNetV1,
+    MobileNetV2_n,
+    MobileNetV2_s,
+    MobileNetV2_m,
+    MobileNetV3_large_n,
+    MobileNetV3_large_s,
+    MobileNetV3_large_m,
+    MobileNetV3_small_n,
+    MobileNetV3_small_s,
+    MobileNetV3_small_m,
+    MobileNetV4ConvLarge, 
+    MobileNetV4ConvSmall, 
+    MobileNetV4ConvMedium, 
+    MobileNetV4HybridMedium, 
+    MobileNetV4HybridLarge,
+    mobile_vit_xx_small, 
+    mobile_vit_x_small, 
+    mobile_vit_small,
+    mobile_vit2_xx_small,
+    efficient,
+    efficientnet_v2,
+    Ghostnetv1,
+    GhostNetV2,
+    GhostNet_1_0,
+    convnextv2_atto, 
+    convnextv2_femto, 
+    convnext_tiny, 
+    convnext_small,
+    convnext_base, 
+    convnext_large, 
+    convnext_xlarge,
+    convnext_pico, 
+    convnextv2_nano, 
+    convnextv2_tiny, 
+    convnextv2_base, 
+    convnextv2_large, 
+    convnextv2_huge,
+    EfficientViT_M0, 
+    EfficientViT_M1, 
+    EfficientViT_M2, 
+    EfficientViT_M3, 
+    EfficientViT_M4, 
+    EfficientViT_M5,
+    efficientvit_backbone_b0, 
+    efficientvit_backbone_b1, 
+    efficientvit_backbone_b2, 
+    efficientvit_backbone_b3,
+    repvit_m0_6, 
+    repvit_m0_9, 
+    repvit_m1_0, 
+    repvit_m1_1, 
+    repvit_m1_5, 
+    repvit_m2_3,
+    starnet_s050, 
+    starnet_s100,
+    starnet_s150, 
+    starnet_s1, 
+    starnet_s2, 
+    starnet_s3, 
+    starnet_s4,
+    fasternet_t0, 
+    fasternet_t1, 
+    fasternet_t2, 
+    fasternet_s, 
+    fasternet_m, 
+    fasternet_l,
+    RepLKNet31B, 
+    RepLKNet31L, 
+    RepLKNetXL,
+    unireplknet_a, 
+    unireplknet_f, 
+    unireplknet_p,
+    unireplknet_n, 
+    unireplknet_t, 
+    unireplknet_s, 
+    unireplknet_b, 
+    unireplknet_l, 
+    unireplknet_xl,
+    LSKNET_T, 
+    LSKNET_S,
+    moganet_xtiny,
+    moganet_tiny, 
+    moganet_small, 
+    moganet_base, 
+    moganet_large, 
+    moganet_xlarge,
+    vanillanet_5, 
+    vanillanet_6, 
+    vanillanet_7, 
+    vanillanet_8, 
+    vanillanet_9, 
+    vanillanet_10, 
+    vanillanet_11, 
+    vanillanet_12, 
+    vanillanet_13, 
+    vanillanet_13_x1_5, 
+    vanillanet_13_x1_5_ada_pool,
+    mambaout_femto, 
+    mambaout_kobe, 
+    mambaout_tiny, 
+    mambaout_small, 
+    mambaout_base,
+    RMT_T, 
+    RMT_S, 
+    RMT_B, 
+    RMT_L,
+    revcol_tiny, 
+    revcol_small, 
+    revcol_base, 
+    revcol_large, 
+    revcol_xlarge,
+    SwinTransformer_Tiny, 
+    SwinTransformer_Tiny_c24, 
+    SwinTransformer_Small, 
+    SwinTransformer_Base, 
+    SwinTransformer_Large,
+    SwinTransformer_mona_Tiny,
+    SwinTransformer_mona_Small, 
+    SwinTransformer_mona_Base, 
+    SwinTransformer_mona_Large,
+    swin_transformer_v2_t,
+    swin_transformer_v2_s, 
+    swin_transformer_v2_b, 
+    swin_transformer_v2_l, 
+    swin_transformer_v2_h, 
+    swin_transformer_v2_g,
+    SlabSwinTransformer_T, 
+    SlabSwinTransformer_S, 
+    SlabSwinTransformer_B,
+    EMO_1M, 
+    EMO_2M, 
+    EMO_5M, 
+    EMO_6M,
+    EMO2_1M_k5_hybrid, 
+    EMO2_1M_k5_hybrid_256, 
+    EMO2_1M_k5_hybrid_512, 
+    EMO2_2M_k5_hybrid, 
+    EMO2_2M_k5_hybrid_256, 
+    EMO2_2M_k5_hybrid_512, 
+    EMO2_5M_k5_hybrid, 
+    EMO2_5M_k5_hybrid_256, 
+    EMO2_5M_k5_hybrid_512, 
+    EMO2_20M_k5_hybrid, 
+    EMO2_20M_k5_hybrid_256, 
+    EMO2_50M_k5_hybrid,
+    ShuffleNetG1, 
+    ShuffleNetG2, 
+    ShuffleNetG3, 
+    ShuffleNetG4, 
+    ShuffleNetG8,
+    shufflenetv2_05, 
+    shufflenetv2_10, 
+    shufflenetv2_15, 
+    shufflenetv2_20,
+    VGG11, 
+    VGG13, 
+    VGG16,
+    VGG19,
+    ResNet18, 
+    ResNet34, 
+    ResNet50, 
+    ResNet101, 
+    ResNet152,
+    resnet18_moe,
+    resnet34_moe, 
+    resnet50_moe, 
+    resnet101_moe, 
+    resnet152_moe,
+    uni_resnet50, 
+    uni_resnet101,
+    orthonet34, 
+    orthonet50, 
+    orthonet101, 
+    orthonet152,
+    sa_resnet50, 
+    sa_resnet101, 
+    sa_resnet152,
+    epsanet50, 
+    epsanet101, 
+    mspanet50,
+    mspanet101,
+    kw_resnet18, 
+    kw_resnet50,
+    overlock_xt, 
+    overlock_t, 
+    overlock_s, 
+    overlock_b,
+    rdnet_tiny, 
+    rdnet_small, 
+    rdnet_base, 
+    rdnet_large,
+    smt_t, 
+    smt_s, 
+    smt_b, 
+    smt_l,
+    GroupMixFormerMiny,
+    GroupMixFormerTiny, 
+    GroupMixFormerSmall, 
+    GroupMixFormerBase,
+    GroupMixFormerLarge,
+    pola_pvt_tiny, 
+    pola_pvt_small, 
+    pola_pvt_medium,
+    pola_pvt_large,
+    nextvit_small, 
+    nextvit_base, 
+    nextvit_large, 
+    focalnet_tiny_srf, 
+    focalnet_tiny_lrf, 
+    focalnet_small_srf, 
+    focalnet_small_lrf, 
+    focalnet_base_srf, 
+    focalnet_base_lrf, 
+    focalnet_large_fl3, 
+    focalnet_large_fl4, 
+    focalnet_xlarge_fl3, 
+    focalnet_xlarge_fl4, 
+    focalnet_huge_fl3, 
+    focalnet_huge_fl4,
+    poolformer_s12, 
+    poolformer_s24, 
+    poolformer_s36, 
+    poolformer_m48, 
+    poolformer_m36,
+    inceptionnext_tiny, 
+    inceptionnext_small, 
+    inceptionnext_base, 
+    inceptionnext_base_384,
+    fastvit_t8, 
+    fastvit_t12, 
+    fastvit_s12, 
+    fastvit_sa12, 
+    fastvit_sa24, 
+    fastvit_sa36, 
+    fastvit_ma36,
+    NFNetF0, 
+    NFNetF1, 
+    NFNetF2, 
+    NFNetF3, 
+    NFNetF4, 
+    NFNetF5, 
+    NFNetF6, 
+    NFNetF7, 
+    DFormerv2_S, 
+    DFormerv2_B, 
+    DFormerv2_L,
+    dfformer_s18,
+    dfformer_s36, 
+    dfformer_m36, 
+    dfformer_b36, 
+    gfformer_s18, 
+    cdfformer_s18, 
+    cdfformer_s36, 
+    cdfformer_m36, 
+    cdfformer_b36, 
+    dfformer_s18_gelu, 
+    dfformer_s18_relu, 
+    dfformer_s18_k2, 
+    dfformer_s18_d8, 
+    dfformer_s18_afno,
+    GhostNet_Reparam,
+    efficientformerv2_s0, 
+    efficientformerv2_s1, 
+    efficientformerv2_s2, 
+    efficientformerv2_l,
+    EdgeVitXXS, 
+    EdgeVitXS, 
+    EdgeVitS,
+    GreedyViG_S, 
+    GreedyViG_M, 
+    GreedyViG_B,
+    mobilevigv2_ti, 
+    mobilevigv2_s, 
+    mobilevigv2_m, 
+    mobilevigv2_b,
+    uniformer_light_xxs, 
+    uniformer_light_xs,
+    SwiftFormer_XS,
+    SwiftFormer_S, 
+    SwiftFormer_L1,
+    SwiftFormer_L3,
+    pvtv2_b0, 
+    pvtv2_b1, 
+    pvtv2_b2, 
+    pvtv2_b2_li, 
+    pvtv2_b3, 
+    pvtv2_b4, 
+    pvtv2_b5,
+    slab_pvt_v2_b0, 
+    slab_pvt_v2_b1, 
+    slab_pvt_v2_b2, 
+    slab_pvt_v2_b2_li, 
+    slab_pvt_v2_b3, 
+    slab_pvt_v2_b4, 
+    slab_pvt_v2_b5,
+    conv2former_n, 
+    conv2former_t, 
+    conv2former_s, 
+    conv2former_b, 
+    conv2former_b_22k, 
+    conv2former_l,
+    LWGANet_L0_1242_e32_k11_GELU, 
+    LWGANet_L1_1242_e64_k11_GELU, 
+    LWGANet_L2_1442_e96_k11_ReLU,
+    hornet_tiny_7x7, 
+    hornet_tiny_gf, 
+    hornet_small_7x7, 
+    hornet_small_gf, 
+    hornet_base_7x7, 
+    hornet_base_gf, 
+    hornet_base_gf_img384,
+    hornet_large_7x7, 
+    hornet_large_gf, 
+    hornet_large_gf_img384,
+    EfficientViM_M1,
+    EfficientViM_M2, 
+    EfficientViM_M3, 
+    EfficientViM_M4,
+    EfficientViM_M5,
+    SHViT_S1, 
+    SHViT_S2, 
+    SHViT_S3, 
+    SHViT_S4,
+    RCViT_XS, 
+    RCViT_S, 
+    RCViT_M, 
+    RCViT_T,
+    gc_vit_xxtiny, 
+    gc_vit_xtiny, 
+    gc_vit_tiny, 
+    gc_vit_tiny2, 
+    gc_vit_small, 
+    gc_vit_small2, 
+    gc_vit_base, 
+    gc_vit_large, 
+    gc_vit_large_224_21k, 
+    gc_vit_large_384_21k, 
+    gc_vit_large_512_21k,
+    convit_tiny_backbone, 
+    convit_small_backbone, 
+    convit_base_backbone,
+    RepVGG_A0, 
+    RepVGG_A1, 
+    RepVGG_A2, 
+    RepVGG_B0, 
+    RepVGG_B1, 
+    RepVGG_B1g2, 
+    RepVGG_B1g4, 
+    RepVGG_B2, 
+    RepVGG_B2g2, 
+    RepVGG_B2g4, 
+    RepVGG_B3, 
+    RepVGG_B3g2, 
+    RepVGG_B3g4, 
+    RepVGG_D2se,
+    QARepVGG_A0, 
+    QARepVGGV1_A0, 
+    QARepVGGV2_A0, 
+    QARepVGGV2_A0_d01,
+    QARepVGGV2_A0_DW, 
+    QARepVGGV6_A0, 
+    QARepVGG_A0_ReLU6, 
+    QARepVGGV2_A0_PReLU, 
+    QARepVGGV2_A1, 
+    QARepVGGV2_A2, 
+    QARepVGGV2_B0, 
+    QARepVGGV2_B1, 
+    QARepVGGV2_B1g2, 
+    QARepVGGV2_B1g4, 
+    QARepVGGV2_D2se,
+    decouplenet_d0, 
+    decouplenet_d1, 
+    decouplenet_d2,
+    sbcformer_xs, 
+    sbcformer_s, 
+    sbcformer_b, 
+    sbcformer_l,
+    fanet_tiny, 
+    fanet_small,
+    cosnet_tiny, 
+    cosnet_small, 
+    cosnet_base,
+    wtconvnext_tiny, 
+    wtconvnext_small, 
+    wtconvnext_base,
+    wtconvnext_large, 
+    wtconvnext_xlarge,
+    MLLA_Tiny, 
+    MLLA_Small, 
+    MLLA_Base,
+    pkinet_t, 
+    pkinet_s, 
+    pkinet_b,
+    glnet_stl, 
+    glnet_stl_paramslot, 
+    glnet_4g, 
+    glnet_9g, 
+    glnet_16g,
+    RAVLT_T, 
+    RAVLT_S, 
+    RAVLT_B, 
+    RAVLT_L,
+    slak_tiny, 
+    slak_small, 
+    slak_base, 
+    slak_large,
+    svt_s, 
+    svt_b, 
+    svt_l,
+    EViT_Tiny, 
+    EViT_Small, 
+    EViT_Base, 
+    EViT_Large,
+    sgformer_s, 
+    sgformer_m, 
+    sgformer_b,
+    spanet_s, 
+    spanet_m, 
+    spanet_mx, 
+    spanet_b, 
+    spanet_bx,
+    StripMLPNet_LightTiny, 
+    StripMLPNet_Tiny, 
+    StripMLPNet_Small, 
+    StripMLPNet_Base,
+    identityformer_s12, 
+    identityformer_s24, 
+    identityformer_s36, 
+    identityformer_m36, 
+    identityformer_m48, 
+    randformer_s12, 
+    randformer_s24, 
+    randformer_s36, 
+    randformer_m36, 
+    randformer_m48, 
+    poolformerv2_s12, 
+    poolformerv2_s24, 
+    poolformerv2_s36, 
+    poolformerv2_m36, 
+    poolformerv2_m48, 
+    convformer_s18, 
+    convformer_s36, 
+    convformer_m36, 
+    convformer_b36, 
+    caformer_s18, 
+    caformer_s36, 
+    caformer_m36, 
+    caformer_b36,
+    iformer_small, 
+    iformer_base, 
+    iformer_large, 
+    van_b0, 
+    van_b1, 
+    van_b2, 
+    van_b3, 
+    van_b4, 
+    van_b5, 
+    van_b6,
+    vheat_tiny, 
+    vheat_small, 
+    vheat_base,
+    LSNet_T,
+    LSNet_S,
+    LSNet_B,
+    StripNet_tiny, 
+    StripNet_small,
+    transxnet_tiny, 
+    transxnet_small, 
+    transxnet_base,
+    parcnetv2_xt, 
+    parcnetv2_tiny, 
+    parcnetv2_small, 
+    parcnetv2_base,
+    MALA_T, 
+    MALA_S, 
+    MALA_B, 
+    MALA_L,
+    mpvit_tiny, 
+    mpvit_xsmall, 
+    mpvit_small, 
+    mpvit_base,
+    uninext_t, 
+    uninext_s, 
+    uninext_b,
+    stvit_small, 
+    stvit_base, 
+    stvit_large,
+    fat_b0, 
+    fat_b1, 
+    fat_b2, 
+    fat_b3,
+    debi_tiny, 
+    debi_small, 
+    debi_base,
+    maxvit_tiny, 
+    maxvit_small, 
+    maxvit_base, 
+    maxvit_large,
+    scalable_vit_s, 
+    scalable_vit_b, 
+    scalable_vit_l,
+    rest_lite, 
+    rest_small, 
+    rest_base, 
+    rest_large, 
+    restv2_tiny, 
+    restv2_small, 
+    restv2_base, 
+    restv2_large,
+    VanillaNet,
+    UniRepLKNet,
+    OverLoCK,
+    RepViT,
+    FastViT,
+    MobileViG,
+    RepVGGBlock,
+    QARepVGGBlock,
+    C2PSA_HV_LCA,
+    C2PSA_HV_LCA_DynamicTanh,
+    LCA_Concat,
+    LCA_DynamicTanh_Concat,
+    Conv_DynamicTanh,
+    C2f_MultiOGA, 
+    ChannelAggregationFFN, 
+    MultiOrderGatedAggregation,
+    C2PSA_Agent,
+    C2PSA_KS,
+    MAFOBB,
+    MAFDetect,
+    MAFSegment,
+    MAFPose,
+    FCM, 
+    Pzconv,  
+    FCM_3,
+    FCM_2, 
+    FCM_1, 
+    Down,
+    CSP_EIMS,
+    HRIF,
+    MyConcat4, 
+    MyConcat6, 
+    CST, 
+    MCS,
+    DySnakeConv,
+    C3k2_DSConv,
+    DySnakeRepNCSPELAN4,
+    SFS_Conv,
+    SNI, 
+    GSConvE,
+    GSConvE2, 
+    ESD, 
+    ESD2,
+    DSConv,
+    HyperACE,
+    DownsampleConv,
+    FullPAD_Tunnel,
+    DSC3k2,
+    F2SoftHG, 
+    ShapeAlignConv, 
+    MergeConv,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -130,26 +1032,25 @@ class BaseModel(nn.Module):
         return self._predict_once(x, profile, visualize, embed)
 
     def _predict_once(self, x, profile=False, visualize=False, embed=None):
-        """
-        Perform a forward pass through the network.
-
-        Args:
-            x (torch.Tensor): The input tensor to the model.
-            profile (bool):  Print the computation time of each layer if True, defaults to False.
-            visualize (bool): Save the feature maps of the model if True, defaults to False.
-            embed (list, optional): A list of feature vectors/embeddings to return.
-
-        Returns:
-            (torch.Tensor): The last output of the model.
-        """
         y, dt, embeddings = [], [], []  # outputs
         for m in self.model:
             if m.f != -1:  # if not from previous layer
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             if profile:
                 self._profile_one_layer(m, x, dt)
-            x = m(x)  # run
-            y.append(x if m.i in self.save else None)  # save output
+            if hasattr(m, 'backbone'):
+                x = m(x)
+                if len(x) != 5:  # 0 - 5
+                    x.insert(0, None)
+                for index, i in enumerate(x):
+                    if index in self.save:
+                        y.append(i)
+                    else:
+                        y.append(None)
+                x = x[-1]  # 最后一个输出传给下一层
+            else:
+                x = m(x)  # run
+                y.append(x if m.i in self.save else None)  # save output
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
             if embed and m.i in embed:
@@ -201,7 +1102,7 @@ class BaseModel(nn.Module):
         """
         if not self.is_fused():
             for m in self.model.modules():
-                if isinstance(m, (Conv, Conv2, DWConv)) and hasattr(m, "bn"):
+                if isinstance(m, (Conv, FDConv_cfg, Conv2, DWConv)) and hasattr(m, "bn"):
                     if isinstance(m, Conv2):
                         m.fuse_convs()
                     m.conv = fuse_conv_and_bn(m.conv, m.bn)  # update conv
@@ -214,9 +1115,53 @@ class BaseModel(nn.Module):
                 if isinstance(m, RepConv):
                     m.fuse_convs()
                     m.forward = m.forward_fuse  # update forward
+                if isinstance(m, (RepConvN)) and hasattr(m, 'fuse_convs'):
+                    m.fuse_convs()
+                    m.forward = m.forward_fuse  # update forward
+                if isinstance(m, RepConv_v7):
+                    m.fuse_repvgg_block()
+                if isinstance(m, (MobileOneBlock_origin, MobileOne_origin, MobileOneBlockv5, MobileOnev5, FastViT, MobileViG)) and hasattr(m, 'reparameterize'):
+                    m.reparameterize()
+                if isinstance(m, (UniRepLKNet)) and hasattr(m, 'reparameterize'):
+                    m.switch_to_deploy()
+                if isinstance(m, (RepVGGBlock)) and hasattr(m, 'rbr_reparam'):
+                    m.switch_to_deploy()
+                if isinstance(m, (QARepVGGBlock)) and hasattr(m, 'rbr_reparam'):
+                    m.switch_to_deploy()
+                if isinstance(m, (OverLoCK)):
+                    m.reparm()
+                if isinstance(m, (OREPA, OREPA_2, VanillaStem, VanillaBlock, DilatedReparamBlock, UniRepLKNetBlock, RepViT, VanillaNet)):
+                    m.switch_to_deploy()
+                if isinstance(m, UniRepLKNetBlock_pro):
+                    m.reparameterize()
+                    LOGGER.info("Switch model to UniRepLKNetBlock")
                 if isinstance(m, RepVGGDW):
                     m.fuse()
                     m.forward = m.forward_fuse
+                if type(m) is RepVGG:
+                    if hasattr(m, 'rbr_1x1'):
+                        # print(m)
+                        kernel, bias = m.get_equivalent_kernel_bias()
+                        rbr_reparam = nn.Conv2d(in_channels=m.rbr_dense.conv.in_channels,
+                                                out_channels=m.rbr_dense.conv.out_channels,
+                                                kernel_size=m.rbr_dense.conv.kernel_size,
+                                                stride=m.rbr_dense.conv.stride,
+                                                padding=m.rbr_dense.conv.padding, dilation=m.rbr_dense.conv.dilation,
+                                                groups=m.rbr_dense.conv.groups, bias=True)
+                        rbr_reparam.weight.data = kernel
+                        rbr_reparam.bias.data = bias
+                        for para in self.parameters():
+                            para.detach_()
+                        m.rbr_dense = rbr_reparam
+                        # m.__delattr__('rbr_dense')
+                        m.__delattr__('rbr_1x1')
+                        if hasattr(m, 'rbr_identity'):
+                            m.__delattr__('rbr_identity')
+                        if hasattr(m, 'id_tensor'):
+                            m.__delattr__('id_tensor')
+                        m.deploy = True
+                        delattr(m, 'se')
+                        m.forward = m.fusevggforward  # update forward
             self.info(verbose=verbose)
 
         return self
@@ -257,7 +1202,7 @@ class BaseModel(nn.Module):
         """
         self = super()._apply(fn)
         m = self.model[-1]  # Detect()
-        if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
+        if isinstance(m, (Detect, MAFDetect, IDetect, DDetect, Detect_ASFF, Detect_SEAM, Detect_MultiSEAM, Detect_AFPN4)):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
             m.stride = fn(m.stride)
             m.anchors = fn(m.anchors)
             m.strides = fn(m.strides)
@@ -323,7 +1268,7 @@ class DetectionModel(BaseModel):
 
         # Build strides
         m = self.model[-1]  # Detect()
-        if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
+        if isinstance(m, (Detect, MAFDetect, IDetect, DDetect, Detect_ASFF, Detect_SEAM, Detect_MultiSEAM, Detect_AFPN4)):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
             s = 256  # 2x min stride
             m.inplace = self.inplace
 
@@ -331,7 +1276,13 @@ class DetectionModel(BaseModel):
                 """Performs a forward pass through the model, handling different Detect subclass types accordingly."""
                 if self.end2end:
                     return self.forward(x)["one2many"]
-                return self.forward(x)[0] if isinstance(m, (Segment, Pose, OBB)) else self.forward(x)
+                return self.forward(x)[0] if isinstance(m, (Segment, Pose, OBB, 
+                                                            ISegment, IPose, IOBB, 
+                                                            MAFSegment, MAFPose, MAFOBB,
+                                                            DOBB, DSegment, DPose,
+                                                            Segment_ASFF, Pose_ASFF, OBB_ASFF,
+                                                            Pose_SEAM, Pose_MultiSEAM,
+                                                            Segment_AFPN4, OBB_AFPN4, Pose_AFPN4)) else self.forward(x)
 
             m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
             self.stride = m.stride
@@ -945,7 +1896,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
         if not scale:
             scale = tuple(scales.keys())[0]
             LOGGER.warning(f"WARNING ⚠️ no model scale passed. Assuming scale='{scale}'.")
-        depth, width, max_channels = scales[scale]
+        depth, width, max_channels, threshold = scales[scale]
 
     if act:
         Conv.default_act = eval(act)  # redefine default activation, i.e. Conv.default_act = nn.SiLU()
@@ -956,7 +1907,9 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
         LOGGER.info(f"\n{'':>3}{'from':>20}{'n':>3}{'params':>10}  {'module':<45}{'arguments':<30}")
     ch = [ch]
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
+    backbone = False
     for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
+        t = m
         m = getattr(torch.nn, m[3:]) if "nn." in m else globals()[m]  # get module
         for j, a in enumerate(args):
             if isinstance(a, str):
@@ -968,9 +1921,17 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
         if m in {
             Classify,
             Conv,
+            Conv_BCN,
+            FDConv_cfg,
+            DualConv,
             ConvTranspose,
             GhostConv,
             Bottleneck,
+            BottleneckCSP,
+            BottleneckCSP2,
+            BottleneckCSPA, 
+            BottleneckCSPB, 
+            BottleneckCSPC,
             GhostBottleneck,
             SPP,
             SPPF,
@@ -978,10 +1939,10 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             C2PSA,
             DWConv,
             Focus,
-            BottleneckCSP,
             C1,
             C2,
             C2f,
+            RTMBlock,
             C3k2,
             RepNCSPELAN4,
             ELAN1,
@@ -999,6 +1960,224 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             PSA,
             SCDown,
             C2fCIB,
+            RepConv_v7, 
+            SPPCSPC,
+            SPPFCSPC,
+            DepthSepConv,
+            C2f_DCN, 
+            C3_DCN,
+            DCNv2,
+            DownC,
+            RepBlock,
+            SimConv,
+            SimSPPF,
+            RepVGGBlock,
+            CBH,
+            LC_Block,
+            Dense,
+            conv_bn_relu_maxpool,
+            Shuffle_Block,
+            DWConvblock,
+            CPCAChannelAttention,
+            C3C2,
+            CNeB,
+            GAMAttention,
+            ResCSPA,
+            ResCSPB,
+            ResCSPC,
+            ResXCSPA,
+            ResXCSPB,
+            ResXCSPC,
+            ES_Bottleneck,
+            MobileOneBlock,
+            HorBlock,
+            EffectiveSE,
+            CAConv,
+            C2f_TripletAt,
+            C3_TripletAt,
+            C2f_DLKA,
+            C3_DLKA,
+            conv_bn_hswish, 
+            MobileNetV3_InvertedResidual,
+            mobilev3_bneck,
+            RepNCSPELAN4, 
+            RepNCSPELAN4_low,
+            RepNCSPELAN4_high,
+            OREPANCSPELAN4,
+            SimAM,
+            AKConv,
+            RepNCSP_AKConv,
+            RepNCSPELAN4AKConv,
+            KANRepNCSPELAN4,
+            FasterRepNCSPELAN4,
+            PRepNCSPELAN4,
+            PConv,
+            DCNV3_YoLo,
+            DCNV3RepNCSPELAN4,
+            Bottleneck_DCNV3,
+            C2f_DCNV3,
+            ODConv_3rd,
+            ConvNextBlock,
+            Yolov7_Tiny_E_ELAN,
+            Yolov7_Tiny_SPP,
+            Yolov7_Tiny_E_ELANMO,
+            Yolov7_E_ELAN,
+            V7DownSampling,
+            MobileOneBlock_origin,
+            BoT3,
+            ELAN1,
+            CSPStage,
+            CoordAtt,
+            CARAFE,
+            CoordConv,
+            RFAConv,
+            RFCBAMConv,
+            RFCAConv,
+            RepViTBlock,
+            PSAFLA,
+            C2f_FLA,
+            C2f_Context,
+            PSAMSDA,
+            ASPP,
+            C2f_Dual,
+            C2f_WT,
+            BasicRFB,
+            DiverseBranchBlock,
+            C2f_DBB,
+            C2f_iRMB,
+            Down_wt,
+            C2f_GhostModule_DynamicConv,
+            ODConv2d,
+            C2f_ODConv,
+            SAConv2d,
+            C2f_SAConv,
+            C2f_MSBlock,
+            C2f_MSBlockv2,
+            C3_OREPA,
+            C2f_OREPA,
+            DynamicConv, 
+            C2f_DynamicConv,
+            SPDConv,
+            C2f_FasterBlock,
+            C2f_FasterBlock_EMA,
+            C3_Faster_CGLU, 
+            C2f_Faster_CGLU,
+            C3k2_FasterBlock,
+            C2f_SENetV1,
+            C2f_SENetV2,  
+            PSASENetV2,
+            C2f_DWRSeg,
+            GSConv,
+            VoVGSCSP,
+            RCSOSA,
+            RepVGG,
+            mn_conv, 
+            InvertedBottleneck, 
+            MobileNetV3_BLOCK,
+            CSPHet,
+            CSPPC,
+            EVCBlock,
+            DSConv2D,
+            C2f_DSConv,
+            VanillaStem, 
+            VanillaBlock,
+            C3_Star, 
+            C3_Star_CAA,
+            C2f_Star, 
+            C2f_Star_CAA,
+            C3_EMBC, 
+            C2f_EMBC,
+            C3_EMSC, 
+            C2f_EMSC,
+            C3_EMSCP, 
+            C2f_EMSCP,
+            C3_UniRepLKNetBlock, 
+            C2f_UniRepLKNetBlock, 
+            C3_DRB, 
+            C2f_DRB,
+            C2f_DAttention,
+            MobileOnev5,
+            C3_RetBlock, 
+            C2f_RetBlock,
+            C3_REPVGGOREPA, 
+            C2f_REPVGGOREPA,
+            C3_RFAConv, 
+            C2f_RFAConv, 
+            C3_RFCBAMConv, 
+            C2f_RFCBAMConv, 
+            C3_RFCAConv, 
+            C2f_RFCAConv,
+            C3_RVB, 
+            C2f_RVB,
+            C3_RVB_EMA, 
+            C2f_RVB_EMA,
+            C2f_UIB,
+            PatchMerging, 
+            PatchEmbed, 
+            SwinStage,
+            C3k2_ConvNeXtV2Block, 
+            C3k2_WTConv,
+            C3k2_SAConv,
+            C3k2_RepVGG,
+            C2PSA_DAT,
+            C2PSA_SENetV2, 
+            SPPFSENetV2,
+            RBFKANConv2d, 
+            ReLUKANConv2d, 
+            KANConv2d, 
+            FasterKANConv2d, 
+            WavKANConv2d, 
+            ChebyKANConv2d, 
+            JacobiKANConv2d, 
+            FastKANConv2d, 
+            GRAMKANConv2d,
+            C2PSA_MSDA,
+            OREPA_2, 
+            C3k2_OREPA_backbone, 
+            C3k2_OREPA_neck,
+            stem, 
+            MBConvBlock,
+            C2PSA_CGA, 
+            LocalWindowAttention,
+            C3k2_MLLABlock1, 
+            C3k2_MLLABlock2,
+            C2PSAMLLA,
+            C2PSA_DiTBlock,
+            C3k2_DiTBlock,
+            C3k2_UIB,
+            RepHDW,
+            RepHMS,
+            MANet,
+            HyperComputeModule_11,
+            ALSS,
+            LCA,
+            A2C2f,
+            LDConv,
+            C2PSA_HV_LCA,
+            C2PSA_HV_LCA_DynamicTanh,
+            Conv_DynamicTanh,
+            C2f_MultiOGA,
+            C2PSA_Agent,
+            C2PSA_KS,
+            FCM, 
+            Pzconv,  
+            FCM_3,
+            FCM_2, 
+            FCM_1, 
+            Down,
+            CSP_EIMS,
+            MCS,
+            CST,
+            DySnakeConv,
+            C3k2_DSConv,
+            DySnakeRepNCSPELAN4,
+            SFS_Conv,
+            GSConvE, 
+            GSConvE2, 
+            ESD, 
+            ESD2,
+            DSC3k2,
+            DSConv,
         }:
             c1, c2 = ch[f], args[0]
             if c2 != nc:  # if c2 not equal to number of classes (i.e. for Classify() output)
@@ -1011,46 +2190,140 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
 
             args = [c1, c2, *args[1:]]
             if m in {
-                BottleneckCSP,
-                C1,
-                C2,
-                C2f,
-                C3k2,
-                C2fAttn,
-                C3,
-                C3TR,
-                C3Ghost,
-                C3x,
-                RepC3,
-                C2fPSA,
-                C2fCIB,
-                C2PSA,
-            }:
+                BottleneckCSP, BottleneckCSP2, BottleneckCSPA, BottleneckCSPB, BottleneckCSPC, 
+                C1, C2, C2f, RTMBlock, C3k2, C2fAttn, C3, C3TR, C3Ghost, C3x, RepC3, C2fPSA, C2fCIB, C2PSA,
+                ResCSPA, ResCSPB, ResCSPC, ResXCSPA, ResXCSPB, ResXCSPC, HorBlock,
+                SPPCSPC, CSPStage, C2f_DCNV3, C2f_FLA, C2f_Context, C2f_Dual, C2f_WT, C2f_DBB,
+                C2f_iRMB, C2f_GhostModule_DynamicConv, C2f_ODConv, C2f_SAConv, C2f_MSBlock, C2f_MSBlockv2,
+                C3_OREPA, C2f_OREPA, C2f_DynamicConv, C2f_FasterBlock, C2f_FasterBlock_EMA, C3_Faster_CGLU, 
+                C2f_Faster_CGLU, C3k2_FasterBlock, C2f_SENetV1, C2f_SENetV2, VoVGSCSP, C2f_TripletAt, C2f_DLKA, C3_DLKA, 
+                CSPHet, CSPPC, C2f_DSConv, C2f_DWRSeg, C3_Star, C3_Star_CAA, C2f_Star, C2f_Star_CAA, 
+                C3_EMBC, C2f_EMBC, C3_EMSC, C2f_EMSC, C3_EMSCP, C2f_EMSCP, 
+                C3_UniRepLKNetBlock, C2f_UniRepLKNetBlock, C3_DRB, C2f_DRB, C2f_DAttention,
+                C3_RetBlock, C2f_RetBlock, C3_REPVGGOREPA, C2f_REPVGGOREPA,
+                C3_RFAConv, C2f_RFAConv, C3_RFCBAMConv, C2f_RFCBAMConv,C3_RFCAConv, C2f_RFCAConv,
+                C3_RVB, C2f_RVB, C3_RVB_EMA, C2f_RVB_EMA, C2f_UIB, C3k2_ConvNeXtV2Block, C3k2_WTConv, C3k2_SAConv,
+                C3k2_RepVGG, RCSOSA, C2PSA_DAT, C2PSA_MSDA, C2PSA_SENetV2, C3k2_OREPA_backbone, C3k2_OREPA_neck,
+                C2PSA_CGA, C3k2_MLLABlock1, C3k2_MLLABlock2, C2PSAMLLA, C2PSA_DiTBlock, C3k2_DiTBlock, C3k2_UIB,
+                RepHDW, MANet, ALSS, A2C2f, C2PSA_HV_LCA, C2PSA_HV_LCA_DynamicTanh, C2f_MultiOGA, C2PSA_Agent, C2PSA_KS,
+                CSP_EIMS, CST, C3k2_DSConv, DSC3k2}:
                 args.insert(2, n)  # number of repeats
                 n = 1
-            if m is C3k2:  # for M/L/X sizes
+            if m in {C3k2, C3k2_ConvNeXtV2Block, C3k2_FasterBlock, C3k2_WTConv, C3k2_SAConv, C3k2_RepVGG, C3k2_OREPA_backbone, C3k2_OREPA_neck,
+                     C3k2_MLLABlock1, C3k2_MLLABlock2, C3k2_DiTBlock, C3k2_UIB, C3k2_DSConv, DSC3k2}:  # for M/L/X sizes
                 legacy = False
                 if scale in "mlx":
                     args[3] = True
+            if m is A2C2f: 
+                legacy = False
+                if scale in "lx":  # for L/X sizes
+                    args.append(True)
+                    args.append(1.5)
+        elif m in {SegNext_Attention, DAttention, DAttentionBaseline, TripletAttention, deformable_LKA_Attention, 
+                   ContextGuidedBlock_Down, MultiDilatelocalAttention, BiLevelRoutingAttention,
+                   SEAM, MultiSEAM, FFA, HAT, OREPA, IAT, SELayerV1, SELayerV2, LSKA, RIDNET,
+                   ADNet, FocalModulation, EMA, LAE, LocalWindowAttention, DiTBlock}:
+            c2 = ch[f]
+            args = [c2, *args]
+        elif m in {Bi_FPN}:
+            length = len([ch[x] for x in f])
+            args = [length]
         elif m is AIFI:
             args = [ch[f], *args]
-        elif m in {HGStem, HGBlock}:
+        elif m in {HGStem, HGBlock, Light_HGBlock}:
             c1, cm, c2 = ch[f], args[0], args[1]
             args = [c1, cm, c2, *args[2:]]
-            if m is HGBlock:
+            if m in {HGBlock, Light_HGBlock}:
                 args.insert(4, n)  # number of repeats
                 n = 1
         elif m is ResNetLayer:
             c2 = args[1] if args[3] else args[1] * 4
         elif m is nn.BatchNorm2d:
             args = [ch[f]]
-        elif m is Concat:
+        elif m in {EMCAD_block, MultiOrderGatedAggregation}:
+            args = [ch[f]]
+        elif m is iRMB:
+            args = [ch[f], ch[f]]
+        elif m is LSKblock:
+            c1 = ch[f]
+            args = [c1, *args[0:]]
+        elif m is AVG:
+            c2 = ch[f]
+        elif m in (Concat, SimFusion_4in, AdvPoolFusion, Concat_BiFPN, LCA_Concat, LCA_DynamicTanh_Concat, MyConcat4, MyConcat6):
             c2 = sum(ch[x] for x in f)
-        elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect}:
+        elif m is HyperComputeModule:
+            c1, c2 = ch[f], args[0]
+            c2 = make_divisible(min(c2, max_channels) * width, 8)
+            args = [c1, c2, threshold]
+        elif m is ADD:
+            c2 = sum(ch[x] for x in f)//2
+        elif m is SimFusion_3in:
+            c2 = args[0]
+            if c2 != nc:  # if not output
+                c2 = make_divisible(min(c2, max_channels) * width, 8)
+            args = [[ch[f_] for f_ in f], c2]
+        elif m is IFM:
+            c1 = ch[f]
+            c2 = sum(args[0])
+            args = [c1, *args]
+        elif m is InjectionMultiSum_Auto_pool:
+            c1 = ch[f[0]]
+            c2 = args[0]
+            args = [c1, *args]
+        elif m is PyramidPoolAgg:
+            c2 = args[0]
+            args = [sum([ch[f_] for f_ in f]), *args]
+        elif m is TopBasicLayer:
+            c2 = sum(args[1])
+        elif m is Shortcut:
+            c2 = ch[f[0]]
+        elif m is ReOrg:
+            c2 = ch[f] * 4
+        elif m is Transpose:
+            c1 = ch[f]
+            c2 = args[0]
+            args = [c1, c2, *args[1:]]
+        elif m in (MobileOne, MobileOne_origin, MobileOneBlock_origin):
+            c1, c2 = ch[f], args[0]
+            c2 = make_divisible(min(c2, max_channels) * width, 8)
+            args = [c1, c2, n, *args[1:]]   
+        elif m is Zoom_cat:
+            c2 = sum(ch[x] for x in f)
+        elif m is Add:
+            c2 = ch[f[-1]]
+        elif m is ScalSeq:
+            c1 = [ch[x] for x in f]
+            c2 = make_divisible(args[0] * width, 8)
+            args = [c1, c2]
+        elif m is attention_model:
+            args = [ch[f[-1]]]
+        elif m is SCConv:
+            c1 = ch[f]
+            c2 = args[0]
+            args = [c1, *args]
+        elif m in {SDFM}:
+            c2 = ch[f[1]]
+            args = [c2, *args]
+        elif m in (CrissCrossAttention, ShuffleAttention, SEAttention,
+                   SKAttention, ECAAttention, MHSA, CBAM):
+            c1, c2 = ch[f], args[0]
+            if c2 != nc:  # if not output
+                c2 = make_divisible(min(c2, max_channels) * width, 8)
+            args = [c1, *args[1:]]
+        elif m is ChannelAggregationFFN:
+            args = [ch[f], c2]
+        elif m in (CSPResNet_CBS, CSPResNet, ConvBNLayer, ResSPP):
+            c2 = args[1]
+        elif m is SNI:
+            c1, c2, up_f = ch[f], make_divisible(args[0] * width, 8), args[1]
+            args = [c1, c2, up_f]
+        elif m in {Detect, MAFDetect, IDetect, DDetect, Detect_ASFF, Detect_SEAM, Detect_MultiSEAM, WorldDetect, Segment, MAFSegment, ISegment, 
+                   DSegment, Segment_ASFF, Pose, MAFPose, IPose, DPose, Pose_ASFF, Pose_SEAM, Pose_MultiSEAM, OBB, MAFOBB, IOBB, DOBB, OBB_ASFF, ImagePoolingAttn, 
+                   v10Detect, v10IDetect, v10DDetect, Detect_AFPN4}:
             args.append([ch[x] for x in f])
             if m is Segment:
                 args[2] = make_divisible(min(args[2], max_channels) * width, 8)
-            if m in {Detect, Segment, Pose, OBB}:
+            if m in {Segment, ISegment, DSegment, Segment_ASFF, Segment_AFPN4}:
                 m.legacy = legacy
         elif m is RTDETRDecoder:  # special case, channels arg must be passed in index 1
             args.insert(1, [ch[x] for x in f])
@@ -1060,20 +2333,128 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             args = [c1, c2, *args[1:]]
         elif m is CBFuse:
             c2 = ch[f[-1]]
+        elif m is HyperACE:
+            legacy = False
+            c1 = ch[f[1]]
+            c2 = args[0]
+            c2 = make_divisible(min(c2, max_channels) * width, 8)
+            he = args[1] 
+            if scale in "n":
+                he = int(args[1] * 0.5)
+            elif scale in "x":
+                he = int(args[1] * 1.5)
+            args = [c1, c2, n, he, *args[2:]]
+            n = 1
+            if scale in "lx":  # for L/X sizes
+                args.append(False)
+        elif m is F2SoftHG:
+            c1 = ch[f[1]]
+            c2 = c1
+            args = [c1, c2, *args]
+            if scale in "m":  
+                args.append(False)
+        elif m is DownsampleConv:
+            c1 = ch[f]
+            c2 = c1 * 2
+            args = [c1]
+            if scale in "lx":  # for L/X sizes
+                args.append(False)
+                c2 =c1
+        elif m is ShapeAlignConv:
+            c2 = ch[f] * 2
+            args = [ch[f]]
+            if scale in "m": 
+                c2 = ch[f]
+                args.append(False)
+        elif m is FullPAD_Tunnel:
+            c2 = ch[f[0]]
+        elif m is MergeConv:
+            c2 = ch[f[0]]
+            args = [c2]
+        elif m in {HRIF}:
+            c1 = [ch[x] for x in f]
+            c2 = make_divisible(min(args[0], max_channels) * width, 8)
+            args = [c1, c2, *args[1:]]
+        elif m in {MSCAM, MSCAMv2, MSCAMv3, MSCAMv4, MSCAMv5}:
+            c1 = c2 = ch[f]
+            args = [c1, args[0]]
+        elif m in {pvt_v2_b0, pvt_v2_b1, pvt_v2_b2, pvt_v2_b3, pvt_v2_b4, pvt_v2_b5,
+                   MobileNetV1, MobileNetV2_n, MobileNetV2_s, MobileNetV2_m, MobileNetV3_large_n, MobileNetV3_large_s, 
+                   MobileNetV3_large_m, MobileNetV3_small_n, MobileNetV3_small_s, MobileNetV3_small_m, mobile_vit_xx_small, mobile_vit_x_small, mobile_vit_small,
+                   MobileNetV4ConvLarge, MobileNetV4ConvSmall, MobileNetV4ConvMedium, MobileNetV4HybridMedium, MobileNetV4HybridLarge,
+                   mobile_vit2_xx_small, efficient, efficientnet_v2, Ghostnetv1, GhostNetV2, convnext_tiny, convnext_small, convnext_base, convnext_large, convnext_xlarge, 
+                   convnextv2_atto, convnextv2_femto, convnext_pico, convnextv2_nano, convnextv2_tiny, convnextv2_base, convnextv2_large, convnextv2_huge, 
+                   EfficientViT_M0, EfficientViT_M1, EfficientViT_M2, EfficientViT_M3, EfficientViT_M4, EfficientViT_M5, efficientvit_backbone_b0, 
+                   efficientvit_backbone_b1, efficientvit_backbone_b2, efficientvit_backbone_b3, repvit_m0_6, repvit_m0_9, repvit_m1_0, 
+                   repvit_m1_1, repvit_m1_5, repvit_m2_3, starnet_s050, starnet_s100, starnet_s150, starnet_s1, starnet_s2, starnet_s3, starnet_s4,
+                   fasternet_t0, fasternet_t1, fasternet_t2, fasternet_s, fasternet_m, fasternet_l, unireplknet_a, unireplknet_f, unireplknet_p, unireplknet_n, unireplknet_t, 
+                   unireplknet_s, unireplknet_b, unireplknet_l, unireplknet_xl, LSKNET_T, LSKNET_S, moganet_xtiny, moganet_tiny, moganet_small, moganet_base, moganet_large, moganet_xlarge,
+                   mspanet50, mspanet101, vanillanet_5, vanillanet_6, vanillanet_7, vanillanet_8, vanillanet_9, vanillanet_10, vanillanet_11, vanillanet_12, 
+                   vanillanet_13, vanillanet_13_x1_5, vanillanet_13_x1_5_ada_pool, mambaout_femto, mambaout_kobe, mambaout_tiny, mambaout_small, mambaout_base,
+                   RMT_T, RMT_S, RMT_B, RMT_L, revcol_tiny, revcol_small, revcol_base, revcol_large, revcol_xlarge, SwinTransformer_Tiny, SwinTransformer_Tiny_c24, SwinTransformer_Small, 
+                   SwinTransformer_Base, SwinTransformer_Large, SwinTransformer_mona_Tiny, SwinTransformer_mona_Small, SwinTransformer_mona_Base, SwinTransformer_mona_Large, 
+                   swin_transformer_v2_t, swin_transformer_v2_s, swin_transformer_v2_b, swin_transformer_v2_l, swin_transformer_v2_h, swin_transformer_v2_g, SlabSwinTransformer_T, SlabSwinTransformer_S, 
+                   SlabSwinTransformer_B, EMO_1M, EMO_2M, EMO_5M, EMO_6M, EMO2_1M_k5_hybrid, EMO2_1M_k5_hybrid_256, EMO2_1M_k5_hybrid_512, EMO2_2M_k5_hybrid, EMO2_2M_k5_hybrid_256, EMO2_2M_k5_hybrid_512, 
+                   EMO2_5M_k5_hybrid, EMO2_5M_k5_hybrid_256, EMO2_5M_k5_hybrid_512, EMO2_20M_k5_hybrid, EMO2_20M_k5_hybrid_256, EMO2_50M_k5_hybrid, ShuffleNetG1, ShuffleNetG2, ShuffleNetG3, ShuffleNetG4, 
+                   ShuffleNetG8, shufflenetv2_05, shufflenetv2_10, shufflenetv2_15, shufflenetv2_20, VGG11, VGG13, VGG16, VGG19, ResNet18, ResNet34, ResNet50, ResNet101, ResNet152, resnet18_moe, resnet34_moe, 
+                   resnet50_moe, resnet101_moe, resnet152_moe, overlock_xt, overlock_t, overlock_s, overlock_b, rdnet_tiny, rdnet_small, rdnet_base, rdnet_large, smt_t, smt_s, smt_b, smt_l, GroupMixFormerMiny, 
+                   GroupMixFormerTiny, GroupMixFormerSmall, GroupMixFormerBase, GroupMixFormerLarge, pola_pvt_tiny, pola_pvt_small, pola_pvt_medium, pola_pvt_large, nextvit_small, nextvit_base, nextvit_large, 
+                   focalnet_tiny_srf, focalnet_tiny_lrf, focalnet_small_srf, focalnet_small_lrf, focalnet_base_srf, focalnet_base_lrf, focalnet_large_fl3, focalnet_large_fl4, focalnet_xlarge_fl3, focalnet_xlarge_fl4, 
+                   focalnet_huge_fl3, focalnet_huge_fl4, poolformer_s12, poolformer_s24, poolformer_s36, poolformer_m48, poolformer_m36, inceptionnext_tiny, inceptionnext_small, inceptionnext_base, inceptionnext_base_384,
+                   fastvit_t8, fastvit_t12, fastvit_s12, fastvit_sa12, fastvit_sa24, fastvit_sa36, fastvit_ma36, NFNetF0, NFNetF1, NFNetF2, NFNetF3, NFNetF4, NFNetF5, NFNetF6, NFNetF7,
+                   DFormerv2_S, DFormerv2_B, DFormerv2_L, dfformer_s18, dfformer_s36, dfformer_m36, dfformer_b36, gfformer_s18, cdfformer_s18, cdfformer_s36, cdfformer_m36, cdfformer_b36, 
+                   dfformer_s18_gelu, dfformer_s18_relu, dfformer_s18_k2, dfformer_s18_d8, dfformer_s18_afno, GhostNet_1_0, epsanet50, epsanet101, GhostNet_Reparam,
+                   efficientformerv2_s0, efficientformerv2_s1, efficientformerv2_s2, efficientformerv2_l, EdgeVitXXS, EdgeVitXS, EdgeVitS, sa_resnet50, sa_resnet101, sa_resnet152, 
+                   GreedyViG_S, GreedyViG_M, GreedyViG_B, mobilevigv2_ti, mobilevigv2_s, mobilevigv2_m, mobilevigv2_b, uniformer_light_xxs, uniformer_light_xs, 
+                   SwiftFormer_XS, SwiftFormer_S, SwiftFormer_L1, SwiftFormer_L3, pvtv2_b0, pvtv2_b1, pvtv2_b2, pvtv2_b2_li, pvtv2_b3, pvtv2_b4, pvtv2_b5, slab_pvt_v2_b0, slab_pvt_v2_b1, 
+                   slab_pvt_v2_b2, slab_pvt_v2_b2_li, slab_pvt_v2_b3, slab_pvt_v2_b4, slab_pvt_v2_b5, conv2former_n, conv2former_t, conv2former_s, conv2former_b, conv2former_b_22k, 
+                   conv2former_l, LWGANet_L0_1242_e32_k11_GELU, LWGANet_L1_1242_e64_k11_GELU, LWGANet_L2_1442_e96_k11_ReLU, hornet_tiny_7x7, hornet_tiny_gf, hornet_small_7x7, hornet_small_gf, 
+                   hornet_base_7x7, hornet_base_gf, hornet_base_gf_img384, hornet_large_7x7, hornet_large_gf, hornet_large_gf_img384, EfficientViM_M1, EfficientViM_M2, 
+                   EfficientViM_M3, EfficientViM_M4, EfficientViM_M5, SHViT_S1, SHViT_S2, SHViT_S3, SHViT_S4, RCViT_XS, RCViT_S, RCViT_M, RCViT_T, gc_vit_xxtiny, gc_vit_xtiny, 
+                   gc_vit_tiny, gc_vit_tiny2, gc_vit_small, gc_vit_small2, gc_vit_base, gc_vit_large, gc_vit_large_224_21k, gc_vit_large_384_21k, gc_vit_large_512_21k, 
+                   convit_tiny_backbone, convit_small_backbone, convit_base_backbone, RepVGG_A0, RepVGG_A1, RepVGG_A2, RepVGG_B0, RepVGG_B1, RepVGG_B1g2, RepVGG_B1g4, RepVGG_B2, RepVGG_B2g2, 
+                   RepVGG_B2g4, RepVGG_B3, RepVGG_B3g2, RepVGG_B3g4, RepVGG_D2se, orthonet34, orthonet50, orthonet101, orthonet152, decouplenet_d0, decouplenet_d1, decouplenet_d2, 
+                   sbcformer_xs, sbcformer_s, sbcformer_b, sbcformer_l, fanet_tiny, fanet_small, cosnet_tiny, cosnet_small, cosnet_base, wtconvnext_tiny, wtconvnext_small, wtconvnext_base, 
+                   wtconvnext_large, wtconvnext_xlarge, MLLA_Tiny, MLLA_Small, MLLA_Base, pkinet_t, pkinet_s, pkinet_b, glnet_stl, glnet_stl_paramslot, glnet_4g, glnet_9g, glnet_16g,
+                   RAVLT_T, RAVLT_S, RAVLT_B, RAVLT_L, slak_tiny, slak_small, slak_base, slak_large, svt_s, svt_b, svt_l, EViT_Tiny, EViT_Small, EViT_Base, EViT_Large, uni_resnet50, 
+                   uni_resnet101, sgformer_s, sgformer_m, sgformer_b, spanet_s, spanet_m, spanet_mx, spanet_b, spanet_bx, kw_resnet18, kw_resnet50, StripMLPNet_LightTiny, StripMLPNet_Tiny, 
+                   StripMLPNet_Small, StripMLPNet_Base, QARepVGG_A0, QARepVGGV1_A0, QARepVGGV2_A0, QARepVGGV2_A0_d01, QARepVGGV2_A0_DW, QARepVGGV6_A0, QARepVGG_A0_ReLU6, QARepVGGV2_A0_PReLU, 
+                   QARepVGGV2_A1, QARepVGGV2_A2, QARepVGGV2_B0, QARepVGGV2_B1, QARepVGGV2_B1g2, QARepVGGV2_B1g4, QARepVGGV2_D2se, identityformer_s12, identityformer_s24, identityformer_s36, 
+                   identityformer_m36, identityformer_m48, randformer_s12, randformer_s24, randformer_s36, randformer_m36, randformer_m48, poolformerv2_s12, poolformerv2_s24, poolformerv2_s36, 
+                   poolformerv2_m36, poolformerv2_m48, convformer_s18, convformer_s36, convformer_m36, convformer_b36, caformer_s18, caformer_s36, caformer_m36, caformer_b36, iformer_small, 
+                   iformer_base, iformer_large, van_b0, van_b1, van_b2, van_b3, van_b4, van_b5, van_b6, vheat_tiny, vheat_small, vheat_base, RepLKNet31B, RepLKNet31L, RepLKNetXL, 
+                   LSNet_T, LSNet_S, LSNet_B, StripNet_tiny, StripNet_small, transxnet_tiny, transxnet_small, transxnet_base, parcnetv2_xt, parcnetv2_tiny, parcnetv2_small, parcnetv2_base, 
+                   MALA_T, MALA_S, MALA_B, MALA_L, mpvit_tiny, mpvit_xsmall, mpvit_small, mpvit_base, uninext_t, uninext_s, uninext_b, stvit_small, stvit_base, stvit_large, fat_b0, fat_b1, 
+                   fat_b2, fat_b3, debi_tiny, debi_small, debi_base, maxvit_tiny, maxvit_small, maxvit_base, maxvit_large, scalable_vit_s, scalable_vit_b, scalable_vit_l, rest_lite, rest_small, 
+                   rest_base, rest_large, restv2_tiny, restv2_small, restv2_base, restv2_large}:
+            m = m(*args)
+            c2 = m.width_list 
+            backbone = True
         else:
             c2 = ch[f]
 
-        m_ = nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
-        t = str(m)[8:-2].replace("__main__.", "")  # module type
-        m_.np = sum(x.numel() for x in m_.parameters())  # number params
-        m_.i, m_.f, m_.type = i, f, t  # attach index, 'from' index, type
+        if isinstance(c2, list) and m not in {CBLinear, }:
+            backbone = True
+            m_ = m
+            m_.backbone = True
+        else:
+            m_ = nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
+            t = str(m)[8:-2].replace('__main__.', '')  # module type
+        m.np = sum(x.numel() for x in m_.parameters())  # number params
+        m_.i, m_.f, m_.type = i + 4 if backbone else i, f, t  # attach index, 'from' index, type
         if verbose:
-            LOGGER.info(f"{i:>3}{str(f):>20}{n_:>3}{m_.np:10.0f}  {t:<45}{str(args):<30}")  # print
-        save.extend(x % i for x in ([f] if isinstance(f, int) else f) if x != -1)  # append to savelist
+            LOGGER.info(f'{i:>3}{str(f):>20}{n_:>3}{m.np:10.0f}  {t:<45}{str(args):<30}')  # print
+        save.extend(x % (i + 4 if backbone else i) for x in ([f] if isinstance(f, int) else f) if
+                    x != -1)  # append to savelist
         layers.append(m_)
         if i == 0:
             ch = []
-        ch.append(c2)
+        if isinstance(c2, list) and m not in {CBLinear, }:
+            ch.extend(c2)
+            for _ in range(5 - len(ch)):
+                ch.insert(0, 0)
+        else:
+            ch.append(c2)
     return nn.Sequential(*layers), sorted(save)
 
 
@@ -1081,11 +2462,11 @@ def yaml_model_load(path):
     """Load a YOLOv8 model from a YAML file."""
     path = Path(path)
     if path.stem in (f"yolov{d}{x}6" for x in "nsmlx" for d in (5, 8)):
-        new_stem = re.sub(r"(\d+)([nslmx])6(.+)?$", r"\1\2-p6\3", path.stem)
+        new_stem = re.sub(r"(\d+)([ntsmblx])6(.+)?$", r"\1\2-p6\3", path.stem)
         LOGGER.warning(f"WARNING ⚠️ Ultralytics YOLO P6 models now use -p6 suffix. Renaming {path.stem} to {new_stem}.")
         path = path.with_name(new_stem + path.suffix)
 
-    unified_path = re.sub(r"(\d+)([nslmx])(.+)?$", r"\1\3", str(path))  # i.e. yolov8x.yaml -> yolov8.yaml
+    unified_path = re.sub(r"(\d+)([ntsmblx])(.+)?$", r"\1\3", str(path))  # i.e. yolov8x.yaml -> yolov8.yaml
     yaml_file = check_yaml(unified_path, hard=False) or check_yaml(path)
     d = yaml_load(yaml_file)  # model dict
     d["scale"] = guess_model_scale(path)
@@ -1106,7 +2487,7 @@ def guess_model_scale(model_path):
         (str): The size character of the model's scale, which can be n, s, m, l, or x.
     """
     try:
-        return re.search(r"yolo[v]?\d+([nslmx])", Path(model_path).stem).group(1)  # noqa, returns n, s, m, l, or x
+        return re.search(r"yolo[v]?\d+([ntsmblx])", Path(model_path).stem).group(1)  # noqa, returns n, s, m, l, or x
     except AttributeError:
         return ""
 
@@ -1160,15 +2541,15 @@ def guess_model_task(model):
                 pass
 
         for m in model.modules():
-            if isinstance(m, Segment):
+            if isinstance(m, (Segment, MAFSegment, ISegment, DSegment, Segment_ASFF, Segment_AFPN4)):
                 return "segment"
             elif isinstance(m, Classify):
                 return "classify"
-            elif isinstance(m, Pose):
+            elif isinstance(m, (Pose, MAFPose, IPose, DPose, Pose_ASFF, Pose_SEAM, Pose_MultiSEAM, Pose_AFPN4)):
                 return "pose"
-            elif isinstance(m, OBB):
+            elif isinstance(m, (OBB, MAFOBB, IOBB, DOBB, OBB_ASFF, OBB_AFPN4)):
                 return "obb"
-            elif isinstance(m, (Detect, WorldDetect, v10Detect)):
+            elif isinstance(m, (Detect, MAFDetect, IDetect, DDetect, Detect_ASFF, Detect_SEAM, Detect_MultiSEAM, WorldDetect, v10Detect, v10IDetect, v10DDetect, Detect_AFPN4)):
                 return "detect"
 
     # Guess from model filename
