@@ -1,0 +1,62 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv7 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80  # number of classes
+activation: nn.ReLU()
+kpt_shape: [17, 3]  # number of keypoints, number of dims (2 for x,y or 3 for x,y,visible)
+depth_multiple: 1.0  # model depth multiple
+width_multiple: 1.0  # layer channel multiple
+ 
+# yolov7-tiny backbone
+backbone:
+  # [from, number, module, args] c2, k=1, s=1, p=None, g=1, act=True, num_blocks_per_stage=1, num_conv_branches=4,
+  [[-1, 1, Conv, [32, 3, 2, None, 1]],  # 0-P1/2
+ 
+   [-1, 1, Conv, [64, 3, 2, None, 1]],  # 1-P2/4
+   [-1, 1, Yolov7_Tiny_E_ELANMO, [64, 1, 1, None, 1, 1, 4]],  # 2
+ 
+   [-1, 1, MP, []],  # 3-P3/8
+   [-1, 1, Yolov7_Tiny_E_ELANMO, [128, 1, 1, None, 1, 1, 4]],  # 4
+ 
+   [-1, 1, MP, []],  # 5-P4/16
+   [-1, 1, Yolov7_Tiny_E_ELANMO, [256, 1, 1, None, 1, 1, 4]],  # 6
+ 
+   [-1, 1, MP, []],  # 7-P5/32
+   [-1, 1, Yolov7_Tiny_E_ELANMO, [512, 1, 1, None, 1, 1, 4]],  # 8
+  ]
+ 
+# yolov7-tiny head
+head:
+  [[-1, 1, Yolov7_Tiny_SPP, [256]], # 9
+ 
+   [-1, 1, Conv, [128, 1, 1, None, 1]],
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+   [6, 1, Conv, [128, 1, 1, None, 1]], # route backbone P4
+   [[-1, -2], 1, Concat, [1]], # 13
+ 
+   [-1, 1, Yolov7_Tiny_E_ELANMO, [128, 1, 1, None, 1, 1, 4]],  # 14
+ 
+   [-1, 1, Conv, [64, 1, 1, None, 1]],
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+   [4, 1, Conv, [64, 1, 1, None, 1]], # route backbone P3
+   [[-1, -2], 1, Concat, [1]],
+ 
+   [-1, 1, Yolov7_Tiny_E_ELANMO, [64, 1, 1, None, 1, 1, 4]],  # 19
+ 
+   [-1, 1, Conv, [128, 3, 2, None, 1]],
+   [[-1, 14], 1, Concat, [1]],
+ 
+   [-1, 1, Yolov7_Tiny_E_ELANMO, [128, 1, 1, None, 1, 1, 4]],  # 22
+ 
+   [-1, 1, Conv, [256, 3, 2, None, 1]],
+   [[-1, 9], 1, Concat, [1]],
+ 
+   [-1, 1, Yolov7_Tiny_E_ELANMO, [256, 1, 1, None, 1, 1, 4]],  # 25
+ 
+   [19, 1, Conv, [128, 3, 1, None, 1]],
+   [22, 1, Conv, [256, 3, 1, None, 1]],
+   [25, 1, Conv, [512, 3, 1, None, 1]],
+ 
+   [[26, 27, 28], 1, IPose, [nc, kpt_shape]],   # Detect(P3, P4, P5)
+  ]

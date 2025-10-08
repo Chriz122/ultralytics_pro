@@ -1,0 +1,57 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv8 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80  # number of classes
+kpt_shape: [17, 3] # number of keypoints, number of dims (2 for x,y or 3 for x,y,visible)
+activation: nn.ReLU()
+scales: # model compound scaling constants, i.e. 'model=yolov8n.yaml' will call yolov8.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.50, 0.25, 1024, 0] # summary: 319 layers, 2624080 parameters, 2624064 gradients, 6.6 GFLOPs
+  s: [0.50, 0.50, 1024, 0] # summary: 319 layers, 9458752 parameters, 9458736 gradients, 21.7 GFLOPs
+  m: [0.50, 1.00, 512, 0] # summary: 409 layers, 20114688 parameters, 20114672 gradients, 68.5 GFLOPs
+  l: [1.00, 1.00, 512, 0] # summary: 631 layers, 25372160 parameters, 25372144 gradients, 87.6 GFLOPs
+  x: [1.00, 1.50, 512, 0] # summary: 631 layers, 56966176 parameters, 56966160 gradients, 196.0 GFLOPs
+
+# YOLOv11.0n backbone
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [32, 3, 2]]  # 0-P1/2
+  - [-1, 1, Conv, [64, 3, 2]]  # 1-P2/4
+  - [-1, 1, MobileOne_origin, [64, 3, 4, False, 0]]
+  - [-1, 1, Conv, [128, 3, 2]]  # 3-P3/8
+  - [-1, 1, MobileOne_origin, [128, 6, 4, False, 0]]
+  - [-1, 1, Conv, [256, 3, 2]]  # 5-P4/16
+  - [-1, 1, MobileOne_origin, [256, 9, 4, False, 0]]
+  - [-1, 1, Conv, [512, 3, 2]]  # 7-P5/32
+  - [-1, 1, MobileOne_origin, [512, 3, 4, False, 0]]
+  - [-1, 1, SPPF, [512, 5]]  # 9
+  - [-1, 2, C2PSA, [512]] # 10
+
+# YOLOv11.0n head
+head:
+  - [4, 1, Conv, [128]]  # 11-P3/8
+  - [6, 1, Conv, [128]]  # 12-P4/16
+  - [10, 1, Conv, [128]]  # 13-P5/32
+
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']] # 14 P5->P4
+  - [[-1, 12], 1, Bi_FPN, []] # 15
+  - [-1, 2, C3k2, [128, False]] # 16-P4/16
+ 
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']] # 17 P4->P3
+  - [[-1, 11], 1, Bi_FPN, []] # 18
+  - [-1, 2, C3k2, [128, False]] # 19-P3/8
+ 
+  - [1, 1, Conv, [128, 3, 2]] # 20 P2->P3
+  - [[-1, 11, 19], 1, Bi_FPN, []] # 21
+  - [-1, 2, C3k2, [128, False]] # 22-P3/8
+ 
+  - [-1, 1, Conv, [128, 3, 2]] # 23 P3->P4
+  - [[-1, 12, 16], 1, Bi_FPN, []] # 24
+  - [-1, 2, C3k2, [128, False]] # 25-P4/16
+ 
+  - [-1, 1, Conv, [128, 3, 2]] # 26 P4->P5
+  - [[-1, 13], 1, Bi_FPN, []] # 27
+  - [-1, 2, C3k2, [128, True]]  # 28-P5/32
+
+  - [[22, 25, 28], 1, IPose, [nc, kpt_shape]]  # Detect(P3, P4, P5)

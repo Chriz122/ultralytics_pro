@@ -1,0 +1,91 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv7 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80  # number of classes
+kpt_shape: [17, 3]  # number of keypoints, number of dims (2 for x,y or 3 for x,y,visible)
+activation: nn.LeakyReLU(0.1) # (optional) model default activation function
+depth_multiple: 1.00  # model depth multiple
+width_multiple: 1.00  # layer channel multiple
+
+# yolov7-tiny backbone
+backbone:
+  # [from, number, module, args] c2, k=1, s=1, p=None, g=1, act=True
+  [[-1, 1, Conv, [16, 3, 2, 1]],              # 0-P1/2  ch_out, kernel, stride, padding
+   [-1, 1, DepthSepConv, [32, 3, 1, False]],  # 1
+ 
+   [-1, 1, DepthSepConv, [64, 3, 2, False]],  # 2-P2/4
+   [-1, 1, DepthSepConv, [64, 3, 1, False]],  # 3
+ 
+   [-1, 1, DepthSepConv, [128, 3, 2, False]], # 4-P3/8
+   [-1, 1, DepthSepConv, [128, 3, 1, False]], # 5
+ 
+   [-1, 1, DepthSepConv, [256, 3, 2, False]], # 6-P4/16
+   [-1, 5, DepthSepConv, [256, 5, 1, False]], # 7
+ 
+   [-1, 1, DepthSepConv, [512, 5, 2, True]],  # 8-P5/32
+   [-1, 1, DepthSepConv, [512, 5, 1, True]],  # 9
+  ]
+
+# yolov7-tiny head
+head:
+  [[-1, 1, Conv, [256, 1, 1]],
+   [-2, 1, Conv, [256, 1, 1]],
+   [-1, 1, SP, [5]],
+   [-2, 1, SP, [9]],
+   [-3, 1, SP, [13]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [256, 1, 1]],
+   [[-1, -7], 1, Concat, [1]],
+   [-1, 1, Conv, [256, 1, 1]],  # 18, 10
+  
+   [-1, 1, Conv, [128, 1, 1]],
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+   [7, 1, Conv, [128, 1, 1]], # route backbone P4
+   [[-1, -2], 1, Concat, [1]],
+   
+   [-1, 1, Conv, [64, 1, 1]],
+   [-2, 1, Conv, [64, 1, 1]],
+   [-1, 1, Conv, [64, 3, 1]],
+   [-1, 1, Conv, [64, 3, 1]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [128, 1, 1]],  # 28, 23
+  
+   [-1, 1, Conv, [64, 1, 1]],
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+   [5, 1, Conv, [64, 1, 1]], # route backbone P3
+   [[-1, -2], 1, Concat, [1]],
+   
+   [-1, 1, Conv, [32, 1, 1]],
+   [-2, 1, Conv, [32, 1, 1]],
+   [-1, 1, Conv, [32, 3, 1]],
+   [-1, 1, Conv, [32, 3, 1]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [64, 1, 1]],  # 38, 33
+   
+   [-1, 1, Conv, [128, 3, 2]],
+   [[-1, 28], 1, Concat, [1]],
+   
+   [-1, 1, Conv, [64, 1, 1]],
+   [-2, 1, Conv, [64, 1, 1]],
+   [-1, 1, Conv, [64, 3, 1]],
+   [-1, 1, Conv, [64, 3, 1]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [128, 1, 1]],  # 46, 41
+   
+   [-1, 1, Conv, [256, 3, 2]],
+   [[-1, 18], 1, Concat, [1]],
+   
+   [-1, 1, Conv, [128, 1, 1]],
+   [-2, 1, Conv, [128, 1, 1]],
+   [-1, 1, Conv, [128, 3, 1]],
+   [-1, 1, Conv, [128, 3, 1]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [256, 1, 1]],  # 54, 49
+      
+   [38, 1, Conv, [128, 3, 1]],
+   [46, 1, Conv, [256, 3, 1]],
+   [54, 1, Conv, [512, 3, 1]],
+
+   [[55, 56, 57], 1, IPose, [nc, kpt_shape]],   # IPose(P3, P4, P5)
+  ]

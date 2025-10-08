@@ -1,0 +1,52 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv7 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80  # number of classes
+activation: nn.LeakyReLU(0.1) # (optional) model default activation function
+depth_multiple: 1.00  # model depth multiple
+width_multiple: 1.00  # layer channel multiple
+
+# yolov7-tiny backbone
+backbone:
+  # [from, number, module, args] c2, k=1, s=1, p=None, g=1, act=True
+  [[-1, 1, Conv, [32, 3, 2]],  # 0-P1/2  
+  
+   [-1, 1, Conv, [64, 3, 2]],  # 1-P2/4    
+   
+   [-1, 1, Conv, [32, 1, 1]],
+   [-2, 1, Conv, [32, 1, 1]],
+   [-1, 1, Conv, [32, 3, 1]],
+   [-1, 1, Conv, [32, 3, 1]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [64, 1, 1]],  # 7
+   
+   [-1, 1, nn.MaxPool2d, [2, 2, 0]],  # 8-P3/8
+   [-1, 1, Conv, [64, 1, 1]],
+   [-2, 1, Conv, [64, 1, 1]],
+   [-1, 1, Conv, [64, 3, 1]],
+   [-1, 1, Conv, [64, 3, 1]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [128, 1, 1]],  # 14
+   
+   [-1, 1, nn.MaxPool2d, [2, 2, 0]],  # 15-P4/16
+   [-1, 1, Conv, [128, 1, 1]],
+   [-2, 1, Conv, [128, 1, 1]],
+   [-1, 1, Conv, [128, 3, 1]],
+   [-1, 1, Conv, [128, 3, 1]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [256, 1, 1]],  # 21
+   
+   [-1, 1, nn.MaxPool2d, [2, 2, 0]],  # 22-P5/32
+   [-1, 1, Conv, [256, 1, 1]],
+   [-2, 1, Conv, [256, 1, 1]],
+   [-1, 1, Conv, [256, 3, 1]],
+   [-1, 1, Conv, [256, 3, 1]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [512, 1, 1]],  # 28
+  ]
+
+# yolov7-tiny head
+head:
+  [[-1, 1, Classify, [nc]],  # Classify
+  ]

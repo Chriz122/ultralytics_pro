@@ -1,0 +1,93 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv7 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80  # number of classes
+activation: nn.LeakyReLU(0.1) # (optional) model default activation function
+depth_multiple: 1.00  # model depth multiple
+width_multiple: 1.00  # layer channel multiple
+ 
+# yolov7-tiny backbone
+backbone:
+  # [from, number, module, args] c2, k=1, s=1, p=None, g=1, act=True
+ 
+  [ [ -1, 1, conv_bn_hswish, [ 16, 2 ] ],                 # 0-p1/2
+
+    [ -1, 1, MobileNetV3_InvertedResidual, [ 16,  16, 3, 2, 1, 0 ] ],  # 1-p2/4
+
+    [ -1, 1, MobileNetV3_InvertedResidual, [ 24,  72, 3, 2, 0, 0 ] ],  # 2-p3/8
+    [ -1, 1, MobileNetV3_InvertedResidual, [ 24,  88, 3, 1, 0, 0 ] ],  # 3-p3/8
+
+    [ -1, 1, MobileNetV3_InvertedResidual, [ 40,  96, 5, 2, 1, 1 ] ],  # 4-p4/16
+    [ -1, 1, MobileNetV3_InvertedResidual, [ 40, 240, 5, 1, 1, 1 ] ],  # 5-p4/16
+    [ -1, 1, MobileNetV3_InvertedResidual, [ 40, 240, 5, 1, 1, 1 ] ],  # 6-p4/16
+    [ -1, 1, MobileNetV3_InvertedResidual, [ 48, 120, 5, 1, 1, 1 ] ],  # 7-p4/16
+    [ -1, 1, MobileNetV3_InvertedResidual, [ 48, 144, 5, 1, 1, 1 ] ],  # 8-p4/16
+
+    [ -1, 1, MobileNetV3_InvertedResidual, [ 96, 288, 5, 2, 1, 1 ] ],  # 9-p5/32
+    [ -1, 1, MobileNetV3_InvertedResidual, [ 96, 576, 5, 1, 1, 1 ] ],  # 10-p5/32
+    [ -1, 1, MobileNetV3_InvertedResidual, [ 96, 576, 5, 1, 1, 1 ] ],  # 11-p5/32
+  ]
+ 
+# yolov7-tiny head
+head:
+  [[-1, 1, Conv, [256, 1, 1]],
+   [-2, 1, Conv, [256, 1, 1]],
+   [-1, 1, SP, [5]],
+   [-2, 1, SP, [9]],
+   [-3, 1, SP, [13]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [256, 1, 1]],
+   [[-1, -7], 1, Concat, [1]],
+   [-1, 1, Conv, [256, 1, 1]],  # 20
+  
+   [-1, 1, Conv, [128, 1, 1]],   
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+   [8, 1, Conv, [128, 1, 1]], # route backbone P4
+   [[-1, -2], 1, Concat, [1]],
+   
+   [-1, 1, Conv, [64, 1, 1]],
+   [-2, 1, Conv, [64, 1, 1]],
+   [-1, 1, Conv, [64, 3, 1]],
+   [-1, 1, Conv, [64, 3, 1]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [128, 1, 1]],  # 30
+  
+   [-1, 1, Conv, [64, 1, 1]],   
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+   [3, 1, Conv, [64, 1, 1]], # route backbone P3
+   [[-1, -2], 1, Concat, [1]],
+   
+   [-1, 1, Conv, [32, 1, 1]],
+   [-2, 1, Conv, [32, 1, 1]],
+   [-1, 1, Conv, [32, 3, 1]],
+   [-1, 1, Conv, [32, 3, 1]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [64, 1, 1]],  # 40
+   
+   [-1, 1, Conv, [128, 3, 2]],
+   [[-1, 30], 1, Concat, [1]],                           
+   
+   [-1, 1, Conv, [64, 1, 1]],
+   [-2, 1, Conv, [64, 1, 1]],
+   [-1, 1, Conv, [64, 3, 1]],
+   [-1, 1, Conv, [64, 3, 1]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [128, 1, 1]],  # 48
+   
+   [-1, 1, Conv, [256, 3, 2]],
+   [[-1, 20], 1, Concat, [1]],
+   
+   [-1, 1, Conv, [128, 1, 1]],
+   [-2, 1, Conv, [128, 1, 1]],  
+   [-1, 1, Conv, [128, 3, 1]],
+   [-1, 1, Conv, [128, 3, 1]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [256, 1, 1]],  # 56
+      
+   [40, 1, Conv, [128, 3, 1]],
+   [48, 1, Conv, [256, 3, 1]],
+   [56, 1, Conv, [512, 3, 1]],
+ 
+   [[57, 58, 59], 1, ISegment, [nc, 32, 256]],   # ISegment(P3, P4, P5)
+  ]

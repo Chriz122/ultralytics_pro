@@ -1,0 +1,50 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv10 object detection model. For Usage examples see https://docs.ultralytics.com/tasks/detect
+ 
+# Parameters
+nc: 80 # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolov10n.yaml' will call yolov10.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.33, 0.25, 1024, 0]
+ 
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [64, 3, 2]] # 0-P1/2
+  - [-1, 1, Conv, [128, 3, 2]] # 1-P2/4
+  - [-1, 3, C2f, [128, True]]
+  - [-1, 1, Conv, [256, 3, 2]] # 3-P3/8
+  - [-1, 6, C2f, [256, True]]
+  - [-1, 1, SCDown, [512, 3, 2]] # 5-P4/16
+  - [-1, 6, C2f, [512, True]]
+  - [-1, 1, SCDown, [1024, 3, 2]] # 7-P5/32
+  - [-1, 3, C2f, [1024, True]]
+  - [-1, 1, SPPF, [1024, 5]] # 9
+  - [-1, 1, PSA, [1024]] # 10
+ 
+# YOLOv10.0n head
+head:
+  - [4, 1, Conv, [256]]  # 11-P3/8
+  - [6, 1, Conv, [256]]  # 12-P4/16
+  - [10, 1, Conv, [256]]  # 13-P5/32
+ 
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']] # 14 P5->P4
+  - [[-1, 12], 1, Bi_FPN, []] # 15
+  - [-1, 3, C2f, [256]] # 16-P4/16
+ 
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']] # 17 P4->P3
+  - [[-1, 11], 1, Bi_FPN, []] # 18
+  - [-1, 3, C2f, [256]] # 19-P3/8
+ 
+  - [1, 1, Conv, [256, 3, 2]] # 20 P2->P3
+  - [[-1, 11, 19], 1, Bi_FPN, []] # 21
+  - [-1, 3, C2f, [256]] # 22-P3/8
+ 
+  - [-1, 1, Conv, [256, 3, 2]] # 23 P3->P4
+  - [[-1, 12, 16], 1, Bi_FPN, []] # 24
+  - [-1, 3, C2f, [512]] # 25-P4/16
+ 
+  - [-1, 1, SCDown, [256, 3, 2]] # 26 P4->P5
+  - [[-1, 13], 1, Bi_FPN, []] # 27
+  - [-1, 3, C2fCIB, [1024, True, True]]  # 28-P5/32
+ 
+  - [[22, 25, 28], 1, Detect, [nc]]  # Detect(P3, P4, P5)

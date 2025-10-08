@@ -1,0 +1,42 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv8 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80 # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolov8n.yaml' will call yolov8.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.33, 0.217, 1024, 0] # YOLOv8n summary: 225 layers,  3157200 parameters,  3157184 gradients,   8.9 GFLOPs
+
+# YOLOv8.0n backbone
+backbone:  
+# def __init__(self, C_in, C_out, num_blocks=1, alpha=0.2, beta=1, stride=1, use_identity=False, shortcut_mode=False):
+  - [-1, 1, Conv, [32, 3, 2]] #     32 320 320                         0
+  - [-1, 1, Conv, [64, 3, 2]] #     64 160 160                         1
+  - [-1, 1, Conv, [64, 3, 1]] #     64 160 160                         2
+  - [-1, 1, Conv, [128, 3, 1]] #    128 160 160                        3
+  - [-1, 1, ALSS, [128, 0.4, 0.4, 2, True, 0]] #    128 80 80          4 步长为2的情况再考虑shortcut_mode
+  - [-1, 1, ALSS, [256, 0.4, 0.4, 1, False,-1 ]] #  256 80 80          5 拼
+  - [-1, 1, ALSS, [512, 0.5, 0.5, 2, True, 1]] #    512 40 40          6 
+  - [-1, 1, ALSS, [512, 0.6, 0.6, 1, False,-1]] #   512 40 40      64  7 拼
+  - [-1, 1, ALSS, [1024,0.7, 0.6, 2, True, 2]] #    1024 20 20         8
+  - [-1, 1, SPPF, [1024, 5]]                  #     1024 20 20         9 拼
+
+# YOLOv8.0n head
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]] #1024 40 40             10
+  - [[-1, 7], 1, Concat, [1]]                  #1536 40 40             11
+  - [-1, 1, ALSS, [512, 0.2, 0.8, 1, True, -1]] #512 40 40             12 拼
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  #512 80 80             13
+  - [[-1, 5], 1, Concat, [1]] # cat backbone P3  768 80 80             14
+
+  - [-1, 1, MSCAMv3, [4]]                                  # 15 
+
+  - [-1, 1, ALSS, [256, 0.2, 0.8, 1, True, -1]] #  256 80 80           16 出
+  - [-1, 1, Conv, [256, 3, 2]] #                   256 40 40           17
+  - [[-1,12], 1, Concat, [1]]  #                   768 40 40           18
+  - [-1, 1, ALSS, [512, 0.4, 0.8, 1, True, -1]] #  512 40 40           19 出
+  - [-1, 1, Conv, [512, 3, 2]] #                   512 20 20           20
+  - [[-1, 9], 1, Concat, [1]]                     #1536 20 20          21  
+  - [-1, 1, ALSS, [1024, 0.6, 0.8, 1, True, -1]] # 1024 20 20          22 出
+
+  - [[16, 19, 22], 1, Segment, [nc, 32, 256]] # Detect(P3, P4, P5)               24

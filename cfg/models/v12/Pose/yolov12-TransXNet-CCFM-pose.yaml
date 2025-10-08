@@ -1,0 +1,43 @@
+# YOLOv12 🚀, AGPL-3.0 license
+# YOLOv12 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80 # number of classe
+kpt_shape: [17, 3]
+scales: # model compound scaling constants, i.e. 'model=yolov12n.yaml' will call yolov12.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.50, 0.25, 1024, 0] # summary: 465 layers, 2,603,056 parameters, 2,603,040 gradients, 6.7 GFLOPs
+  s: [0.50, 0.50, 1024, 0] # summary: 465 layers, 9,285,632 parameters, 9,285,616 gradients, 21.7 GFLOPs
+  m: [0.50, 1.00, 512, 0] # summary: 501 layers, 20,201,216 parameters, 20,201,200 gradients, 68.1 GFLOPs
+  l: [1.00, 1.00, 512, 0] # summary: 831 layers, 26,454,880 parameters, 26,454,864 gradients, 89.7 GFLOPs
+  x: [1.00, 1.50, 512, 0] # summary: 831 layers, 59,216,928 parameters, 59,216,912 gradients, 200.3 GFLOPs
+
+# YOLO12n backbone
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, transxnet_tiny,  []] # 4
+
+# YOLO12n head
+head:
+  - [-1, 1, Conv, [256, 1, 1]]  # 5, Y5, lateral_convs.0
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+
+  - [3, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 7 input_proj.1
+  - [[-2, -1], 1, Concat, [1]]
+  - [-1, 2, A2C2f, [256, False, -1]] # 9
+  - [-1, 1, Conv, [256, 1, 1]]  # 10, Y4, lateral_convs.1
+
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+  - [2, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 12 input_proj.0
+  - [[-2, -1], 1, Concat, [1]]  # cat backbone P4
+  - [-1, 2, A2C2f, [256, False, -1]] # X3 (14), fpn_blocks.1
+
+  - [-1, 1, Conv, [256, 3, 2]]  # 15, downsample_convs.0
+  - [[-1, 10], 1, Concat, [1]]  # cat Y4
+  - [-1, 2, A2C2f, [256, False, -1]]  # F4 (17), pan_blocks.0
+
+  - [-1, 1, Conv, [256, 3, 2]]  # 18, downsample_convs.1
+  - [[-1, 5], 1, Concat, [1]]  # cat Y5
+  - [-1, 2, C3k2, [256, True]]  # F5 (20), pan_blocks.1
+
+  - [[14, 17, 20], 1, Pose, [nc, kpt_shape]] # Detect(P3, P4, P5)

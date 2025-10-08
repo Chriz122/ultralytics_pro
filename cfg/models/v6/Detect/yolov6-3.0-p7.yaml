@@ -1,0 +1,79 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv6 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/models/yolov6
+
+# Parameters
+nc: 80  # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolov6n.yaml' will call yolov8.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.33, 0.25, 1024, 0]
+  t: [0.33, 0.375, 1024, 0]
+  s: [0.33, 0.50, 1024, 0]
+  m: [0.67, 0.75, 768, 0]
+  l: [1.00, 1.00, 512, 0]
+  x: [1.00, 1.25, 512, 0]
+
+# YOLOv6-3.0s backbone
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [64, 3, 2]]  # 0-P1/2
+  - [-1, 1, Conv, [128, 3, 2]]  # 1-P2/4
+  - [-1, 6, Conv, [128, 3, 1]]
+  - [-1, 1, Conv, [256, 3, 2]]  # 3-P3/8
+  - [-1, 12, Conv, [256, 3, 1]]
+  - [-1, 1, Conv, [512, 3, 2]]  # 5-P4/16
+  - [-1, 18, Conv, [512, 3, 1]]
+  - [-1, 1, Conv, [768, 3, 2]] # 7-P5/32
+  - [-1, 6, Conv, [768, 3, 1]]
+  - [-1, 1, Conv, [1024, 3, 2]] # 9-P6/32
+  - [-1, 6, Conv, [1024, 3, 1]]
+  - [-1, 1, Conv, [1280, 3, 2]] # 11-P7/32
+  - [-1, 6, Conv, [1280, 3, 1]]
+  - [-1, 1, SPPF, [1280, 5]]  # 13
+
+# YOLOv6-3.0s head
+head:
+  - [-1, 1, Conv, [512, 1, 1]]
+  - [-1, 1, nn.ConvTranspose2d, [512, 2, 2, 0]]
+  - [[-1, 10], 1, Concat, [1]]  # cat backbone P5
+  - [-1, 1, Conv, [512, 3, 1]]
+  - [-1, 11, Conv, [512, 3, 1]]  # 18
+
+  - [-1, 1, Conv, [384, 1, 1]]
+  - [-1, 1, nn.ConvTranspose2d, [384, 2, 2, 0]]
+  - [[-1, 8], 1, Concat, [1]]  # cat backbone P5
+  - [-1, 1, Conv, [384, 3, 1]]
+  - [-1, 11, Conv, [384, 3, 1]]  # 23
+
+  - [-1, 1, Conv, [256, 1, 1]]
+  - [-1, 1, nn.ConvTranspose2d, [256, 2, 2, 0]]
+  - [[-1, 6], 1, Concat, [1]]  # cat backbone P4
+  - [-1, 1, Conv, [256, 3, 1]]
+  - [-1, 11, Conv, [256, 3, 1]]  # 28
+
+  - [-1, 1, Conv, [128, 1, 1]]
+  - [-1, 1, nn.ConvTranspose2d, [128, 2, 2, 0]]
+  - [[-1, 4], 1, Concat, [1]]  # cat backbone P3
+  - [-1, 1, Conv, [128, 3, 1]]
+  - [-1, 11, Conv, [128, 3, 1]]  # 33
+
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [[-1, 29], 1, Concat, [1]]  # cat head P4
+  - [-1, 1, Conv, [256, 3, 1]]
+  - [-1, 11, Conv, [256, 3, 1]]  # 37
+
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 24], 1, Concat, [1]]  # cat head P5
+  - [-1, 1, Conv, [384, 3, 1]]
+  - [-1, 11, Conv, [384, 3, 1]]  # 41
+
+  - [-1, 1, Conv, [384, 3, 2]]
+  - [[-1, 19], 1, Concat, [1]]  # cat head P6
+  - [-1, 1, Conv, [512, 3, 1]]
+  - [-1, 11, Conv, [512, 3, 1]]  # 45 
+
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 14], 1, Concat, [1]]  # cat head P6
+  - [-1, 1, Conv, [640, 3, 1]]
+  - [-1, 11, Conv, [640, 3, 1]]  # 49 
+
+  - [[33, 37, 41, 45, 49], 1, Detect, [nc]]  # Detect(P3, P4, P5, P6)

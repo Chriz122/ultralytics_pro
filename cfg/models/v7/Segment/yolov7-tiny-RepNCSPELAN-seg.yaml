@@ -1,0 +1,66 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv7 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80  # number of classes
+activation: nn.LeakyReLU(0.1) # (optional) model default activation function
+depth_multiple: 1.00  # model depth multiple
+width_multiple: 1.00  # layer channel multiple
+
+# yolov7-tiny backbone
+backbone:
+  # [from, number, module, args] c2, k=1, s=1, p=None, g=1, act=True
+  [[-1, 1, Conv, [32, 3, 2]],  # 0-P1/2  
+  
+   [-1, 1, Conv, [64, 3, 2]],  # 1-P2/4    
+   
+   [-1, 1, RepNCSPELAN4, [64, 32, 32, 1]], # 2
+
+   [-1, 1, MP, []],  # 3-P3/8
+   [-1, 1, RepNCSPELAN4, [128, 64, 32, 1]], # 4
+
+   [-1, 1, MP, []],  # 5-P4/16
+   [-1, 1, RepNCSPELAN4, [256, 128, 64, 1]], # 6
+
+   [-1, 1, MP, []],  # 7-P5/32
+   [-1, 1, RepNCSPELAN4, [512, 256, 128, 1]], # 8
+  ]
+
+# yolov7-tiny head
+head:
+  [[-1, 1, Conv, [256, 1, 1]],
+   [-2, 1, Conv, [256, 1, 1]],
+   [-1, 1, SP, [5]],
+   [-2, 1, SP, [9]],
+   [-3, 1, SP, [13]],
+   [[-1, -2, -3, -4], 1, Concat, [1]],
+   [-1, 1, Conv, [256, 1, 1]],
+   [[-1, -7], 1, Concat, [1]],
+   [-1, 1, Conv, [256, 1, 1]],  # 17, 9
+  
+   [-1, 1, Conv, [128, 1, 1]],
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+   [6, 1, Conv, [128, 1, 1]], # route backbone P4
+   [[-1, -2], 1, Concat, [1]],
+   [-1, 1, RepNCSPELAN4, [128, 64, 32, 1]], # 22
+  
+   [-1, 1, Conv, [64, 1, 1]],
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+   [4, 1, Conv, [64, 1, 1]], # route backbone P3
+   [[-1, -2], 1, Concat, [1]],
+   [-1, 1, RepNCSPELAN4,[64, 32, 32, 1]], # 27
+   
+   [-1, 1, Conv, [128, 3, 2]],
+   [[-1, 22], 1, Concat, [1]],
+   [-1, 1, RepNCSPELAN4, [128, 64, 32, 1]], # 30
+   
+   [-1, 1, Conv, [256, 3, 2]],
+   [[-1, 17], 1, Concat, [1]],
+   [-1, 1, RepNCSPELAN4, [256, 128, 64, 1]], # 33
+      
+   [27, 1, Conv, [128, 3, 1]],
+   [30, 1, Conv, [256, 3, 1]],
+   [33, 1, Conv, [512, 3, 1]],
+
+   [[34, 35, 36], 1, ISegment, [nc, 32, 256]],   # ISegment(P3, P4, P5)
+  ]

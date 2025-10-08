@@ -1,0 +1,61 @@
+# YOLOv12 🚀, AGPL-3.0 license
+# YOLOv12 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80 # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolov12n.yaml' will call yolov12.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.50, 0.25, 1024, 6] # summary: 465 layers, 2,603,056 parameters, 2,603,040 gradients, 6.7 GFLOPs
+  s: [0.50, 0.50, 1024, 8] # summary: 465 layers, 9,285,632 parameters, 9,285,616 gradients, 21.7 GFLOPs
+  m: [0.50, 1.00, 512, 10] # summary: 501 layers, 20,201,216 parameters, 20,201,200 gradients, 68.1 GFLOPs
+  l: [1.00, 1.00, 512, 10] # summary: 831 layers, 26,454,880 parameters, 26,454,864 gradients, 89.7 GFLOPs
+  x: [1.00, 1.50, 512, 12] # summary: 831 layers, 59,216,928 parameters, 59,216,912 gradients, 200.3 GFLOPs
+
+# YOLO12n backbone
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv,  [64, 3, 2]] # 0-P1/2
+  - [-1, 1, Conv,  [128, 3, 2]] # 1-P2/4
+  - [-1, 2, C3k2,  [256, False, 0.25]]
+  - [-1, 1, Conv,  [256, 3, 2]] # 3-P3/8
+  - [-1, 2, C3k2,  [512, False, 0.25]]
+  - [-1, 1, Conv,  [512, 3, 2]] # 5-P4/16
+  - [-1, 4, A2C2f, [512, True, 4]]
+  - [-1, 1, Conv,  [1024, 3, 2]] # 7-P5/32
+  - [-1, 4, A2C2f, [1024, True, 1]] # 8
+
+# YOLO12n head
+head:
+  # Semantic Collecting
+  - [0, 1, nn.AvgPool2d, [8, 8, 0]] # 9
+  - [2, 1, nn.AvgPool2d, [4, 4, 0]] # 10
+  - [4, 1, nn.AvgPool2d, [2, 2, 0]] # 11
+  - [8, 1, nn.Upsample, [None, 2, 'nearest']] # 12
+  - [[9, 10, 11, 6, 12], 1, Concat, [1]]  # cat 13
+
+  # Hypergraph Computation
+  - [-1, 1, Conv, [512, 1, 1]] # 14
+  - [-1, 1, HyperComputeModule, [512]] # 15
+  - [-1, 2, A2C2f, [512, False, -1]] # 16
+
+  # Semantic Collecting
+  - [-1, 1, nn.AvgPool2d, [2, 2, 0]] # 17
+  - [[-1, 8], 1, Concat, [1]]  # cat 18
+  - [-1, 1, Conv, [1024, 1, 1]] # 19 P5
+
+  - [[16, 6], 1, Concat, [1]]  # cat 20
+  - [-1, 2, A2C2f, [512, False, -1]]  # 21 P4
+
+  - [16, 1, nn.Upsample, [None, 2, 'nearest']] # 22
+  - [[-1, 4], 1, Concat, [1]]  # cat 23
+  - [-1, 2, A2C2f, [256, False, -1]]  # 24 P3/N3
+
+  - [-1, 1, Conv, [256, 3, 2]] # 25
+  - [[-1, 21], 1, Concat, [1]]  # 26 cat 
+  - [-1, 2, A2C2f, [512, False, -1]]  # 27 N4
+
+  - [-1, 1, Conv, [512, 3, 2]] # 28
+  - [[-1, 19], 1, Concat, [1]]  # 29 cat
+  - [-1, 2, C3k2, [1024, True]]  # 30 N5
+
+  - [[24, 27, 30], 1, Detect, [nc]]  # Detect(N3, N4, N5)

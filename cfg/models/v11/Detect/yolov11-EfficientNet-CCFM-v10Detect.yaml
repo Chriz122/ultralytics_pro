@@ -1,0 +1,59 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLO11 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+ 
+# Parameters
+nc: 80 # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolo11n.yaml' will call yolo11.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.50, 0.25, 1024, 0] # summary: 319 layers, 2624080 parameters, 2624064 gradients, 6.6 GFLOPs
+  s: [0.50, 0.50, 1024, 0] # summary: 319 layers, 9458752 parameters, 9458736 gradients, 21.7 GFLOPs
+  m: [0.50, 1.00, 512, 0] # summary: 409 layers, 20114688 parameters, 20114672 gradients, 68.5 GFLOPs
+  l: [1.00, 1.00, 512, 0] # summary: 631 layers, 25372160 parameters, 25372144 gradients, 87.6 GFLOPs
+  x: [1.00, 1.50, 512, 0] # summary: 631 layers, 56966176 parameters, 56966160 gradients, 196.0 GFLOPs
+ 
+# YOLOv8.0n backbone
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, stem, [32, 'ReLU6']]             # 0-P1/2
+  - [-1, 1, MBConvBlock, [16, 3, 1, 1, 0]]   # 1
+  - [-1, 1, MBConvBlock, [24, 3, 2, 6, 0.028, True]]   # 2-P2/4
+  - [-1, 1, MBConvBlock, [24, 3, 1, 6, 0.057]]
+  - [-1, 1, MBConvBlock, [40, 5, 2, 6, 0.085]]   # 4-P3/8
+  - [-1, 1, MBConvBlock, [40, 5, 1, 6, 0.114]]
+  - [-1, 1, MBConvBlock, [80, 3, 2, 6, 0.142]]   # 6-P4/16
+  - [-1, 1, MBConvBlock, [80, 3, 1, 6, 0.171]]
+  - [-1, 1, MBConvBlock, [80, 3, 1, 6, 0.200]]
+  - [-1, 1, MBConvBlock, [112, 5, 1, 6, 0.228]]  # 9
+  - [-1, 1, MBConvBlock, [112, 5, 1, 6, 0.257]]
+  - [-1, 1, MBConvBlock, [112, 5, 1, 6, 0.285]]
+  - [-1, 1, MBConvBlock, [192, 5, 2, 6, 0.314]]  # 12-P5/32
+  - [-1, 1, MBConvBlock, [192, 5, 1, 6, 0.342]]
+  - [-1, 1, MBConvBlock, [192, 5, 1, 6, 0.371]]
+  - [-1, 1, MBConvBlock, [192, 5, 1, 6, 0.400]]
+  - [-1, 1, MBConvBlock, [320, 3, 1, 6, 0.428]]  # 16
+ 
+ 
+# YOLO11n head
+head:
+  - [-1, 1, Conv, [256, 1, 1]]  # 17, Y5, lateral_convs.0
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+
+  - [9, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 19 input_proj.1
+  - [[-2, -1], 1, Concat, [1]]
+  - [-1, 2, C3k2, [256, False]] # 21
+  - [-1, 1, Conv, [256, 1, 1]]  # 22, Y4, lateral_convs.1
+
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+  - [5, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 24 input_proj.0
+  - [[-2, -1], 1, Concat, [1]]  # cat backbone P4
+  - [-1, 2, C3k2, [256, False]] # X3 (26), fpn_blocks.1
+
+  - [-1, 1, Conv, [256, 3, 2]]  # 27, downsample_convs.0
+  - [[-1, 22], 1, Concat, [1]]  # cat Y4
+  - [-1, 2, C3k2, [256, False]]  # F4 (29), pan_blocks.0
+
+  - [-1, 1, Conv, [256, 3, 2]]  # 30, downsample_convs.1
+  - [[-1, 17], 1, Concat, [1]]  # cat Y5
+  - [-1, 2, C3k2, [256, True]]  # F5 (32), pan_blocks.1
+ 
+  - [[26, 29, 32], 1, v10Detect, [nc]] # Detect(P3, P4, P5)

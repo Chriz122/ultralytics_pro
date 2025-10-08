@@ -1,0 +1,96 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv7 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80  # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolov8n.yaml' will call yolov8.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.33, 0.25, 1024]
+  t: [0.33, 0.375, 1024]
+  s: [0.33, 0.50, 1024]
+  m: [0.67, 0.75, 768]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.25, 512]
+
+# yolov7 backbone by yoloair
+backbone:
+  # [from, number, module, args]
+  [[-1, 1, Conv, [32, 3, 1]],  # 0
+   [-1, 1, Conv, [64, 3, 2]],  # 1-P1/2
+   [-1, 1, Conv, [64, 3, 1]],
+   [-1, 1, Conv, [128, 3, 2]],  # 3-P2/4 
+   [-1, 1, CNeB, [128]], 
+   [-1, 1, Conv, [256, 3, 2]], 
+
+   [-1, 1, MP, []],
+   [-1, 1, Conv, [128, 1, 1]],
+   [-3, 1, Conv, [128, 1, 1]],
+   [-1, 1, Conv, [128, 3, 2]],
+   [[-1, -3], 1, Concat, [1]],  # 16-P3/8
+   [-1, 1, Conv, [128, 1, 1]],
+   [-2, 1, Conv, [128, 1, 1]],
+   [-1, 1, Conv, [128, 3, 1]],
+   [-1, 1, Conv, [128, 3, 1]],
+   [-1, 1, Conv, [128, 3, 1]],
+   [-1, 1, Conv, [128, 3, 1]],
+   [[-1, -3, -5, -6], 1, Concat, [1]],
+   [-1, 1, Conv, [512, 1, 1]],
+
+   [-1, 1, MP, []],
+   [-1, 1, Conv, [256, 1, 1]],
+   [-3, 1, Conv, [256, 1, 1]],
+   [-1, 1, Conv, [256, 3, 2]],
+   [[-1, -3], 1, Concat, [1]],
+   [-1, 1, Conv, [256, 1, 1]],
+   [-2, 1, Conv, [256, 1, 1]],
+   [-1, 1, Conv, [256, 3, 1]],
+   [-1, 1, Conv, [256, 3, 1]],
+   [-1, 1, Conv, [256, 3, 1]],
+   [-1, 1, Conv, [256, 3, 1]],
+   [[-1, -3, -5, -6], 1, Concat, [1]],
+   [-1, 1, Conv, [1024, 1, 1]], 
+         
+   [-1, 1, MP, []],
+   [-1, 1, Conv, [512, 1, 1]],
+   [-3, 1, Conv, [512, 1, 1]],
+   [-1, 1, Conv, [512, 3, 2]],
+   [[-1, -3], 1, Concat, [1]],
+   [-1, 1, CNeB, [1024]],
+   [-1, 1, Conv, [256, 3, 1]],
+  ]
+
+# yolov7 head by yoloair
+head:
+  [[-1, 1, SPPCSPC, [512]],
+   [-1, 1, Conv, [256, 1, 1]],
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+   [31, 1, Conv, [256, 1, 1]],
+   [[-1, -2], 1, Concat, [1]],
+   [-1, 1, C3C2, [128]],
+
+   [-1, 1, Conv, [128, 1, 1]],
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+   [18, 1, Conv, [128, 1, 1]],
+   [[-1, -2], 1, Concat, [1]],
+   [-1, 1, C3C2, [128]],
+
+   [-1, 1, MP, []],
+   [-1, 1, Conv, [128, 1, 1]],
+   [-3, 1, GAMAttention, [128]],
+   [-1, 1, Conv, [128, 3, 2]],
+   [[-1, -3, 44], 1, Concat, [1]],
+   [-1, 1, C3C2, [256]],
+ 
+   [-1, 1, MP, []],
+   [-1, 1, Conv, [256, 1, 1]],
+   [-3, 1, Conv, [256, 1, 1]],
+   [-1, 1, Conv, [256, 3, 2]], 
+   [[-1, -3, 39], 1, Concat, [1]],
+   [-1, 3, C3C2, [512]],
+
+   [49, 1, Conv, [256, 3, 1]],
+   [55, 1, Conv, [512, 3, 1]],
+   [61, 1, Conv, [1024, 3, 1]],
+
+   [[62, 63, 64], 1, ISegment, [nc, 32, 256]],   # ISegment(P3, P4, P5)
+  ]
