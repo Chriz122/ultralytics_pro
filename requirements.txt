@@ -1,0 +1,5 @@
+ultralytics=="8.3.24"
+
+antialiased-cnns 
+ttach 
+ipdb
