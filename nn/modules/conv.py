@@ -54,6 +54,7 @@ __all__ = (
     "FCM_1", 
     "Down",
     "DSConv",
+    "CBS",
 )
 
 
@@ -141,25 +142,81 @@ class DynamicTanh(nn.Module):
 
 
 class Conv(nn.Module):
-    """Standard convolution with args(ch_in, ch_out, kernel, stride, padding, groups, dilation, activation)."""
+    """
+    Standard convolution module with batch normalization and activation.
+
+    Attributes:
+        conv (nn.Conv2d): Convolutional layer.
+        bn (nn.BatchNorm2d): Batch normalization layer.
+        act (nn.Module): Activation function layer.
+        default_act (nn.Module): Default activation function (SiLU).
+    """
 
     default_act = nn.SiLU()  # default activation
 
     def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
-        """Initialize Conv layer with given arguments including activation."""
+        """
+        Initialize Conv layer with given parameters.
+
+        Args:
+            c1 (int): Number of input channels.
+            c2 (int): Number of output channels.
+            k (int): Kernel size.
+            s (int): Stride.
+            p (int, optional): Padding.
+            g (int): Groups.
+            d (int): Dilation.
+            act (bool | nn.Module): Activation function.
+        """
         super().__init__()
         self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p, d), groups=g, dilation=d, bias=False)
         self.bn = nn.BatchNorm2d(c2)
         self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
 
     def forward(self, x):
-        """Apply convolution, batch normalization and activation to input tensor."""
+        """
+        Apply convolution, batch normalization and activation to input tensor.
+
+        Args:
+            x (torch.Tensor): Input tensor.
+
+        Returns:
+            (torch.Tensor): Output tensor.
+        """
         return self.act(self.bn(self.conv(x)))
 
     def forward_fuse(self, x):
-        """Perform transposed convolution of 2D data."""
+        """
+        Apply convolution and activation without batch normalization.
+
+        Args:
+            x (torch.Tensor): Input tensor.
+
+        Returns:
+            (torch.Tensor): Output tensor.
+        """
         return self.act(self.conv(x))
-    
+
+class CBS(Conv):
+    """
+    Conv + BatchNorm + SiLU (default activation)，即 YOLOv5 中的 CBS 模块。
+    继承自 YOLOv11 的 Conv 类，默认使用 SiLU 激活函数。
+    """
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1):
+        """
+        初始化 CBS 模块（Conv+BN+SiLU）。
+        
+        Args:
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            k (int): 卷积核大小。
+            s (int): 步长。
+            p (int, optional): 填充。
+            g (int): 分组数。
+            d (int): 膨胀率。
+        """
+        super().__init__(c1, c2, k, s, p, g, d, act=True)  # act=True 启用默认的 SiLU
+  
     
 class Conv_BCN(nn.Module):
     """Standard convolution with args(ch_in, ch_out, kernel, stride, padding, groups, dilation, activation)."""

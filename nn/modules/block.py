@@ -200,6 +200,9 @@ __all__ = (
     "DownsampleConv", 
     "FullPAD_Tunnel",
     "DSC3k2",
+    "MFAM",
+    "IEMA",
+    "DASI",
 )
 
 
@@ -6841,3 +6844,239 @@ class FullPAD_Tunnel(nn.Module):
     def forward(self, x):
         out = x[0] + self.gate * x[1]
         return out
+
+
+class MFAM(nn.Module):
+    """
+    多尺度特征聚合模块 (Multi-scale Feature Aggregation Module)
+    严格对齐需求：
+    - 分支1: DWConv 3x3
+    - 分支2: DWConv 5x5
+    - 分支3: DWConv 1x7 + 7x1
+    - 分支4: DWConv 1x9 + 9x1
+    - 分支5: 1x1深度卷积（非恒等映射）
+    - 输出: 1x1 Conv 融合所有分支
+    """
+    def __init__(self, c1: int, c2: int):
+        """
+        初始化MFAM模块
+        
+        Args:
+            c1 (int): 输入通道数
+            c2 (int): 输出通道数
+        """
+        super().__init__()
+        # 所有分支的通道数与输入一致
+        self.c = c1
+        
+        # 分支1: DWConv 3x3
+        self.dw_conv3x3 = DWConv(c1, c1, k=3, act=True)
+        # 分支2: DWConv 5x5
+        self.dw_conv5x5 = DWConv(c1, c1, k=5, act=True)
+        # 分支3: DWConv 1x7 + 7x1
+        self.dw_conv1x7 = DWConv(c1, c1, k=(1, 7), act=True)
+        self.dw_conv7x1 = DWConv(c1, c1, k=(7, 1), act=True)
+        # 分支4: DWConv 1x9 + 9x1
+        self.dw_conv1x9 = DWConv(c1, c1, k=(1, 9), act=True)
+        self.dw_conv9x1 = DWConv(c1, c1, k=(9, 1), act=True)
+        # 分支5: 1x1深度卷积（非恒等映射，明确使用1x1 DWConv）
+        self.dw_conv1x1 = DWConv(c1, c1, k=1, act=True)
+        
+        # 输出融合：1x1 Conv整合所有分支
+        self.conv1x1 = Conv(c1 * 5, c2, k=1, act=True)  # 5个分支，每个c1通道
+        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播流程：
+        1. 输入特征分5条分支处理
+        2. 各分支结果相加（分支3和4是两个卷积的和）
+        3. 所有分支结果拼接后用1x1 Conv融合
+        """
+        # 分支1: 3x3 DWConv
+        x1 = self.dw_conv3x3(x)
+        # 分支2: 5x5 DWConv
+        x2 = self.dw_conv5x5(x)
+        # 分支3: 1x7 + 7x1 DWConv（顺序执行）
+        x3 = self.dw_conv7x1(self.dw_conv1x7(x))
+        # 分支4: 1x9 + 9x1 DWConv（顺序执行）
+        x4 = self.dw_conv9x1(self.dw_conv1x9(x))
+        # 分支5: 1x1 DWConv（非恒等映射）
+        x5 = self.dw_conv1x1(x)
+        
+        # 拼接所有分支结果（5个分支，每个c1通道）
+        x_cat = torch.cat([x1, x2, x3, x4, x5], dim=1)
+        
+        # 1x1 Conv融合特征并调整通道数
+        return self.conv1x1(x_cat)
+
+
+class IEMA(nn.Module):
+    """
+    特征分组与多分支处理模块
+    """
+    def __init__(self, c1: int, c2: int, groups: int = 16):
+        super().__init__()
+        self.groups = groups
+        self.c1 = c1
+        self.c2 = c2
+
+        # Feature Grouping部分 - 修正池化操作
+        self.x_avg_pool = nn.AdaptiveAvgPool2d((1, None))  # [B, C, 1, W]
+        self.y_avg_pool = nn.AdaptiveAvgPool2d((None, 1))  # [B, C, H, 1]
+        
+        # 1x1卷积调整通道数
+        self.x_conv = Conv(c1, c1, k=1, s=1, act=True)
+        self.y_conv = Conv(c1, c1, k=1, s=1, act=True)
+        
+        # 合并后的卷积
+        self.concat_conv = Conv(c1 * 2, c1, k=1, s=1, act=True)
+
+        # Parallel Subnetworks部分
+        branch_channels = c1 // groups 
+        self.dwconv_3x3 = DWConv(branch_channels, branch_channels, k=3, s=1, act=True)
+        self.dwconv_1x5 = DWConv(branch_channels, branch_channels, k=(1, 5), s=1, act=True)
+        self.dwconv_5x1 = DWConv(branch_channels, branch_channels, k=(5, 1), s=1, act=True)
+        
+        self.identity = nn.Identity()
+        merged_channels = branch_channels * 4
+        self.merge_conv = Conv(merged_channels, c1, k=1, s=1, act=True)  # 使用普通Conv调整通道数
+
+        # Cross-spatial Lasting部分
+        self.group_norm = nn.GroupNorm(num_groups=groups, num_channels=c1)
+        self.avg_pool_x = nn.AdaptiveAvgPool2d((1, None))
+        self.avg_pool_y = nn.AdaptiveAvgPool2d((None, 1))
+        self.softmax_x = nn.Softmax(dim=-1)
+        self.softmax_y = nn.Softmax(dim=-2)
+
+        # 后续重加权等操作
+        self.sigmoid_1 = nn.Sigmoid()
+        self.rewight_1 = nn.Conv2d(c1, c1, kernel_size=1, stride=1)
+        self.sigmoid_2 = nn.Sigmoid()
+        self.rewight_2 = nn.Conv2d(c1, c2, kernel_size=1, stride=1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播逻辑
+        """
+        batch_size, channels, height, width = x.size()
+        
+        # 水平方向池化: [B, C, 1, W]
+        x_x_pool = self.x_avg_pool(x)
+        x_x_pool = self.x_conv(x_x_pool)
+        
+        # 垂直方向池化: [B, C, H, 1]
+        x_y_pool = self.y_avg_pool(x)
+        x_y_pool = self.y_conv(x_y_pool)
+        
+        # 关键修正: 将两个特征调整为相同尺寸
+        x_x_pool = nn.functional.interpolate(x_x_pool, size=(height, width), mode='bilinear', align_corners=False)
+        x_y_pool = nn.functional.interpolate(x_y_pool, size=(height, width), mode='bilinear', align_corners=False)
+        
+        # 现在可以安全地拼接
+        concat_feature = torch.cat([x_x_pool, x_y_pool], dim=1)
+        grouped_feature = self.concat_conv(concat_feature)
+        
+        # 张量拆分
+        split_features = torch.split(grouped_feature, grouped_feature.size(1) // self.groups, dim=1)
+        
+        # 并行分支处理
+        branch_3x3 = self.dwconv_3x3(split_features[0]) if split_features else None
+        branch_1x5 = self.dwconv_1x5(split_features[1]) if len(split_features) > 1 else None
+        branch_5x1 = self.dwconv_5x1(split_features[2]) if len(split_features) > 2 else None
+        branch_identity = self.identity(split_features[3]) if len(split_features) > 3 else None
+
+        # 合并分支
+        merged_branches = [b for b in [branch_3x3, branch_1x5, branch_5x1, branch_identity] if b is not None]
+        merged_feature = torch.cat(merged_branches, dim=1) if merged_branches else x
+        merged_feature = self.merge_conv(merged_feature)
+
+        # Cross-spatial Lasting
+        gn_feature = self.group_norm(merged_feature)
+        x_pool = self.avg_pool_x(gn_feature)
+        y_pool = self.avg_pool_y(gn_feature)
+        x_softmax = self.softmax_x(x_pool)
+        y_softmax = self.softmax_y(y_pool)
+        mul_x_feature = gn_feature * x_softmax
+        mul_y_feature = gn_feature * y_softmax
+        cross_feature = mul_x_feature + mul_y_feature
+
+        # 重加权输出
+        sigmoid_1_out = self.sigmoid_1(cross_feature)
+        rewight_1_out = self.rewight_1(sigmoid_1_out)
+        add_feature = x + rewight_1_out  # 残差连接
+        sigmoid_2_out = self.sigmoid_2(add_feature)
+        out = self.rewight_2(sigmoid_2_out)
+
+        return out
+
+class DASI(nn.Module):
+    def __init__(self, in_channels_high, out_channels, in_channels_low=0, in_channels_mid=0):
+        super(DASI, self).__init__()
+        self.in_channels_high = in_channels_high
+        self.out_channels = out_channels
+
+        # 低层次特征处理（调整通道数）
+        if in_channels_low == 0:
+            self.conv_low = nn.Identity()
+        else:
+            self.conv_low = nn.Conv2d(in_channels_low, in_channels_high, kernel_size=3, stride=1, padding=1)
+
+        # 中间特征处理（调整通道数）
+        if in_channels_mid == 0:
+            self.conv_mid = nn.Identity()
+        else:
+            self.conv_mid = nn.Conv2d(in_channels_mid, in_channels_high, kernel_size=1, stride=1)
+
+        # 高层次特征处理（调整通道数 + 上采样到中间特征尺寸）
+        self.conv_high = nn.Conv2d(in_channels_high, in_channels_high, kernel_size=1, stride=1)
+        # 上采样因子根据中间特征尺寸动态计算（假设高层次尺寸是中间的 1/2）
+        self.bilinear = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)  # 20->40
+
+        # 注意力机制
+        self.attention_conv = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(in_channels_high, in_channels_high // 4, kernel_size=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels_high // 4, in_channels_high, kernel_size=1),
+            nn.Sigmoid()
+        )
+
+        # 输出层
+        self.merge_conv = nn.Conv2d(in_channels_high * 3, out_channels, kernel_size=1, stride=1)
+        self.final_bn = nn.BatchNorm2d(out_channels)
+        self.final_relu = nn.ReLU(inplace=True)
+
+    def forward(self, x):
+        x_high, x_low, x_mid = x
+
+        # 1. 调整低层次特征：通道数 + 下采样到中间尺寸（80->40）
+        x_low_processed = self.conv_low(x_low)  # 通道数: in_channels_high
+        x_low_processed = F.interpolate(x_low_processed, size=x_mid.shape[2:], mode='bilinear')  # 80x80->40x40
+
+        # 2. 调整中间特征：通道数（保持尺寸 40x40）
+        x_mid_processed = self.conv_mid(x_mid)  # 通道数: in_channels_high
+
+        # 3. 调整高层次特征：通道数 + 上采样到中间尺寸（20->40）
+        x_high_processed = self.conv_high(x_high)  # 通道数: in_channels_high
+        x_high_upsampled = self.bilinear(x_high_processed)  # 20x20->40x40
+
+        # 4. 生成注意力权重（基于中间特征）
+        attention = self.attention_conv(x_mid_processed)  # [B, in_channels_high, 1, 1]
+
+        # 5. 特征融合（带注意力的加权求和）
+        fused = (
+            x_low_processed * attention +
+            x_high_upsampled * (1 - attention) +
+            x_mid_processed
+        )
+
+        # 6. 合并三分支特征（通道拼接）
+        merged = torch.cat([x_low_processed, x_mid_processed, x_high_upsampled], dim=1)  # 通道数: 3*in_channels_high
+
+        # 7. 输出处理：调整通道数 + 尺寸不变
+        out = self.merge_conv(merged)  # 通道数: out_channels
+        out = self.final_bn(out)
+        out = self.final_relu(out)
+
+        return out
+

@@ -53,6 +53,10 @@ from ultralytics.nn.modules import (
     Conv2,
     ConvTranspose,
     Detect,
+    IEMA,
+    MFAM,
+    CBS,
+    DASI,
     DWConv,
     DWConvTranspose2d,
     Focus,
@@ -1937,6 +1941,8 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             SPPF,
             C2fPSA,
             C2PSA,
+            MFAM,
+            CBS,
             DWConv,
             Focus,
             C1,
@@ -2430,6 +2436,22 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             m = m(*args)
             c2 = m.width_list 
             backbone = True
+        # --------------------------------------------------------------------------------------
+        elif m is DASI:
+            # 假设DASI的from参数为[f_low, f_mid, f_high]，对应低、中、高分辨率特征
+            f_high, f_low, f_mid =  f  # 解包三个索引
+            c1 = [ch[f_high], ch[f_mid], ch[f_low]]
+            c2 = args[3]  # DASI模块的输出通道数（由args[0]指定，如512）
+            c2 = make_divisible(min(c2, max_channels) * width, 8)
+            args = [ch[f_high], ch[f_mid], ch[f_low], c2]
+        elif m is IEMA:
+            c1, c2 = ch[f], args[0]
+            if c2 != nc:  # if c2 not equal to number of classes (i.e. for Classify() output)
+                c2 = make_divisible(min(c2, max_channels) * width, 8)
+            args = [c1, c2, 16]
+        # 版权声明：本文为博主原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接和本声明。
+        # 原文链接：https://blog.csdn.net/weixin_42010722/article/details/148745028
+        # --------------------------------------------------------------------------------------
         else:
             c2 = ch[f]
 

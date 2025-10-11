@@ -310,6 +310,7 @@
 | `yolov11-LightHGNetV2-l.yaml`    | LightHGNetV2-l（輕量化骨幹網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-LSNet.yaml`             | LSNet（輕量化骨幹網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-Mamba-v10Detect.yaml` / `yolov11-Mamba.yaml`  | Mamba（多尺度注意力模組）                                               | 強化多尺度特徵融合                         | 多尺度目標檢測                        |
+| `yolov11-MASF.yaml`              | MASF（多尺度自適應特徵）                                               | 強化多尺度特徵融合                         | 多尺度目標檢測                        |
 | `yolov11-MLLA.yaml`             | MLLA（多層次輕量化注意力）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-MobileNetv4.yaml`      | MobileNetv4（輕量化骨幹網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-OverLoCK.yaml`         | OverLoCK（跨層次注意力模組）                                               | 強化跨層次特徵融合                         | 多尺度目標檢測                        |
@@ -361,7 +362,6 @@
 | `yolov12-TransXNet-CCFM-pose.yaml`               | TransXNet + CCFM + pose head                                              | 結合 Transformer 與姿態估計                  | 高精度姿態估計                         |
 | `yolov12-MobileNetv4-CCFM-seg.yaml`              | MobileNetv4 + CCFM + segmentation head                                     | 輕量化與語義分割結合                         | 行動端 / 語義分割                       |
 | `yolov12-MobileNetv4-ShuffleAttention-seg.yaml` | MobileNetv4 + ShuffleAttention + segmentation head                        | 輕量注意力與語義分割結合                     | 行動端 / 輕量語義分割                   |
-| `yolov12-ShuffleAttention-CCFM-seg.yaml`               | ShuffleAttention + CCFM + segmentation head                               | 注意力與通道交互提升語義分割                  | 複雜背景 / 語義分割                     |
 
 ## YOLOv13 系列
 | 模型名稱（代表）                                 | 改進模組／架構變化（簡述）                                               | 相較原版 YOLO 的改進點                      | 專長與應用場景                         |
@@ -940,6 +940,7 @@ ultralytics_pro\cfg\models
 │  │      yolov11-LSNet.yaml
 │  │      yolov11-Mamba-v10Detect.yaml
 │  │      yolov11-Mamba.yaml
+│  │      yolov11-MASF.yaml
 │  │      yolov11-MLLA.yaml
 │  │      yolov11-MobileNetv4.yaml
 │  │      yolov11-OREPA-C2PSA-DAT-v10Detect.yaml
@@ -967,7 +968,6 @@ ultralytics_pro\cfg\models
 │  │      yolov11-vHeat.yaml
 │  │      yolov11-WTConvNeXt.yaml
 │  │      yolov11.yaml
-│  │      新文字文件.txt
 │  │      
 │  ├─OBB
 │  │      yolov11-DecoupleNet-obb.yaml
