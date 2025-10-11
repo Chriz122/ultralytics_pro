@@ -11,7 +11,7 @@
 
 重要提醒：在替換系統套件前請務必先備份原始資料夾，並確認 Python 版本與相依套件相容。
 
-## 可搭配 YOLO_tools (由 Chriz122 提供) 的使用說明
+## 可搭配 YOLO_tools 的使用說明
 
 可以搭配 [YOLO_tools](https://github.com/Chriz122/YOLO_tools) 的 toolbox 訓練、標註處理、評估等工作。
 
