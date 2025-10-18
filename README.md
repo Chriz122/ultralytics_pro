@@ -389,7 +389,7 @@
 | `yolov13-sn2.yaml`                                | sn2 / 特定 block 變體                                                     | 調整深寬度或 block 類型                    | 根據需求選擇不同深度/效能折衝           |
 | `yolov13-pose.yaml`                               | pose variant（結合 pose head）                                            | 同時檢測與姿態估計                         | 人體/動物姿態估計                      |
 
-# models 檔案結構樹
+# models 檔案結構
 ```
 ultralytics_pro\cfg\models
 │  README.md
