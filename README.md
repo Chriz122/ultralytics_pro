@@ -393,7 +393,7 @@
 
 # models 檔案結構
 ```
-ultralytics_pro\cfg\models
+ultralytics_pro\ultralytics\cfg\models
 │  README.md
 │  
 ├─11
