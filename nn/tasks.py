@@ -395,6 +395,7 @@ from ultralytics.nn.modules import (
     AAttn,
     ABlock,
     A2C2f,
+    PST,
     MSCAM, 
     MSCAMv2, 
     MSCAMv3, 
@@ -2158,6 +2159,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             ALSS,
             LCA,
             A2C2f,
+            PST,
             LDConv,
             C2PSA_HV_LCA,
             C2PSA_HV_LCA_DynamicTanh,
@@ -2333,6 +2335,15 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 m.legacy = legacy
         elif m is RTDETRDecoder:  # special case, channels arg must be passed in index 1
             args.insert(1, [ch[x] for x in f])
+        elif m is PST:
+            c1, c_up, c2 = ch[f[0]], ch[f[1]], args[0]
+            c2 = make_divisible(min(c2, max_channels) * width, 8)
+            args = [c1, c_up, c2, *args[1:]]
+            args.insert(3, n)  # number of repeats
+            n = 1
+            legacy = False
+            if scale in "lx":  # for L/X sizes
+                args.extend((True, 1.2))
         elif m is CBLinear:
             c2 = args[0]
             c1 = ch[f]

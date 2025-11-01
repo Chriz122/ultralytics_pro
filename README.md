@@ -334,6 +334,8 @@
 | `yolov11-MobileNetv4.yaml`      | MobileNetv4（輕量化骨幹網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-OverLoCK.yaml`         | OverLoCK（跨層次注意力模組）                                               | 強化跨層次特徵融合                         | 多尺度目標檢測                        |
 | `yolov11-PKINet.yaml`           | PKINet（位置關鍵交互網絡）                                               | 強化位置交互表徵                           | 複雜背景、多物體場景                   |
+| `yolov11-PoolFormerv2.yaml`    | PoolFormerv2（輕量化池化 Transformer）                                     | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
+| `yolov11-pst.yaml`              | PST（Pyramid Sparse Transformer，金字塔稀疏 Transformer） | 提升多尺度特徵融合與全局上下文建模效率 | 複雜背景、多物體場景                   |
 | `yolov11-QARepVGG.yaml`         | QARepVGG    （量化重參數化 VGG）                                             | 訓練強、推理簡化                            | 需要部署效率且保持高表示能力            |
 | `yolov11-RandFormer.yaml`       | RandFormer（隨機注意力 Transformer）                                      | 提升全局上下文建模與效率                     | 複雜背景、多物體場景                   |
 | `yolov11-RepLKNet.yaml`         | RepLKNet（重參數化大卷積網絡）                                             | 訓練強、推理簡化                            | 需要部署效率且保持高表示能力            |
@@ -903,6 +905,7 @@ ultralytics_pro\cfg\models
 ├─v11
 │  ├─Classify
 │  │      yolov11-cls.yaml
+│  │      yolov11-cls-pst.yaml
 │  │      
 │  ├─Detect
 │  │      yolov11-ASF.yaml
@@ -968,6 +971,7 @@ ultralytics_pro\cfg\models
 │  │      yolov11-OverLoCK.yaml
 │  │      yolov11-PKINet.yaml
 │  │      yolov11-PoolFormerv2.yaml
+│  │      yolov11-pst.yaml
 │  │      yolov11-QARepVGG.yaml
 │  │      yolov11-RandFormer.yaml
 │  │      yolov11-RepGFPN.yaml
