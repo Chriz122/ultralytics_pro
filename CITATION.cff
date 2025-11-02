@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Ultralytics Pro"
+authors:
+  - name: "Chriz122"
+    email: "chriszeng921229@gmail.com"
+license: "AGPL-3.0-or-later"
+url: "https://github.com/Chriz122/ultralytics_pro"
+keywords:
+  - YOLO
+  - object-detection
+  - computer-vision
+  - ultralytics
+preferred-citation:
+  type: software
+  title: "Ultralytics Pro: A Comprehensive Collection of YOLO Model Variants"
+  authors:
+    - name: "Chriz122"
+  year: 2025
+  url: "https://github.com/Chriz122/ultralytics_pro"

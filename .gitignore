@@ -10,3 +10,5 @@ __pycache__/
 # 虛擬環境
 venv/
 .env/
+
+.ini
