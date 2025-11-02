@@ -157,8 +157,8 @@ Copyright (C) 2023 Ultralytics Inc.
 - **說明**: PyramidSparseTransformer,用於多尺度特徵融合的可插拔模組
 
 ### FBRT-YOLO
-- **來源論文**: https://arxiv.org/abs/2504.20670
-- **授權**: ⚠️ arXiv 非專有許可 (僅提供論文,無 GitHub 儲存庫)
+- **來源**: https://github.com/galaxy-oss/FCM
+- **授權**: 待確認 (GitHub 儲存庫未明確標示授權)
 - **作者**: Yao Xiao, Tingfa Xu, Yu Xin, Jianan Li
 - **論文**: FBRT-YOLO: Faster and Better for Real-Time Aerial Image Detection (AAAI 2025)
 - **說明**: 專注於航空影像即時檢測,包含 FCM (特徵互補映射模組) 和 MKP (多核感知單元)
@@ -186,4 +186,4 @@ Copyright (C) 2023 Ultralytics Inc.
 - **說明**: 基於 YOLOv3 的輕量級行人檢測模型,使用 ShuffleNet 單元減少 67.3% FLOPs
 
 ### HEYDet
-- **狀態**: ❌ **未找到公開論文或 GitHub 儲存庫**
+- **狀態**: 待整合
