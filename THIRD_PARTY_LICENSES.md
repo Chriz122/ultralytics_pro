@@ -186,4 +186,7 @@ Copyright (C) 2023 Ultralytics Inc.
 - **說明**: 基於 YOLOv3 的輕量級行人檢測模型,使用 ShuffleNet 單元減少 67.3% FLOPs
 
 ### HEYDet
-- **狀態**: 待整合
+- **來源**: https://github.com/VincentYuuuuuu/HEIDet
+- **授權**: GPL-3.0
+- **作者**: VincentYuuuuuu
+- **說明**: YOLO 模型變體,專注於目標檢測任務
