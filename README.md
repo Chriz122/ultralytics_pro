@@ -728,6 +728,17 @@ ultralytics_pro\ultralytics\cfg\models
 │          PPyoloE-s-seg.yaml
 │          PPyoloE-x-seg.yaml
 │          
+├─pst
+│  ├─Classify
+│  │      r101-cls-pst.yaml
+│  │      r18-cls-pst.yaml
+│  │      r50-cls-pst.yaml
+│  │      
+│  └─Detect
+│          r101-pst.yaml
+│          r18-pst.yaml
+│          r50-pst.yaml
+│ 
 ├─R
 │  ├─Classify
 │  │      yoloR-cls-d6.yaml
