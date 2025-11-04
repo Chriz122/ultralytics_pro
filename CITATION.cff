@@ -4,6 +4,10 @@ title: "Ultralytics Pro"
 authors:
   - name: "Chriz122"
     email: "chriszeng921229@gmail.com"
+  - name: "HSU0519"
+    alias: "HSU0519"
+  - name: "tomy600098"
+    alias: "tomy600098"
 license: "AGPL-3.0-or-later"
 url: "https://github.com/Chriz122/ultralytics_pro"
 keywords:
@@ -16,5 +20,7 @@ preferred-citation:
   title: "Ultralytics Pro: A Comprehensive Collection of YOLO Model Variants"
   authors:
     - name: "Chriz122"
+    - name: "HSU0519"
+    - name: "tomy600098"
   year: 2025
   url: "https://github.com/Chriz122/ultralytics_pro"
