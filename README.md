@@ -36,7 +36,7 @@
 | `yolov4-csp-rtdetr.yaml`                                                    |                             CSP + RT-DETR 解碼頭 | 兼顧 CSP 的效能與 RT-DETR 類解碼效果    | 需穩定精度與較高效率的場景       |
 | `yolov4-csp.yaml`                                                           | 使用 CSPDarknet（Cross Stage Partial）作為 backbone | 減少重複計算、提升參數效率與訓練穩定性          | 大型模型訓練效率與推論平衡       |
 | `yolov4-mish-rtdetr.yaml`                                                   |                                Mish + RT-DETR | 精度提升與更好的解碼/定位                | 高精度檢測場景             |
-| `yolov4-mish.yaml`                                                          |                    使用 Mish 激活函數（取代 ReLU/SiLU） | 更平滑的梯度與更好的特徵表達，常見於高精度模型      | 精度優先場景（可接受較高計算）     |
+| `yolov4-mish.yaml`                                                          |                    使用 Mish 激活函數（相較 ReLU/Leaky ReLU 更平滑） | 更平滑的梯度與更好的特徵表達，常見於高精度模型      | 精度優先場景（可接受較高計算）     |
 
 ## YOLOv5 系列
 | 模型名稱                                                                    |                                     改進模組／架構變化（簡述） | 相較原版 YOLO 改進點               | 專長與應用場景                       |
@@ -124,7 +124,7 @@
 | `yolov7-tiny-MobileNetv3.yaml`                                          |       MobileNetv3 輕量化 backbone | 輕量化設計，適合手機/嵌入              | 邊緣設備/移動端            |
 | `yolov7-tiny-MobileOne.yaml`                                           |    MobileOne 輕量化 backbone | 推理速度優化，適合手機/嵌入           | 邊緣設備/移動端            |
 | `yolov7-tiny-PPLCNet.yaml`                                             |        PPLCNet 輕量化 backbone | 輕量化設計，適合手機/嵌入              | 邊緣設備/移動端            |
-| `yolov7-tiny-RepNCSPELAN.yaml`                                          | |         RepNCSPELAN（複合模塊） | 結合 Rep 設計與 NCSPELAN 類優化  | 兼顧訓練表示與推理效率         |
+| `yolov7-tiny-RepNCSPELAN.yaml`                                          |         RepNCSPELAN（複合模塊） | 結合 Rep 設計與 NCSPELAN 類優化  | 兼顧訓練表示與推理效率         |
 | `yolov7-tiny-rtdetr.yaml`                                              |            RT-DETR 類 head | 改良定位/分類解碼穩定性             | 需要更佳定位一致性的場景        |
 | `yolov7-tiny-simple.yaml`                                              |          簡化版 YOLOv7-tiny | 減少參數與計算量，提升速度              | 需要極速推理的場景            |
 | `yolov7-u6.yaml`                                                      |        YOLOv7-u6（大尺度輸入） | 適合高解析度輸入，提升小目標檢測         | 高解析度影像/小目標檢測         |
@@ -133,7 +133,7 @@
 ## YOLOv8 系列
 | 模型名稱                                                                                              |                                           改進模組／架構變化（簡述） | 相較原版 YOLO 改進點                     | 專長與應用場景           |
 | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------: | --------------------------------- | ----------------- |
-| `yolov8.yaml`             |                    YOLOv8 基準（C2f、decoupled head 等為常見基礎） | v8 帶來更現代化的模組（C2f, decoupled head）      | 通用任務                |
+| `yolov8.yaml`             |                    YOLOv8 基準（C2f、anchor-free、decoupled head 為常見基礎） | v8 引入 anchor-free 與 decoupled head 等現代化設計      | 通用任務                |
 | `yolov8-cls-resnet101.yaml` / `yolov8-cls-resnet50.yaml` / `yolov8-cls.yaml`                       |                                 ResNet101/50 backbone | 強化分類任務的特徵提取                     | 圖像分類任務           |
 | `yolov8-ghost.yaml` / `yolov8-ghost-p2.yaml` / `yolov8-ghost-p6.yaml`                             |                             GhostModule/backbone（輕量化模組） | 更少參數但維持表示能力                       | 行動裝置/邊緣部署         |
 | `yolov8-rtdetr.yaml`                                                                              |                                          RT-DETR 類 head | 提升定位穩定度                           | 需要更準確邊框的情況        |
@@ -173,8 +173,8 @@
 | `yolov8-Faster-Block-CGLU.yaml` | Faster-Block + CGLU (Convolutional Gated Linear Unit) backbone | 結合Faster-Block與CGLU                       | 需要高效特徵提取的任務       |
 | `yolov8-Faster-EMA.yaml` | Faster-EMA (Exponential Moving Average) backbone | 結合Faster-Block與EMA                       | 訓練-部署一體化優化       |
 | `yolov8-GAMAttention.yaml` | GAMAttention (Global Attention Mechanism) backbone | 強化全局注意力的機制                       | 需要強注意力機制的任務       |
-| `yolov8-goldyolo.yaml` | GoldYolo backbone | | 結合多種模組以提升表示能力                       | 高精度任務             |
-| `yolov8-hornet-backbone.yaml` | Hornet backbone | | 結合多種模組以提升表示能力                       | 高精度任務             |
+| `yolov8-goldyolo.yaml` | GoldYOLO backbone/變體 | 綜合多種優化以提升精度-速度折衷                       | 高精度任務             |
+| `yolov8-hornet-backbone.yaml` | Hornet backbone | 結合多種模組以提升表示能力                       | 高精度任務             |
 | `yolov8-hornet-neck.yaml` | Hornet neck | 強化特徵融合的neck                       | 需要強特徵融合的任務       |
 | `yolov8-HWD.yaml` | HWD (Hierarchical Weight Decomposition) backbone | 層次化權重分解的特徵提取                       | 需要高效特徵提取的任務       |
 | `yolov8-l-mobilenetv3s.yaml` | Lite MobileNetv3s backbone | 輕量化的MobileNetv3s特徵提取                       | 行動裝置/邊緣部署         |
@@ -188,7 +188,7 @@
 | `yolov8-mobileone-backbone.yaml` | MobileOne backbone | 輕量化的MobileOne特徵提取                       | 行動裝置/邊緣部署         |
 | `yolov8-MobileOne.yaml` | MobileOne neck | 強化特徵融合的neck                       | 需要強特徵融合的任務       |
 | `yolov8-mobilev3l.yaml` | MobileV3-Large backbone | 輕量化的MobileNetv3 Large特徵提取                       | 行動裝置/邊緣部署         |
-| `yolov8-MSFM.yaml` | MSFM (Multi-Scale Feature Module Module) backbone | 強化多尺度特徵的模組                       | 需要多尺度特徵提取的任務       |
+| `yolov8-MSFM.yaml` | MSFM (Multi-Scale Feature Module) backbone | 強化多尺度特徵的模組                       | 需要多尺度特徵提取的任務       |
 | `yolov8-ODConvNext.yaml` | ODConvNext backbone | 強化動態卷積的特徵提取                       | 需要靈活特徵提取的任務       |
 | `yolov8-p2.yaml` | P2 (Extra small variant) backbone | 超小型變體                       | 行動裝置/邊緣部署         |
 | `yolov8-p34.yaml` | P3/4 (Small-medium variants) backbone | 小型至中型變體                       | 通用任務             |
