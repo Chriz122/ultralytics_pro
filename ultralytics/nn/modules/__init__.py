@@ -1,20 +1,20 @@
-# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-Ultralytics modules.
+Ultralytics neural network modules.
 
-Example:
-    Visualize a module with Netron.
-    ```python
-    from ultralytics.nn.modules import *
-    import torch
-    import os
+This module provides access to various neural network components used in Ultralytics models, including convolution
+blocks, attention mechanisms, transformer components, and detection/segmentation heads.
 
-    x = torch.ones(1, 128, 40, 40)
-    m = Conv(128, 128)
-    f = f"{m._get_name()}.onnx"
-    torch.onnx.export(m, x, f)
-    os.system(f"onnxslim {f} {f} && open {f}")  # pip install onnxslim
-    ```
+Examples:
+    Visualize a module with Netron
+    >>> from ultralytics.nn.modules import Conv
+    >>> import torch
+    >>> import subprocess
+    >>> x = torch.ones(1, 128, 40, 40)
+    >>> m = Conv(128, 128)
+    >>> f = f"{m._get_name()}.onnx"
+    >>> torch.onnx.export(m, x, f)
+    >>> subprocess.run(f"onnxslim {f} {f} && open {f}", shell=True, check=True)  # pip install onnxslim
 """
 
 from .block import (
@@ -134,7 +134,6 @@ from .block import (
     MobileNetV3_InvertedResidual,
     mobilev3_bneck,
     SimAM,
-    Silence,
     RepConvN,
     RepNCSPELAN4,
     SPPELAN,
@@ -187,16 +186,17 @@ from .block import (
     AAttn,
     ABlock,
     A2C2f,
-    PST,
     CSP_EIMS,
     HRIF,
     HyperACE, 
     DownsampleConv, 
     FullPAD_Tunnel,
     DSC3k2,
-    IEMA,
+    TorchVision,
     MFAM,
+    IEMA,
     DASI,
+    PST,
 )
 from .ppyolo import (
     ResSPP,
@@ -218,7 +218,6 @@ from .conv import (
     DualConv,
     Conv2,
     ConvTranspose,
-    CBS,
     DWConv,
     DWConvTranspose2d,
     Focus,
@@ -252,8 +251,33 @@ from .conv import (
     FCM_1, 
     Down,
     DSConv,
+    Index,
 )
-from .head import OBB, MAFOBB, IOBB, DOBB, OBB_ASFF, Classify, Detect, MAFDetect, IDetect, DDetect, Detect_ASFF, Detect_SEAM, Detect_MultiSEAM, Pose, MAFPose, IPose, DPose, Pose_ASFF, Pose_SEAM, Pose_MultiSEAM, RTDETRDecoder, Segment, MAFSegment, ISegment, DSegment, Segment_ASFF, WorldDetect, v10Detect, v10IDetect, v10DDetect
+from .head import (
+    OBB,
+    MAFOBB,
+    IOBB,
+    DOBB,
+    Classify,
+    Detect,
+    MAFDetect,
+    IDetect,
+    DDetect,
+    LRPCHead,
+    Pose,
+    MAFPose,
+    IPose,
+    DPose,
+    RTDETRDecoder,
+    Segment,
+    MAFSegment,
+    ISegment,
+    DSegment,
+    WorldDetect,
+    YOLOEDetect,
+    YOLOESegment,
+    v10Detect,
+)
 from .transformer import (
     AIFI,
     MLP,
@@ -319,7 +343,6 @@ from .RFAConv import C3_RFAConv, C2f_RFAConv, C3_RFCBAMConv, C2f_RFCBAMConv, C3_
 from .RVB import C3_RVB, C2f_RVB, C3_RVB_EMA, C2f_RVB_EMA
 from .UIB import C2f_UIB, C3k2_UIB
 from .SwinTransformer import PatchMerging, PatchEmbed, SwinStage
-from .AFPN import Detect_AFPN4, Segment_AFPN4, OBB_AFPN4, Pose_AFPN4
 from .BiFPN import Concat_BiFPN
 from .ConvNeXtv2 import C3k2_ConvNeXtV2Block, C3k_ConvNeXtV2Block
 from .WTConv import C3k2_WTConv
@@ -430,9 +453,11 @@ from .MetaFormer import identityformer_s12, identityformer_s24, identityformer_s
 from .iFormer import iformer_small, iformer_base, iformer_large
 from .VAN import van_b0, van_b1, van_b2, van_b3, van_b4, van_b5, van_b6
 from .vHeat import vheat_tiny, vheat_small, vheat_base
+from .vHeat_MoE import vHeat_MoE_t, vHeat_MoE_s, vHeat_MoE_b
 from .LSNet import LSNet_T, LSNet_S, LSNet_B
 from .StripNet import StripNet_tiny, StripNet_small
 from .TransXNet import transxnet_tiny, transxnet_small, transxnet_base
+from .TransNeXt import transnext_micro, transnext_tiny, transnext_small, transnext_base
 from .ParCNetV2 import parcnetv2_xt, parcnetv2_tiny, parcnetv2_small, parcnetv2_base
 from .MALA import MALA_T, MALA_S, MALA_B, MALA_L
 from .MPViT import mpvit_tiny, mpvit_xsmall, mpvit_small, mpvit_base
@@ -444,6 +469,25 @@ from .MaxViT import maxvit_tiny, maxvit_small, maxvit_base, maxvit_large
 from .ScalableViT import scalable_vit_s, scalable_vit_b, scalable_vit_l
 from .ResTv1 import rest_lite, rest_small, rest_base, rest_large
 from .ResTv2 import restv2_tiny, restv2_small, restv2_base, restv2_large
+from .MedFormer import medformer_tiny, medformer_small, medformer_base
+from .TinyViT import tiny_vit_5m, tiny_vit_11m, tiny_vit_21m
+# Mamba ----------------------------------------------
+from .TinyViM import tinyvim_s, tinyvim_b, tinyvim_l
+from .mamba_yolo import (
+    VSSBlock, 
+    SimpleStem, 
+    VisionClueMerge, 
+    XSSBlock,
+)
+from .MambaVision import mamba_vision_T, mamba_vision_T2, mamba_vision_S, mamba_vision_B, mamba_vision_L, mamba_vision_L2
+from .VSSD import vssd_micro_e300, vssd_tiny_e300, vssd_small_e300, vssd_base_e300
+from .SparXMamba import sparx_mamba_t, sparx_mamba_s, sparx_mamba_b
+from .GroupMamba import groupmamba_tiny, groupmamba_small, groupmamba_base
+# Mamba ----------------------------------------------
+# Deformable ----------------------------------------------
+from .FlashInternImage import flash_intern_image_t, flash_intern_image_s, flash_intern_image_b
+from .DSAN import dsan_t, dsan_s, dsan_b
+# Deformable ----------------------------------------------
 from .HVI_CIDNet import C2PSA_HV_LCA, C2PSA_HV_LCA_DynamicTanh, LCA_Concat, LCA_DynamicTanh_Concat
 from .MogaNet import C2f_MultiOGA, ChannelAggregationFFN, MultiOrderGatedAggregation
 from .AgentAttention import C2PSA_Agent
@@ -464,7 +508,6 @@ __all__ = (
     "Conv2",
     "LightConv",
     "RepConv",
-    "CBS",
     "DWConv",
     "DWConvTranspose2d",
     "ConvTranspose",
@@ -521,8 +564,6 @@ __all__ = (
     "OBB",
     "WorldDetect",
     "v10Detect",
-    "v10IDetect",
-    "v10DDetect",
     "ImagePoolingAttn",
     "ContrastiveHead",
     "BNContrastiveHead",
@@ -615,7 +656,6 @@ __all__ = (
     "ISegment",
     "IOBB",
     "IPose",
-    "Silence",
     "RepConvN",
     "RepNCSPELAN4",
     "RepNCSPELAN4_low",
@@ -755,18 +795,10 @@ __all__ = (
     "ScalSeq", 
     "attention_model",
     "EVCBlock",
-    "Detect_ASFF",
-    "Segment_ASFF",
-    "Pose_ASFF",
-    "OBB_ASFF",
     "DSConv2D",
     "C2f_DSConv",
     "VanillaStem", 
     "VanillaBlock",
-    "Detect_SEAM", 
-    "Detect_MultiSEAM",
-    "Pose_SEAM",
-    "Pose_MultiSEAM",
     "C3_Star", 
     "C3_Star_CAA",
     "C2f_Star", 
@@ -804,10 +836,6 @@ __all__ = (
     "PatchMerging", 
     "PatchEmbed", 
     "SwinStage",
-    "Detect_AFPN4", 
-    "Segment_AFPN4", 
-    "OBB_AFPN4", 
-    "Pose_AFPN4",
     "Concat_BiFPN",
     "C3k2_ConvNeXtV2Block", 
     "C3k_ConvNeXtV2Block",
@@ -858,7 +886,6 @@ __all__ = (
     "AAttn",
     "ABlock",
     "A2C2f",
-    "PST",
     "MSCAM",
     "MSCAMv2",
     "MSCAMv3", 
@@ -1292,6 +1319,9 @@ __all__ = (
     "spanet_mx", 
     "spanet_b", 
     "spanet_bx",
+    "groupmamba_tiny", 
+    "groupmamba_small", 
+    "groupmamba_base",
     "StripMLPNet_LightTiny", 
     "StripMLPNet_Tiny", 
     "StripMLPNet_Small", 
@@ -1332,6 +1362,9 @@ __all__ = (
     "vheat_tiny", 
     "vheat_small", 
     "vheat_base",
+    "vHeat_MoE_t", 
+    "vHeat_MoE_s", 
+    "vHeat_MoE_b",
     "LSNet_T", 
     "LSNet_S", 
     "LSNet_B",
@@ -1340,6 +1373,10 @@ __all__ = (
     "transxnet_tiny", 
     "transxnet_small", 
     "transxnet_base",
+    "transnext_micro", 
+    "transnext_tiny", 
+    "transnext_small", 
+    "transnext_base",
     "parcnetv2_xt", 
     "parcnetv2_tiny", 
     "parcnetv2_small", 
@@ -1380,6 +1417,34 @@ __all__ = (
     "restv2_small", 
     "restv2_base", 
     "restv2_large",
+    "medformer_tiny", 
+    "medformer_small", 
+    "medformer_base",
+    "tiny_vit_5m", 
+    "tiny_vit_11m", 
+    "tiny_vit_21m",
+    "tinyvim_s", 
+    "tinyvim_b", 
+    "tinyvim_l",
+    "mamba_vision_T",
+    "mamba_vision_T2",
+    "mamba_vision_S",
+    "mamba_vision_B",
+    "mamba_vision_L",
+    "mamba_vision_L2",
+    "vssd_micro_e300", 
+    "vssd_tiny_e300", 
+    "vssd_small_e300", 
+    "vssd_base_e300",
+    "sparx_mamba_t", 
+    "sparx_mamba_s", 
+    "sparx_mamba_b",
+    "flash_intern_image_t", 
+    "flash_intern_image_s", 
+    "flash_intern_image_b",
+    "dsan_t", 
+    "dsan_s", 
+    "dsan_b",
     "VanillaNet",
     "UniRepLKNet",
     "OverLoCK",
@@ -1428,11 +1493,17 @@ __all__ = (
     "DownsampleConv",
     "FullPAD_Tunnel",
     "DSC3k2",
-    "IEMA",
-    "MFAM",
-    "DASI",
     "DSConv",
     "F2SoftHG", 
     "ShapeAlignConv", 
     "MergeConv",
+    "Index",
+    "LRPCHead",
+    "TorchVision",
+    "YOLOEDetect",
+    "YOLOESegment",
+    "MFAM",
+    "IEMA",
+    "DASI",
+    "PST",
 )

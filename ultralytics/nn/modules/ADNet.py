@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
  
-
+ 
 class ADNet(nn.Module):
     def __init__(self, channels, num_of_layers=16):
         super(ADNet, self).__init__()
