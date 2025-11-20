@@ -209,7 +209,7 @@
 | `yolov8-SKAttention.yaml` | SKAttention (選擇性核心注意力) backbone | 強化選擇性卷積核的注意力機制                       | 需多尺度／形狀變化顯著的場景       |
 | `yolov8-SPDConv.yaml` | SPDConv (Spatially Pooled Convolution) backbone | 強化空間池化卷積的特徵提取                       | 需要高效特徵提取的任務       |
 | `yolov8-SPPCSPC.yaml` | SPPCSPC（SPP + CSP 變體） backbone | 將 SPP 與 CSP 結合，強化多尺度池化與特徵表徵       | 小物體與表徵穩定性提升               |
-| `yolov8-StripNet-sn2.yaml` | StripNet-sn2 backbone | 輕量化的StripNet-sn2特徵提取                       | 行動裝置/邊緣部署         |
+| `yolov8-StripNet-sn2.yaml` | StripNet-sn2（條帶化骨幹 + 高效卷積模組）                                               | 條帶化卷積減少計算量、強化多尺度特徵融合，保持輕量化並提升小物體偵測能力                         | 行動端 / 輕量場景 / 小物體 / 多尺度目標                      |
 | `yolov8-SwinTransformer.yaml` | Swin Transformer backbone | 強化局部與全局特徵的Transformer                       | 需要強上下文理解能力的任務       |
 | `yolov8-TripletAttention.yaml` | TripletAttention（三重注意力） backbone | 強化三重注意力的機制                       | 需要強注意力機制的任務       |
 | `yolov8-VanillaNet.yaml` | VanillaNet（極簡化網路）                                   | 使用 `VanillaNet` 作為骨幹，追求最簡化的架構       | 需要易於部署／調試的場景             |
@@ -355,7 +355,7 @@
 | `yolov11-SoftHGNN.yaml`         | SoftHGNN（軟超 GNN）                                               | 建模高階語義關係並強化多尺度特徵重新分配與融合                         | 複雜背景 / 多物體場景                      |
 | `yolov11-SPANet.yaml`           | SPANet（空間注意力網絡）                                               | 結合空間注意力提升表示能力                   | 複雜背景 / 多物體場景                   |
 | `yolov11-StripMLPNet.yaml`      | StripMLPNet（條帶化 MLP 網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
-| `yolov11-StripNet-sn2.yaml`     | StripNet-sn2（條帶化骨幹網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
+| `yolov11-StripNet-sn2.yaml`     | StripNet-sn2（條帶化骨幹 + 高效卷積模組）                                               | 條帶化卷積減少計算量、強化多尺度特徵融合，保持輕量化並提升小物體偵測能力                         | 行動端 / 輕量場景 / 小物體 / 多尺度目標                      |
 | `yolov11-STViT-CCFM.yaml` | STViT-CCFM（輕量化 Transformer + CCFM） | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-TransNeXt.yaml`        | TransNeXt（聚合注意力 + 卷積 GLU）                                       | 引入聚合注意力 (Aggregated Attention) 增強全域感知 + 卷積 GLU 強化局部特徵建模 | 複雜背景 / 多物體場景 / 多尺度目標 |
 | `yolov11-TransXNet.yaml`        | TransXNet（D‑Mixer + MS-FFN）                                       | 動態捕捉全局 + 局部特徵 (IDConv + OSRA) + 多尺度融合，增強表示能力 | 複雜背景 / 多物體場景 / 多尺度目標  |
@@ -397,8 +397,7 @@
 | 模型名稱                                 | 改進模組／架構變化（簡述）                                               | 相較原版 YOLO 改進點                      | 專長與應用場景                         |
 |------------------------------------------------|---------------------------------------------------------------------:|-----------------------------------------|--------------------------------------|
 | `yolov13.yaml`                                   | 標準 YOLOv13                                                   |標準 YOLOv13          | 通用物件檢測                     |
-| `yolov13-sn2.yaml`                                | sn2 / 特定 block 變體                                                     | 調整深寬度或 block 類型                    | 根據需求選擇不同深度/效能折衝           |
-| `yolov13-pose.yaml`                               | pose variant（結合 pose head）                                            | 同時檢測與姿態估計                         | 人體/動物姿態估計                      |
+| `yolov13-sn2.yaml`                                | SN² 架構                                                     | 強化多尺度特徵融合與高效卷積設計，提升小物體與複雜場景表現                         | 複雜背景 / 多物體場景 / 多尺度目標 / 小物體                      |
 
 ## models 檔案結構
 ```
