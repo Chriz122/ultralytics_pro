@@ -845,13 +845,6 @@ ultralytics_pro\ultralytics\cfg\models
 │          Syolo.yaml
 │          
 ├─v10
-│  │  yolov10b.yaml
-│  │  yolov10l.yaml
-│  │  yolov10m.yaml
-│  │  yolov10n.yaml
-│  │  yolov10s.yaml
-│  │  yolov10x.yaml
-│  │  
 │  └─Detect
 │          yolov10b.yaml
 │          yolov10l.yaml
@@ -912,16 +905,6 @@ ultralytics_pro\ultralytics\cfg\models
 │          yolov10x.yaml
 │          
 ├─v11
-│  │  yoloe-v11-seg.yaml
-│  │  yoloe-v11.yaml
-│  │  yolov11-cls-resnet18.yaml
-│  │  yolov11-cls.yaml
-│  │  yolov11-obb.yaml
-│  │  yolov11-pose.yaml
-│  │  yolov11-RGBIR.yaml
-│  │  yolov11-seg.yaml
-│  │  yolov11.yaml
-│  │  
 │  ├─Classify
 │  │      yolov11-cls-pst.yaml
 │  │      yolov11-cls-resnet18.yaml
@@ -1100,10 +1083,6 @@ ultralytics_pro\ultralytics\cfg\models
 │  └─Segment
 ├─v14
 ├─v3
-│  │  yolov3-spp.yaml
-│  │  yolov3-tiny.yaml
-│  │  yolov3.yaml
-│  │  
 │  ├─Classify
 │  │      yolov3-cls.yaml
 │  │      yolov3-spp-cls.yaml
@@ -1169,9 +1148,6 @@ ultralytics_pro\ultralytics\cfg\models
 │          yolov4-seg-p7.yaml
 │          
 ├─v5
-│  │  yolov5-p6.yaml
-│  │  yolov5.yaml
-│  │  
 │  ├─Classify
 │  │      yolov5-AIFI-cls.yaml
 │  │      yolov5-cls.yaml
@@ -1716,26 +1692,6 @@ ultralytics_pro\ultralytics\cfg\models
 │              yolov7-seg-u6.yaml
 │              
 ├─v8
-│  │  yoloe-v8-seg.yaml
-│  │  yoloe-v8.yaml
-│  │  yolov8-cls-resnet101.yaml
-│  │  yolov8-cls-resnet50.yaml
-│  │  yolov8-cls.yaml
-│  │  yolov8-ghost-p2.yaml
-│  │  yolov8-ghost-p6.yaml
-│  │  yolov8-ghost.yaml
-│  │  yolov8-obb.yaml
-│  │  yolov8-p2.yaml
-│  │  yolov8-p6.yaml
-│  │  yolov8-pose-p6.yaml
-│  │  yolov8-pose.yaml
-│  │  yolov8-rtdetr.yaml
-│  │  yolov8-seg-p6.yaml
-│  │  yolov8-seg.yaml
-│  │  yolov8-world.yaml
-│  │  yolov8-worldv2.yaml
-│  │  yolov8.yaml
-│  │  
 │  ├─Classify
 │  │      yolov8-AIFI-cls.yaml
 │  │      yolov8-cls-p2.yaml
@@ -1961,14 +1917,6 @@ ultralytics_pro\ultralytics\cfg\models
 │          yolov8-TripletAttention-seg.yaml
 │          
 ├─v9
-│  │  yolov9c-seg.yaml
-│  │  yolov9c.yaml
-│  │  yolov9e-seg.yaml
-│  │  yolov9e.yaml
-│  │  yolov9m.yaml
-│  │  yolov9s.yaml
-│  │  yolov9t.yaml
-│  │  
 │  ├─Detect
 │  │  │  gelan-c-AKConv.yaml
 │  │  │  gelan-c-DCNV3RepNCSPELAN4.yaml
