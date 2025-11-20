@@ -11,4 +11,5 @@ __pycache__/
 venv/
 .env/
 
-.ini
+# 日誌文件
+*.ini

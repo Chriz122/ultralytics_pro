@@ -1,7 +1,11 @@
-# 使用說明
+# ultralytics_pro - 模型大禮包
+
+繁體中文 | [English](README_en.md)
+
+## 使用說明
 
 支援版本
-- 建議 ultralytics==8.3.225
+- 建議: `ultralytics==8.3.225`
 - 安裝補充相依套件：
   ```powershell
   pip install -r requirements.txt
@@ -17,18 +21,18 @@
 > ## 可搭配 YOLO_tools 的使用說明
 > 可以搭配 [YOLO_tools](https://github.com/Chriz122/YOLO_tools) 的 toolbox 訓練、標註處理、評估等工作。
 
-# 模型介紹
-## YOLOv3 系列
+## 模型介紹
+### YOLOv3 系列
 | 模型名稱                                                                  |                                                改進模組／架構變化（簡述） | 相較原版 YOLO 改進點                                  | 專長與應用場景               |
 | --------------------------------------------------------------------- | -----------------------------------------------------------: | ---------------------------------------------- | --------------------- |
 | `yolov3.yaml`           |                 標準 YOLOv3  | 標準 YOLOv3                                        | 通用物件檢測                |
 | `yolov3-spp.yaml`           |              加入 SPP（空間金字塔池化）層於 backbone/neck | 擴大感受野、改善多尺度特徵融合與小物體表現                          | 視野/多尺度複雜場景、小目標偵測      |
 | `yolov3-tiny.yaml`           |                                  簡化 backbone 與 head（tiny 結構） | 推論更快、參數小、精度下降                                  | 嵌入式/即時推論資源受限場景        |
-| `yolov3-rtdetr.yaml`           | 結合 RT-DETR head                                        | 將檢測頭替換為 `RTDETRDecoder`，追求更穩定的定位與分類     | 需保持高精度的同時提供實時性能           |
+| `yolov3-rtdetr.yaml`           | RT-DETR head                                        | 將檢測頭替換為 `RTDETRDecoder`，追求更穩定的定位與分類     | 需保持高精度的同時提供實時性能           |
 | `yolov3-spp-rtdetr.yaml`           |                                        同時帶 SPP 與 RT-DETR head | 多尺度融合 + 改良解碼，有助於小目標與邊界精準度                      | 小目標＋高定位需求場景           |
 | `yolov3-tiny-rtdetr.yaml`           |                                        tiny + RT-DETR head | 在極度輕量化上嘗試提升定位/分類品質                             | 超低資源但需稍好精度的場景         |
 
-## YOLOv4 系列
+### YOLOv4 系列
 | 模型名稱                                                                        |                                 改進模組／架構變化（簡述） | 相較原版 YOLO 改進點                | 專長與應用場景             |
 | --------------------------------------------------------------------------- | --------------------------------------------: | ---------------------------- | ------------------- |
 | `yolov4-p5.yaml` / `yolov4-p6.yaml` / `yolov4-p7.yaml`                      |                   調整輸出層級（P5/P6/P7 分別對應不同金字塔層） | 支援更大/更小尺度的檢測需求（P7 更適合大尺度）    | 通用物件檢測，小目標／中型／大型目標專向調整 |
@@ -37,7 +41,7 @@
 | `yolov4-mish-rtdetr.yaml`           |                                Mish 激活函數 + RT-DETR head | 精度提升與更好的解碼/定位                | 需保持高精度的同時提供實時性能             |
 | `yolov4-mish.yaml`           |                    使用 Mish 激活函數（相較 ReLU/Leaky ReLU 更平滑） | 更平滑的梯度與更好的特徵表達，常見於高精度模型      | 精度優先場景（可接受較高計算）     |
 
-## YOLOv5 系列
+### YOLOv5 系列
 | 模型名稱                                                                    | 改進模組／架構變化（簡述）                                     | 相較原版 YOLO 改進點                               | 專長與應用場景                       |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------- | ------------------------------------ |
 | `yolov5.yaml`           | 標準 YOLOv5                           | 標準 YOLOv5                      | 通用物件檢測                         |
@@ -48,7 +52,7 @@
 | `yolov5-BoT3.yaml`           | BoT3（Bottleneck Transformer）                             | 在 C3 模組中結合多頭自注意力（MHSA）               | 需要捕捉全域上下文關係的場景         |
 | `yolov5-CAConv.yaml`           | CAConv（Coordinate Attention 卷積）                        | 整合座標注意力，強化空間位置與通道關係             | 精細定位、背景複雜場景               |
 | `yolov5-CARAFE.yaml`           | CARAFE（內容感知特徵重組上採樣）                           | 使用 CARAFE 模組進行上採樣，更好地恢復細節特徵     | 小目標/邊緣精細化場景     |
-| `yolov5-CCFM.yaml`           | CCFM（跨通道特徵融合模組）                                 | 改善多通道跨層融合，提升表徵品質                   | 複雜背景、多物體場景               |
+| `yolov5-CCFM.yaml`           | CCFM（跨通道特徵融合模組）                                 | 改善多通道跨層融合，提升表徵品質                   | 複雜背景 / 多物體場景               |
 | `yolov5-CNeB-neck.yaml`           | CNeB-neck（跨層網路區塊 Neck）                             | 調整 Neck 結構以改良特徵融合或輕量化               | 尋求效率與精度平衡的場景             |
 | `yolov5-CoordAtt.yaml`           | CoordAtt（座標注意力）                                     | 在 C3 模組中加入座標注意力，捕捉方向與位置敏感資訊 | 小目標、位置資訊重要的場景           |
 | `yolov5-CPCA.yaml`           | CPCA（通道與位置交叉注意力）                               | 強化通道與位置的交互注意力                         | 複合場景下的精度提升                 |
@@ -81,12 +85,12 @@
 | `yolov5-TripletAttention.yaml`           | TripletAttention（三重注意力） backbone | 強化三重注意力的機制                       | 需要強注意力機制的任務       |
 | `yolov5-VanillaNet.yaml`           | VanillaNet（極簡化網路）                                   | 使用 `VanillaNet` 作為骨幹，追求最簡化的架構       | 需要易於部署／調試的場景             |
 
-## YOLOv6 系列
+### YOLOv6 系列
 | 模型名稱                                                                                       | 改進模組／架構變化（簡述）                                     | 相較原版 YOLO 改進點                                       | 專長與應用場景                       |
 | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------ |
 | `yolov6.yaml`           | 標準 YOLOv6  |標準 YOLOv6      | 通用物件檢測                   |
 | `yolov6-3.0-p2.yaml` / `yolov6-3.0-p34.yaml` / `yolov6-3.0-p6.yaml` / `yolov6-3.0-p7.yaml` | 調整輸出層級（P2/P34/P6/P7 分別對應不同金字塔層）               | 支援更大/更小尺度的檢測需求（P7 更適合大尺度）               | 通用物件檢測，小目標／中型／大型目標專向調整                   |
-| `yolov6-3.0-rtdetr.yaml` / `yolov6-4.0-rtdetr.yaml`           | 結合 RT-DETR head                                        | 將檢測頭替換為 `RTDETRDecoder`，追求更穩定的定位與分類     | 需保持高精度的同時提供實時性能           |
+| `yolov6-3.0-rtdetr.yaml` / `yolov6-4.0-rtdetr.yaml`           | RT-DETR head                                        | 將檢測頭替換為 `RTDETRDecoder`，追求更穩定的定位與分類     | 需保持高精度的同時提供實時性能           |
 | `yolov6-4.0-CPCA.yaml`           | CPCA（通道與位置交叉注意力）                               | 強化通道與位置的交互注意力                         | 複合場景下的精度提升                 |
 | `yolov6-4.0-CrissCrossAttention.yaml`           | Criss-Cross Attention（跨十字注意力）                      | 強化空間注意力的機制     | 需要強注意力機制的任務               |
 | `yolov6-4.0-D-LKAAttention.yaml`           | D-LKA（可變形大核心注意力）                                | 結合大感受野與可變形注意力，提升對遠距離與異形物件的表現 | 遠距/異形目標偵測                   |
@@ -98,7 +102,7 @@
 | `yolov6-4.0-SKAttention-obb.yaml`           | SKAttention + 旋轉框（OBB）                                | 多尺度核心注意力結合旋轉框預測                             | 多尺度旋轉目標檢測                   |
 | `yolov6-4.0-TripletAttention-obb.yaml`           | TripletAttention（三重注意力） backbone + 旋轉框（OBB） | 強化三重注意力的機制                       | 需要強注意力機制的任務       |
 
-## YOLOv7 系列
+### YOLOv7 系列
 | 模型名稱                                                                    | 改進模組／架構變化（簡述）                                     | 相較原版 YOLO 改進點                                       | 專長與應用場景                       |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------ |
 | `yolov7.yaml` / `yolov7-x.yaml` / `yolov7-w6.yaml` /  `yolov7-tiny.yaml` / `yolov7-tiny-silu.yaml` / `yolov7-e6e.yaml` / `yolov7-e6.yaml` / `yolov7-d6.yaml`|  標準 YOLOv7  | 標準 YOLOv7  | 通用物件檢測，小目標／中型／大型目標專向調整          |
@@ -115,7 +119,7 @@
 | `yolov7-goldyolo.yaml` / `yolov7-goldyolo-u6.yaml` / `yolov7-goldyolo-simple.yaml`           |          goldyolo（整合優化設計） | 多種提升策略集合，改善 AP 與速度比      | 想要整體提升性能的情境         |
 | `yolov7-MobileOne.yaml` / `yolov7-MobileOne-u6.yaml` / `yolov7-tiny-MobileOne.yaml`           |    MobileOne 輕量化 backbone | 推理速度優化，適合手機/嵌入           | 邊緣設備/移動端            |
 | `yolov7-RepNCSPELAN.yaml` / `yolov7-RepNCSPELAN-u6.yaml`           |         RepNCSPELAN（複合模塊） backbone | 結合 Rep 設計與 NCSPELAN 類優化  | 兼顧訓練表示與推理效率         |
-| `yolov7-rtdetr.yaml` / `yolov7-rtdetr-u6.yaml`           | 結合 RT-DETR head                                        | 將檢測頭替換為 `RTDETRDecoder`，追求更穩定的定位與分類     | 需保持高精度的同時提供實時性能           |
+| `yolov7-rtdetr.yaml` / `yolov7-rtdetr-u6.yaml`           | RT-DETR head                                        | 將檢測頭替換為 `RTDETRDecoder`，追求更穩定的定位與分類     | 需保持高精度的同時提供實時性能           |
 | `yolov7-simple.yaml`           |          簡化版 YOLOv7 | 減少參數與計算量，提升速度              | 需要極速推理的場景            |
 | `yolov7-tiny-AKConv.yaml`           | AKConv（自適應核心卷積）                                   | 取代標準卷積，提升對不同尺寸和形狀物體的適應性     | 小目標或形狀不規則的物體             |
 | `yolov7-tiny-goldyolo-simple.yaml`           |          goldyolo（整合優化設計） | 多種提升策略集合，改善 AP 與速度比      | 想要整體提升性能的情境         |
@@ -124,19 +128,19 @@
 | `yolov7-tiny-MobileOne.yaml`           |    MobileOne 輕量化 backbone | 推理速度優化，適合手機/嵌入           | 邊緣設備/移動端            |
 | `yolov7-tiny-PPLCNet.yaml`           | PPLCNet (PaddlePaddle 輕量神經網路) backbone | 輕量化的PPLCNet特徵提取                       | 行動裝置/邊緣部署         |
 | `yolov7-tiny-RepNCSPELAN.yaml`           |         RepNCSPELAN（複合模塊） backbone | 結合 Rep 設計與 NCSPELAN 類優化  | 兼顧訓練表示與推理效率         |
-| `yolov7-tiny-rtdetr.yaml`           | 結合 RT-DETR head                                        | 將檢測頭替換為 `RTDETRDecoder`，追求更穩定的定位與分類     | 需保持高精度的同時提供實時性能           |
+| `yolov7-tiny-rtdetr.yaml`           | RT-DETR head                                        | 將檢測頭替換為 `RTDETRDecoder`，追求更穩定的定位與分類     | 需保持高精度的同時提供實時性能           |
 | `yolov7-tiny-simple.yaml`           |          簡化版 YOLOv7-tiny | 減少參數與計算量，提升速度              | 需要極速推理的場景            |
 | `yolov7-u6.yaml`           |        YOLOv7-u6（大尺度輸入） | 適合高解析度輸入，提升小目標檢測         | 高解析度影像/小目標檢測         |
 
-## YOLOv8 系列
+### YOLOv8 系列
 | 模型名稱                                                                                              |                                           改進模組／架構變化（簡述） | 相較原版 YOLO 改進點                     | 專長與應用場景           |
 | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------: | --------------------------------- | ----------------- |
 | `yolov8.yaml`           |                    標準 YOLOv8  | 標準 YOLOv8       | 通用物件檢測                |
-|`yolove-v8.yaml`           |                    標準 YOLOEv8  | 標準 YOLOEv8      | 適用於多元影像辨識任務    |
+|`yoloe-v8.yaml`           |                    YOLOEDetect head  | 開放詞彙物件偵測模型      | 適用於開放詞彙，通用物件檢測    |
 | `yolov8-cls-resnet101.yaml` / `yolov8-cls-resnet50.yaml` / `yolov8-cls.yaml`                       |                                 ResNet101/50 backbone | 強化分類任務的特徵提取                     | 圖像分類任務           |
 | `yolov8-ghost.yaml` / `yolov8-ghost-p2.yaml` / `yolov8-ghost-p6.yaml`           |                             GhostModule/backbone（輕量化模組） | 更少參數但維持表示能力                       | 行動裝置/邊緣部署         |
-| `yolov8-rtdetr.yaml`           | 結合 RT-DETR head                                        | 將檢測頭替換為 `RTDETRDecoder`，追求更穩定的定位與分類     | 需保持高精度的同時提供實時性能           |
-| `yolov8-world.yaml` / `yolov8-worldv2.yaml`           |                                 World模型 backbone | 結合多種模組以提升表示能力                   | 高精度任務             |
+| `yolov8-rtdetr.yaml`           | RT-DETR head                                        | 將檢測頭替換為 `RTDETRDecoder`，追求更穩定的定位與分類     | 需保持高精度的同時提供實時性能           |
+| `yolov8-world.yaml` / `yolov8-worldv2.yaml`           |                                 WorldDetect head   | 開放詞彙物件偵測模型                   | 適用於開放詞彙，通用物件檢測             |
 | `yolov8-AIFI.yaml`           | AIFI（尺度內特徵交換） backbone | 注意力引導的特徵提取                       | 需要強注意力機制的任務       |（Attention-based Intrascale Feature Interaction） backbone | 注意力引導的特徵提取                       | 需要強注意力機制的任務       |
 | `yolov8-AKConv.yaml`           | AKConv（自適應核心卷積）                                   | 取代標準卷積，提升對不同尺寸和形狀物體的適應性     | 小目標或形狀不規則的物體             |
 | `yolov8-BoT3.yaml`           | BoT3（Bottleneck Transformer）                             | 在 C2f 模組中結合多頭自注意力（MHSA）               | 需要捕捉全域上下文關係的場景         |
@@ -195,7 +199,7 @@
 | `yolov8-RepVGG-A1-backbone.yaml` | RepVGG-A1 backbone | 輕量化的RepVGG-A1特徵提取                       | 行動裝置/邊緣部署         |
 | `yolov8-RepVGG.yaml` | RepVGG（重參數化 VGG）                                     | 訓練時多分支，推理時融合成單一卷積，兼顧精度與速度 | 需要訓練精度與推理效率兼顧的場景     |
 | `yolov8-RepViTBlock.yaml` | RepViTBlock backbone | 結合Rep和ViT的特徵提取                       | 需要高效特徵提取的任務       |
-| `yolov8-rtdetr.yaml` | 結合 RT-DETR head                                        | 將檢測頭替換為 `RTDETRDecoder`，追求更穩定的定位與分類     | 需保持高精度的同時提供實時性能           |
+| `yolov8-rtdetr.yaml` | RT-DETR head                                        | 將檢測頭替換為 `RTDETRDecoder`，追求更穩定的定位與分類     | 需保持高精度的同時提供實時性能           |
 | `yolov8-SEAttention.yaml` | SEAttention (Squeeze-and-Excitation Attention) backbone | 強化SE注意力的機制                       | 需要強注意力機制的任務       |
 | `yolov8-SegNextAttention.yaml` | SegNextAttention backbone | 強化語義分割注意力的機制                       | 需要強語義分割能力的任務       |
 | `yolov8-ShuffleAttention.yaml` | ShuffleAttention backbone | 強化通道與空間注意力的機制                       | 需要強注意力機制的任務       |
@@ -210,8 +214,8 @@
 | `yolov8-TripletAttention.yaml` | TripletAttention（三重注意力） backbone | 強化三重注意力的機制                       | 需要強注意力機制的任務       |
 | `yolov8-VanillaNet.yaml` | VanillaNet（極簡化網路）                                   | 使用 `VanillaNet` 作為骨幹，追求最簡化的架構       | 需要易於部署／調試的場景             |
 
-## YOLOv9 系列
-| 模型名稱（代表）                                 | 改進模組／架構變化（簡述）                                               | 相較原版 YOLO 的改進點                      | 專長與應用場景                         |
+### YOLOv9 系列
+| 模型名稱                                 | 改進模組／架構變化（簡述）                                               | 相較原版 YOLO 改進點                      | 專長與應用場景                         |
 |------------------------------------------------|---------------------------------------------------------------------:|-----------------------------------------|--------------------------------------|
 | `yolov9*.yaml`           | 標準 YOLOv9  | 標準 YOLOv9          | 通用物件檢測                     |
 | `gelan-c-AKConv.yaml`           | AKConv（自適應核心卷積）                                   | 取代標準卷積，提升對不同尺寸和形狀物體的適應性     | 小目標或形狀不規則的物體             |
@@ -225,8 +229,8 @@
 | `gelan-c-dpose.yaml`           | dpose variant（結合 pose head）                                          | 同時檢測與姿態估計                         | 人體/動物姿態估計                      |
 | `gelan-c-dseg.yaml`           | dseg variant（結合 segmentation head）                                    | 同時檢測與語義分割                         | 語義分割任務                          |
 
-## YOLOv10 系列
-| 模型名稱（代表）                                 | 改進模組／架構變化（簡述）                                               | 相較原版 YOLO 的改進點                      | 專長與應用場景                         |
+### YOLOv10 系列
+| 模型名稱                                 | 改進模組／架構變化（簡述）                                               | 相較原版 YOLO 改進點                      | 專長與應用場景                         |
 |------------------------------------------------|---------------------------------------------------------------------:|-----------------------------------------|--------------------------------------|
 | `yolov10*.yaml`           | 標準 YOLOv10  | 標準 YOLOv10      | 通用物件檢測                     |
 | `yolov10n-ADNet.yaml`           | ADNet（專用 attention / decoder 模組）                                   | 改善分類/定位一致性                        | 精度優先但維持一定速度                |
@@ -252,7 +256,7 @@
 | `yolov10n-C2f-SENetV1.yaml`           | SENetV1（通道注意力網路 V1）                                      | 提升通道特徵提取                            | 複雜背景 / 多尺度目標                 |
 | `yolov10n-C2f-SENetV2.yaml`           | SENetV2（通道注意力網路 V2）                                      | 提升通道特徵提取                            | 複雜背景 / 多尺度目標                 |
 | `yolov10n-C2f-Triple.yaml`           | Triple（多重特徵融合模組）                                      | 強化多重特徵融合                            | 複雜場景 / 多尺度目標                 |
-| `yolov10n-CCFM.yaml`           | CCFM（跨通道特徵融合模組）                                 | 改善多通道跨層融合，提升表徵品質                   | 複雜背景、多物體場景               |
+| `yolov10n-CCFM.yaml`           | CCFM（跨通道特徵融合模組）                                 | 改善多通道跨層融合，提升表徵品質                   | 複雜背景 / 多物體場景               |
 | `yolov10n-DAT.yaml`           | DAT（雙向注意力變體）                                                  | 改善特徵融合與背景抑制                      | 複雜背景 / 低對比度影像               |
 | `yolov10n-DLKA.yaml`           | DLKA（大核 + 可變形注意力）                                              | 擴展感受野、提升遠距與異形物體表現           | 遠距 / 異形目標                       |
 | `yolov10n-DynamicConv.yaml`           | DynamicConv（動態卷積）                                                   | 針對局部特徵自適應卷積                        | 需要自適應局部表徵的場景                |
@@ -279,18 +283,19 @@
 | `yolov10n-SPDConv.yaml`           | SPDConv（空間注意力卷積）                                        | 提升卷積運算效率                              | 需要高效運算的場景                      |
 | `yolov10n-SPPELAN.yaml`           | SPPELAN（空間像素級特徵融合模組）                              | 強化空間像素級特徵融合                        | 複雜場景 / 多尺度目標                   |
 
-## YOLOv11 系列
-| 模型名稱（代表）                                 | 改進模組／架構變化（簡述）                                               | 相較原版 YOLO 的改進點                      | 專長與應用場景                         |
+### YOLOv11 系列
+| 模型名稱                                 | 改進模組／架構變化（簡述）                                               | 相較原版 YOLO 改進點                      | 專長與應用場景                         |
 |------------------------------------------------|---------------------------------------------------------------------:|-----------------------------------------|--------------------------------------|
 | `yolov11.yaml`           | 標準 YOLOv11                                                   |標準 YOLOv11          | 通用物件檢測                     |
-|`yolove-v11.yaml`           |                    標準 YOLEv11  | 標準 YOLOEv11      | 適用於多元影像辨識任務    |
+|`yoloe-v11.yaml`           |                    YOLOEDetect head  | 開放詞彙物件偵測模型      | 適用於開放詞彙，通用物件檢測    |
 | `yolov11-RGBIR.yaml`           | RGB + IR 雙分支 Backbone（Multiin + C3k2 + C2PSA）並於 P3–P5 進行融合 | 具備可見光/紅外線雙模態特徵整合能力 | 夜間偵測、熱成像輔助、多光譜任務 |
 | `yolov11-cls-resnet18.yaml`           |           ResNet18 backbone | 強化分類任務的特徵提取                     | 圖像分類任務           |
 | `yolov11-ASF.yaml`           | ASF（自適應融合/注意力）                                                  | 改善多尺度融合與背景抑制                    | 複雜背景 / 小目標                      |
+| `yolov11-BCN.yaml`           | BCN（雙向卷積網路）                                                | 強化特徵提取與融合                          | 複雜背景 / 多尺度目標                 |
 | `yolov11-BiFPN.yaml`           | BiFPN（雙向特徵金字塔網絡）                                                | 強化多尺度特徵融合                         | 多尺度目標檢測                        |
-| `yolov11-C2PSA-CGA.yaml`           | C2PSA（通道-位置自適應）結合 CGA（通道引導注意力）                       | 強化通道與位置的交互                       | 複雜背景、多物體場景                   |
-| `yolov11-C2PSA-DAT.yaml`           | C2PSA 結合 DAT（雙重注意力 Transformer）                                   | 結合局部與全局注意力提升表示能力             | 複雜背景、多物體場景                   |
-| `yolov11-C2PSA-DiT-CCFM.yaml` / `yolov11-C2PSA-DiT.yaml`| C2PSA 結合 DiT（Dual Transformer）( 與 CCFM（Cross-Channel Fusion Module）) | 強化通道與位置的交互，提升全局上下文建模能力 | 複雜背景、多物體場景                   |
+| `yolov11-C2PSA-CGA.yaml`           | C2PSA（通道-位置自適應）結合 CGA（通道引導注意力）                       | 強化通道與位置的交互                       | 複雜背景 / 多物體場景                   |
+| `yolov11-C2PSA-DAT.yaml`           | C2PSA 結合 DAT（雙重注意力 Transformer）                                   | 結合局部與全局注意力提升表示能力             | 複雜背景 / 多物體場景                   |
+| `yolov11-C2PSA-DiT-CCFM.yaml` / `yolov11-C2PSA-DiT.yaml`| C2PSA 結合 DiT（Dual Transformer）( 與 CCFM（Cross-Channel Fusion Module）) | 強化通道與位置的交互，提升全局上下文建模能力 | 複雜背景 / 多物體場景                   |
 | `yolov11-C2PSA-SENetV2-LightHGNetV2-l.yaml` / `yolov11-C2PSA-SENetV2-LightHGNetV2-l-CCFM.yaml`| C2PSA 結合 SENetV2 與 LightHGNetV2-l（輕量化骨幹網絡）( 與 CCFM（Cross-Channel Fusion Module）)         | 輕量化設計，提升通道與位置交互               | 行動端 / 輕量場景                      |
 | `yolov11-C3k2-ConvNeXtV2Block-BiFPN.yaml` / `yolov11-C3k2-ConvNeXtV2Block-BiFPN.yaml`| C3k2（新型 block）搭配 ConvNeXtV2 Block 與 BiFPN                      | 提升表徵流動與多尺度融合                    | 需要更強表示能力的中大型模型           |
 | `yolov11-C3K2-DiTBlock.yaml` | C3K2 搭配 DiT Block（Dual Transformer Block） | 提升表徵流動與全局上下文建模                | 需要更強表示能力的中大型模型           |
@@ -299,29 +304,30 @@
 | `yolov11-C3k2-OREPA-backbone-v10Detect.yaml` / `yolov11-C3k2-OREPA-backbone.yaml` | C3k2 搭配 OREPA backbone（重參數化注意力） | 提升表徵流動與推理效率                      | 需要更強表示能力的中大型模型           |
 | `yolov11-C3k2-UIB-CCFM.yaml` / `yolov11-C3k2-UIB-FMDI.yaml` / `yolov11-C3k2-UIB.yaml` | C3k2 搭配 UIB（統一交互塊）| 提升表徵流動與通道/位置交互                  | 需要更強表示能力的中大型模型           |
 | `yolov11-C3k2-WTConv.yaml` | C3k2 搭配 WTConv（加權卷積）| 提升表徵流動與融合效率                      | 需要更強表示能力的中大型模型           |
-| `yolov11-CAFormer.yaml`    | CAFormer（通道注意力 Transformer）                                           | 結合通道注意力與全局上下文建模               | 複雜背景、多物體場景                   |
-| `yolov11-CCFM.yaml` / `yolov11-CCFM-C2PSA-DAT.yaml` / `yolov11-CCFM-C2PSA-DAT-v10Detect.yaml`| CCFM 結合 C2PSA / DAT 等複合注意力                                           | 強化通道/位置交互與跨層融合                  | 複雜背景、多物體場景                   |
-| `yolov11-ConvFormer.yaml`      | ConvFormer（卷積 + Transformer 混合）                                       | 結合局部卷積與全局注意力                     | 複雜背景、多物體場景                   |
-| `yolov11-COSNet.yaml`          | COSNet（通道注意力 + 空間注意力）                                         | 結合通道與空間注意力，提升特徵表徵能力       | 複雜背景、多物體場景                   |
+| `yolov11-CAFormer.yaml`    | CAFormer（通道注意力 Transformer）                                           | 結合通道注意力與全局上下文建模               | 複雜背景 / 多物體場景                   |
+| `yolov11-CCFM.yaml` / `yolov11-CCFM-C2PSA-DAT.yaml` / `yolov11-CCFM-C2PSA-DAT-v10Detect.yaml`| CCFM 結合 C2PSA / DAT 等複合注意力                                           | 強化通道/位置交互與跨層融合                  | 複雜背景 / 多物體場景                   |
+| `yolov11-ConvFormer.yaml`      | ConvFormer（卷積 + Transformer 混合）                                       | 結合局部卷積與全局注意力                     | 複雜背景 / 多物體場景                   |
+| `yolov11-COSNet.yaml`          | COSNet（通道注意力 + 空間注意力）                                         | 結合通道與空間注意力，提升特徵表徵能力       | 複雜背景 / 多物體場景                   |
 | `yolov11-DecoupleNet.yaml`      | DecoupleNet（解耦頭設計）                                                | 分離分類與回歸任務，提升精度                  | 高精度需求場景                        |
-| `yolov11-DiT-C3k2-UIB-CCFM.yaml` | DiT 結合 C3k2、UIB 與 CCFM                                               | 強化通道/位置交互與全局上下文建模             | 複雜背景、多物體場景                   |
-| `yolov11-DiT-C3k2-UIB-FMDI-IDetect.yaml` / `yolov11-DiT-C3k2-UIB-FMDI.yaml`  | DiT 結合 C3k2、UIB 與 FMDI（特徵多尺度雙向交互）| 強化通道/位置交互與全局上下文建模             | 複雜背景、多物體場景                   |
-| `yolov11-DiT-C3k2-WTConv-CCFM.yaml` | DiT 結合 C3k2、WTConv 與 CCFM                                               | 強化通道/位置交互與全局上下文建模             | 複雜背景、多物體場景                   |
-| `yolov11-DiT-CCFM-IDetect.yaml` / `yolov11-DiT-CCFM.yaml`  | DiT 結合 CCFM（Cross-Channel Fusion Module）                                | 強化通道/位置交互與全局上下文建模             | 複雜背景、多物體場景                   |
-| `yolov11-DiT.yaml`               | DiT（Dual Transformer）                                                   | 提升全局上下文建模能力                       | 複雜背景、多物體場景                   |
-| `yolov11-DySnakeConv.yaml`               | DySnakeConv（動態蛇形卷積）                                               | 提升特徵表徵與流動能力                       | 複雜背景、多物體場景                   |
-| `yolov11-EfficientNet-CCFM-v10Detect.yaml` | EfficientNet 結合 CCFM（Cross-Channel Fusion Module）                    | 強化通道/位置交互與全局上下文建模             | 複雜背景、多物體場景                   |
+| `yolov11-DiT-C3k2-UIB-CCFM.yaml` | DiT 結合 C3k2、UIB 與 CCFM                                               | 強化通道/位置交互與全局上下文建模             | 複雜背景 / 多物體場景                   |
+| `yolov11-DiT-C3k2-UIB-FMDI-IDetect.yaml` / `yolov11-DiT-C3k2-UIB-FMDI.yaml`  | DiT 結合 C3k2、UIB 與 FMDI（特徵多尺度雙向交互）| 強化通道/位置交互與全局上下文建模             | 複雜背景 / 多物體場景                   |
+| `yolov11-DiT-C3k2-WTConv-CCFM.yaml` | DiT 結合 C3k2、WTConv 與 CCFM                                               | 強化通道/位置交互與全局上下文建模             | 複雜背景 / 多物體場景                   |
+| `yolov11-DiT-CCFM-IDetect.yaml` / `yolov11-DiT-CCFM.yaml`  | DiT 結合 CCFM（Cross-Channel Fusion Module）                                | 強化通道/位置交互與全局上下文建模             | 複雜背景 / 多物體場景                   |
+| `yolov11-DiT.yaml`               | DiT（Dual Transformer）                                                   | 提升全局上下文建模能力                       | 複雜背景 / 多物體場景                   |
+| `yolov11-DySnakeConv.yaml`               | DySnakeConv（動態蛇形卷積）                                               | 提升特徵表徵與流動能力                       | 複雜背景 / 多物體場景                   |
+| `yolov11-EfficientNet-CCFM-v10Detect.yaml` | EfficientNet 結合 CCFM（Cross-Channel Fusion Module）                    | 強化通道/位置交互與全局上下文建模             | 複雜背景 / 多物體場景                   |
 | `yolov11-EfficientNet-OREPA-v10Detect.yaml` | EfficientNet 結合 OREPA（重參數化注意力）                               | 提升表徵流動與推理效率                      | 需要更強表示能力的中大型模型           |
 | `yolov11-EfficientNet.yaml`               | EfficientNet                                                               | 提升表徵流動與推理效率                      | 需要更強表示能力的中大型模型           |
-| `yolov11-EfficientViM.yaml` / `yolov11-EfficientViT_MIT.yaml` | EfficientViM / EfficientViT_MIT（高效 Transformer）                        | 提升全局上下文建模與效率                     | 複雜背景、多物體場景                   |
-| `yolov11-EMOv2.yaml`               | EMOv2（情境感知模組）                                                   | 結合情境感知提升表示能力                     | 複雜背景、多物體場景                   |
-| `yolov11-EViT.yaml`               | EViT（Efficient Vision Transformer）                                   | 提升全局上下文建模與效率                     | 複雜背景、多物體場景                   |
+| `yolov11-EfficientViM.yaml` / `yolov11-EfficientViT_MIT.yaml` | EfficientViM / EfficientViT_MIT（高效 Transformer）                        | 提升全局上下文建模與效率                     | 複雜背景 / 多物體場景                   |
+| `yolov11-EMOv2.yaml`               | EMOv2（情境感知模組）                                                   | 結合情境感知提升表示能力                     | 複雜背景 / 多物體場景                   |
+| `yolov11-EViT.yaml`               | EViT（Efficient Vision Transformer）                                   | 提升全局上下文建模與效率                     | 複雜背景 / 多物體場景                   |
+| `yolov11-FasterNet.yaml`               | FasterNet（高效骨幹網絡）                                               | 提升表徵流動與推理效率                      | 邊緣設備/移動端            |
 | `yolov11-FloraNet.yaml`           | FloraNet（輕量化骨幹網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-FMDI.yaml`               | FMDI（特徵多尺度雙向交互）                                               | 強化多尺度特徵融合                         | 多尺度目標檢測                        |
-| `yolov11-GLNet.yaml`             | GLNet（全局-局部網絡）                                                | 結合全局與局部特徵                         | 複雜背景、多物體場景                   |
+| `yolov11-GLNet.yaml`             | GLNet（全局-局部網絡）                                                | 結合全局與局部特徵                         | 複雜背景 / 多物體場景                   |
 | `yolov11-hyper.yaml`             | hyper（超參數或特殊結構整合）                                              | 模型架構/訓練策略調整以提升穩定性            | 特定資料集優化                         |
 | `yolov11-IdentityFormer.yaml`    | IdentityFormer（輕量化 Transformer）                                      | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
-| `yolov11-iFormer.yaml`           | iFormer（混合卷積與 Transformer）                                       | 結合局部卷積與全局注意力                     | 複雜背景、多物體場景                   |
+| `yolov11-iFormer.yaml`           | iFormer（混合卷積與 Transformer）                                       | 結合局部卷積與全局注意力                     | 複雜背景 / 多物體場景                   |
 | `yolov11-KW_ResNet.yaml`         | KW_ResNet（鍵重參數化 ResNet）                                            | 提升表徵流動與推理效率                      | 需要更強表示能力的中大型模型           |
 | `yolov11-LAE.yaml`               | LAE（輕量化注意力增強）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-LAUDNet.yaml`           | LAUDNet（輕量化骨幹網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
@@ -332,27 +338,31 @@
 | `yolov11-MLLA.yaml`             | MLLA（多層次輕量化注意力）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-MobileNetv4.yaml`      | MobileNetv4（輕量化骨幹網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-OverLoCK.yaml`         | OverLoCK（跨層次注意力模組）                                               | 強化跨層次特徵融合                         | 多尺度目標檢測                        |
-| `yolov11-PKINet.yaml`           | PKINet（位置關鍵交互網絡）                                               | 強化位置交互表徵                           | 複雜背景、多物體場景                   |
+| `yolov11-PKINet.yaml`           | PKINet（位置關鍵交互網絡）                                               | 強化位置交互表徵                           | 複雜背景 / 多物體場景                   |
 | `yolov11-PoolFormerv2.yaml`    | PoolFormerv2（輕量化池化 Transformer）                                     | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
-| `yolov11-pst.yaml`              | PST（Pyramid Sparse Transformer，金字塔稀疏 Transformer） | 提升多尺度特徵融合與全局上下文建模效率 | 複雜背景、多物體場景                   |
+| `yolov11-pst.yaml`              | PST（Pyramid Sparse Transformer，金字塔稀疏 Transformer） | 提升多尺度特徵融合與全局上下文建模效率 | 複雜背景 / 多物體場景                   |
 | `yolov11-QARepVGG.yaml`         | QARepVGG    （量化重參數化 VGG）                                             | 訓練強、推理簡化                            | 需要部署效率且保持高表示能力            |
-| `yolov11-RandFormer.yaml`       | RandFormer（隨機注意力 Transformer）                                      | 提升全局上下文建模與效率                     | 複雜背景、多物體場景                   |
+| `yolov11-RandFormer.yaml`       | RandFormer（隨機注意力 Transformer）                                      | 提升全局上下文建模與效率                     | 複雜背景 / 多物體場景                   |
 | `yolov11-RepLKNet.yaml`         | RepLKNet（重參數化大卷積網絡）                                             | 訓練強、推理簡化                            | 需要部署效率且保持高表示能力            |
-| `yolov11-ResNet_MoE.yaml`       | ResNet_MoE（專家混合模型）                                               | 提升模型容量與表徵能力                       | 複雜背景、多物體場景                   |
+| `yolov11-ResNet_MoE.yaml`       | ResNet_MoE（專家混合模型）                                               | 提升模型容量與表徵能力                       | 複雜背景 / 多物體場景                   |
 | `yolov11-RFAConv.yaml`          | RFAConv（重參數化注意力卷積）                                               | 提升表徵流動與推理效率                      | 需要更強表示能力的中大型模型           |
-| `yolov11-SFSCNet.yaml`          | SFSCNet（空間頻率選擇卷積網絡）                                           | 提升特徵表徵與流動能力                       | 複雜背景、多物體場景                   |
-| `yolov11-SGFormer.yaml`         | SGFormer（稀疏全局注意力 Transformer）                                   | 提升全局上下文建模與效率                     | 複雜背景、多物體場景                   |
+| `yolov11-SFSCNet.yaml`          | SFSCNet（空間頻率選擇卷積網絡）                                           | 提升特徵表徵與流動能力                       | 複雜背景 / 多物體場景                   |
+| `yolov11-SGFormer.yaml`         | SGFormer（稀疏全局注意力 Transformer）                                   | 提升全局上下文建模與效率                     | 複雜背景 / 多物體場景                   |
 | `yolov11-SlabPVTv2.yaml`        | SlabPVTv2（輕量化 Pyramid Vision Transformer）                        | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-SlabSwinTransformer.yaml` | SlabSwinTransformer（輕量化 Swin Transformer）                        | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-SlimNeck.yaml`         | SlimNeck（輕量化頸部設計）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
-| `yolov11-SMT.yaml`              | SMT（稀疏混合 Transformer）                                               | 提升全局上下文建模與效率                     | 複雜背景、多物體場景                   |
-| `yolov11-SPANet.yaml`           | SPANet（空間注意力網絡）                                               | 結合空間注意力提升表示能力                   | 複雜背景、多物體場景                   |
+| `yolov11-SMT.yaml`              | SMT（稀疏混合 Transformer）                                               | 提升全局上下文建模與效率                     | 複雜背景 / 多物體場景                   |
+| `yolov11-SoftHGNN.yaml`         | SoftHGNN（軟超 GNN）                                               | 建模高階語義關係並強化多尺度特徵重新分配與融合                         | 複雜背景 / 多物體場景                      |
+| `yolov11-SPANet.yaml`           | SPANet（空間注意力網絡）                                               | 結合空間注意力提升表示能力                   | 複雜背景 / 多物體場景                   |
 | `yolov11-StripMLPNet.yaml`      | StripMLPNet（條帶化 MLP 網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-StripNet-sn2.yaml`     | StripNet-sn2（條帶化骨幹網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
-| `yolov11-StripNet.yaml`         | StripNet（條帶化骨幹網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
-| `yolov11-VAN.yaml`              | VAN（視覺注意力網絡）                                               | 結合通道注意力與全局上下文建模               | 複雜背景、多物體場景                   |
+| `yolov11-STViT-CCFM.yaml` | STViT-CCFM（輕量化 Transformer + CCFM） | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
+| `yolov11-TransNeXt.yaml`        | TransNeXt（聚合注意力 + 卷積 GLU）                                       | 引入聚合注意力 (Aggregated Attention) 增強全域感知 + 卷積 GLU 強化局部特徵建模 | 複雜背景 / 多物體場景 / 多尺度目標 |
+| `yolov11-TransXNet.yaml`        | TransXNet（D‑Mixer + MS-FFN）                                       | 動態捕捉全局 + 局部特徵 (IDConv + OSRA) + 多尺度融合，增強表示能力 | 複雜背景 / 多物體場景 / 多尺度目標  |
+| `yolov11-UniNeXt-CCFM.yaml`     | UniNeXt-CCFM（通用骨幹 + CCFM）                                       | 高維特徵融合 + 局部與全局特徵建模 + 穩定提升各種 STM 表現               | 複雜背景 / 多物體場景 / 多尺度目標                  |
+| `yolov11-VAN.yaml`              | VAN（視覺注意力網絡）                                               | 結合通道注意力與全局上下文建模               | 複雜背景 / 多物體場景                   |
 | `yolov11-vHeat.yaml`            | vHeat（輕量化骨幹網絡）                                               | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
-| `yolov11-WTConvNeXt.yaml`       | WTConvNeXt（加權卷積 + ConvNeXt 混合）                                       | 結合局部卷積與全局注意力                     | 複雜背景、多物體場景                   |
+| `yolov11-WTConvNeXt.yaml`       | WTConvNeXt（加權卷積 + ConvNeXt 混合）                                       | 結合局部卷積與全局注意力                     | 複雜背景 / 多物體場景                   |
 | `yolov11-C2PSA-DiT-C3k2-WTConv-CCFM-pose.yaml` | C2PSA-DiT-C3k2-WTConv-CCFM（輕量化姿態估計模型） | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-CoordConv-BiFPN-pose.yaml` | CoordConv-BiFPN（輕量化姿態估計模型） | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-EfficientViM-CCFM-pose.yaml` | EfficientViM-CCFM（輕量化姿態估計模型） | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
@@ -370,12 +380,12 @@
 | `yolov11-C3k2-WTConv-CCFM-seg.yaml` | C3k2-WTConv-CCFM（輕量化語義分割模型） | 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 | `yolov11-Haar-seg.yaml` | Haar（輕量化骨幹網絡）| 輕量化設計，提升效率                         | 行動端 / 輕量場景                      |
 
-## YOLOv12 系列
-| 模型名稱（代表）                                 | 改進模組／架構變化（簡述）                                               | 相較原版 YOLO 的改進點                      | 專長與應用場景                         |
+### YOLOv12 系列
+| 模型名稱                                 | 改進模組／架構變化（簡述）                                               | 相較原版 YOLO 改進點                      | 專長與應用場景                         |
 |------------------------------------------------|---------------------------------------------------------------------:|-----------------------------------------|--------------------------------------|
 | `yolov12.yaml`           | 標準 YOLOv12                                                   |標準 YOLOv12          | 通用物件檢測                     |
 | `yolov12-ASF.yaml`           | ASF（自適應融合/注意力）                                                  | 改善多尺度融合與背景抑制                    | 複雜背景 / 小目標                      |
-| `yolov12-CCFM.yaml`           | CCFM（跨通道特徵融合模組）                                 | 改善多通道跨層融合，提升表徵品質                   | 複雜背景、多物體場景               |
+| `yolov12-CCFM.yaml`           | CCFM（跨通道特徵融合模組）                                 | 改善多通道跨層融合，提升表徵品質                   | 複雜背景 / 多物體場景               |
 | `yolov12-hyper.yaml`           | hyper（超參數或特殊結構整合）                                              | 模型架構/訓練策略調整以提升穩定性            | 特定資料集優化                         |
 | `yolov12-ShuffleAttention-CCFM.yaml`           | ShuffleAttention + CCFM                                                   | 輕量注意力提升通道/位置交互                  | 行動端 / 輕量場景                      |
 | `yolov12-EMOv2-CCFM-pose.yaml`           | EMOv2 + CCFM + pose head                                                  | 結合情境感知與姿態估計                       | 人體/動物姿態估計                      |
@@ -383,14 +393,14 @@
 | `yolov12-MobileNetv4-CCFM-seg.yaml`           | MobileNetv4 + CCFM + segmentation head                                     | 輕量化與語義分割結合                         | 行動端 / 語義分割                       |
 | `yolov12-MobileNetv4-ShuffleAttention-seg.yaml` | MobileNetv4 + ShuffleAttention + segmentation head                        | 輕量注意力與語義分割結合                     | 行動端 / 輕量語義分割                   |
 
-## YOLOv13 系列
-| 模型名稱（代表）                                 | 改進模組／架構變化（簡述）                                               | 相較原版 YOLO 的改進點                      | 專長與應用場景                         |
+### YOLOv13 系列
+| 模型名稱                                 | 改進模組／架構變化（簡述）                                               | 相較原版 YOLO 改進點                      | 專長與應用場景                         |
 |------------------------------------------------|---------------------------------------------------------------------:|-----------------------------------------|--------------------------------------|
 | `yolov13.yaml`                                   | 標準 YOLOv13                                                   |標準 YOLOv13          | 通用物件檢測                     |
 | `yolov13-sn2.yaml`                                | sn2 / 特定 block 變體                                                     | 調整深寬度或 block 類型                    | 根據需求選擇不同深度/效能折衝           |
 | `yolov13-pose.yaml`                               | pose variant（結合 pose head）                                            | 同時檢測與姿態估計                         | 人體/動物姿態估計                      |
 
-# models 檔案結構
+## models 檔案結構
 ```
 ultralytics_pro\ultralytics\cfg\models
 │  README.md
@@ -832,6 +842,7 @@ ultralytics_pro\ultralytics\cfg\models
 ├─syolo
 │  └─Detect
 │          Syolo-s.yaml
+│          Syolo.yaml
 │          
 ├─v10
 │  │  yolov10b.yaml
@@ -919,6 +930,7 @@ ultralytics_pro\ultralytics\cfg\models
 │  ├─Detect
 │  │      yoloe-v11.yaml
 │  │      yolov11-ASF.yaml
+│  │      yolov11-BCN.yaml
 │  │      yolov11-BiFPN.yaml
 │  │      yolov11-C2PSA-CGA.yaml
 │  │      yolov11-C2PSA-DAT.yaml
@@ -959,6 +971,7 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov11-EfficientViT_MIT.yaml
 │  │      yolov11-EMOv2.yaml
 │  │      yolov11-EViT.yaml
+│  │      yolov11-FasterNet.yaml
 │  │      yolov11-FloraNet.yaml
 │  │      yolov11-FMDI.yaml
 │  │      yolov11-GLNet.yaml
@@ -995,9 +1008,14 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov11-SlabSwinTransformer.yaml
 │  │      yolov11-SlimNeck.yaml
 │  │      yolov11-SMT.yaml
+│  │      yolov11-SoftHGNN.yaml
 │  │      yolov11-SPANet.yaml
 │  │      yolov11-StripMLPNet.yaml
 │  │      yolov11-StripNet-sn2.yaml
+│  │      yolov11-STViT-CCFM.yaml
+│  │      yolov11-TransNeXt.yaml
+│  │      yolov11-TransXNet.yaml
+│  │      yolov11-UniNeXt-CCFM.yaml
 │  │      yolov11-VAN.yaml
 │  │      yolov11-vHeat.yaml
 │  │      yolov11-WTConvNeXt.yaml
@@ -1080,6 +1098,7 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov13-pose.yaml
 │  │      
 │  └─Segment
+├─v14
 ├─v3
 │  │  yolov3-spp.yaml
 │  │  yolov3-tiny.yaml
@@ -2171,5 +2190,5 @@ ultralytics_pro\ultralytics\cfg\models
     └─Segment
             yoloe-v11-seg.yaml
             yoloe-v8-seg.yaml
-
+            
 ```
