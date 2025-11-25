@@ -10,11 +10,10 @@
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F  # Added Import
 from timm.models.registry import register_model
 from timm.models.layers import trunc_normal_, DropPath, LayerNorm2d
-from pathlib import Path
 import numpy as np
+import math
 
 
 def window_partition(x, window_size):
@@ -46,79 +45,6 @@ def ct_window(ct, W, H, window_size):
     return ct
 
 
-def _load_state_dict(module, state_dict, strict=False, logger=None):
-    """Load state_dict to a module."""
-    unexpected_keys = []
-    all_missing_keys = []
-    err_msg = []
-
-    metadata = getattr(state_dict, '_metadata', None)
-    state_dict = state_dict.copy()
-    if metadata is not None:
-        state_dict._metadata = metadata
-    
-    def load(module, prefix=''):
-        local_metadata = {} if metadata is None else metadata.get(
-            prefix[:-1], {})
-        module._load_from_state_dict(state_dict, prefix, local_metadata, True,
-                                     all_missing_keys, unexpected_keys,
-                                     err_msg)
-        for name, child in module._modules.items():
-            if child is not None:
-                load(child, prefix + name + '.')
-
-    load(module)
-    load = None
-    missing_keys = [
-        key for key in all_missing_keys if 'num_batches_tracked' not in key
-    ]
-
-    if unexpected_keys:
-        err_msg.append('unexpected key in source '
-                       f'state_dict: {", ".join(unexpected_keys)}\n')
-    if missing_keys:
-        err_msg.append(
-            f'missing keys in source state_dict: {", ".join(missing_keys)}\n')
-
-    
-    if len(err_msg) > 0:
-        err_msg.insert(
-            0, 'The model and loaded state dict do not match exactly\n')
-        err_msg = '\n'.join(err_msg)
-        if strict:
-            raise RuntimeError(err_msg)
-        elif logger is not None:
-            logger.warning(err_msg)
-        else:
-            print(err_msg)
-
-
-def _load_checkpoint(model,
-                    filename,
-                    map_location='cpu',
-                    strict=False,
-                    logger=None):
-    """Load checkpoint from a file or URI."""
-    checkpoint = torch.load(filename, map_location=map_location)
-    if not isinstance(checkpoint, dict):
-        raise RuntimeError(
-            f'No state_dict found in checkpoint file {filename}')
-    if 'state_dict' in checkpoint:
-        state_dict = checkpoint['state_dict']
-    elif 'model' in checkpoint:
-        state_dict = checkpoint['model']
-    else:
-        state_dict = checkpoint
-    if list(state_dict.keys())[0].startswith('module.'):
-        state_dict = {k[7:]: v for k, v in state_dict.items()}
-
-    if sorted(list(state_dict.keys()))[0].startswith('encoder'):
-        state_dict = {k.replace('encoder.', ''): v for k, v in state_dict.items() if k.startswith('encoder.')}
-
-    _load_state_dict(model, state_dict, strict, logger)
-    return checkpoint
-
-
 class PosEmbMLPSwinv2D(nn.Module):
     def __init__(self,
                  window_size,
@@ -136,7 +62,7 @@ class PosEmbMLPSwinv2D(nn.Module):
         relative_coords_w = torch.arange(-(self.window_size[1] - 1), self.window_size[1], dtype=torch.float32)
         relative_coords_table = torch.stack(
             torch.meshgrid([relative_coords_h,
-                            relative_coords_w])).permute(1, 2, 0).contiguous().unsqueeze(0)  # 1, 2*Wh-1, 2*Ww-1, 2
+                            relative_coords_w], indexing='ij')).permute(1, 2, 0).contiguous().unsqueeze(0)  # 1, 2*Wh-1, 2*Ww-1, 2
         if pretrained_window_size[0] > 0:
             relative_coords_table[:, :, :, 0] /= (pretrained_window_size[0] - 1)
             relative_coords_table[:, :, :, 1] /= (pretrained_window_size[1] - 1)
@@ -152,7 +78,7 @@ class PosEmbMLPSwinv2D(nn.Module):
         self.register_buffer("relative_coords_table", relative_coords_table)
         coords_h = torch.arange(self.window_size[0])
         coords_w = torch.arange(self.window_size[1])
-        coords = torch.stack(torch.meshgrid([coords_h, coords_w]))
+        coords = torch.stack(torch.meshgrid([coords_h, coords_w], indexing='ij'))
         coords_flatten = torch.flatten(coords, 1)
         relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]
         relative_coords = relative_coords.permute(1, 2, 0).contiguous()
@@ -246,7 +172,6 @@ class PosEmbMLPSwinv1D(nn.Module):
         self.deploy = True
 
     def forward(self, input_tensor):
-        # Adapts to input sequence length dynamically
         seq_length = input_tensor.shape[1] if not self.conv else input_tensor.shape[2]
         if self.deploy:
             return input_tensor + self.relative_bias
@@ -265,7 +190,7 @@ class PosEmbMLPSwinv1D(nn.Module):
                 seq_length = int(seq_length**0.5)
                 relative_coords_h = torch.arange(0, seq_length, device=input_tensor.device, dtype = input_tensor.dtype)
                 relative_coords_w = torch.arange(0, seq_length, device=input_tensor.device, dtype = input_tensor.dtype)
-                relative_coords_table = torch.stack(torch.meshgrid([relative_coords_h, relative_coords_w])).contiguous().unsqueeze(0)
+                relative_coords_table = torch.stack(torch.meshgrid([relative_coords_h, relative_coords_w], indexing='ij')).contiguous().unsqueeze(0)
                 relative_coords_table -= seq_length // 2
                 relative_coords_table /= (seq_length // 2)
                 if not self.conv:
@@ -288,6 +213,15 @@ class Mlp(nn.Module):
                  out_features=None,
                  act_layer=nn.GELU,
                  drop=0.):
+        """
+        Args:
+            in_features: input features dimension.
+            hidden_features: hidden features dimension.
+            out_features: output features dimension.
+            act_layer: activation function.
+            drop: dropout rate.
+        """
+
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -318,6 +252,13 @@ class Downsample(nn.Module):
                  dim,
                  keep_dim=False,
                  ):
+        """
+        Args:
+            dim: feature size dimension.
+            norm_layer: normalization layer.
+            keep_dim: bool argument for maintaining the resolution.
+        """
+
         super().__init__()
         if keep_dim:
             dim_out = dim
@@ -341,6 +282,11 @@ class PatchEmbed(nn.Module):
     """
 
     def __init__(self, in_chans=3, in_dim=64, dim=96):
+        """
+        Args:
+            in_chans: number of input channels.
+            dim: feature size dimension.
+        """
         super().__init__()
         self.proj = nn.Identity()
         self.conv_down = nn.Sequential(
@@ -369,6 +315,12 @@ class ConvBlock(nn.Module):
                  layer_scale=None,
                  kernel_size=3):
         super().__init__()
+        """
+        Args:
+            drop_path: drop path.
+            layer_scale: layer scale coefficient.
+            kernel_size: kernel size.
+        """
         self.conv1 = nn.Conv2d(dim, dim, kernel_size=kernel_size, stride=1, padding=1)
         self.norm1 = nn.BatchNorm2d(dim, eps=1e-5)
         self.act1 = nn.GELU()
@@ -410,6 +362,17 @@ class WindowAttention(nn.Module):
                  resolution=0,
                  seq_length=0):
         super().__init__()
+        """
+        Args:
+            dim: feature size dimension.
+            num_heads: number of attention head.
+            qkv_bias: bool argument for query, key, value learnable bias.
+            qk_scale: bool argument to scaling query, key.
+            attn_drop: attention dropout rate.
+            proj_drop: output dropout rate.
+            resolution: feature resolution.
+            seq_length: sequence length.
+        """
         self.num_heads = num_heads
         head_dim = dim // num_heads
         self.head_dim = dim // num_heads
@@ -463,6 +426,25 @@ class HAT(nn.Module):
                  ct_size=1,
                  do_propagation=False):
         super().__init__()
+        """
+        Args:
+            dim: feature size dimension.
+            num_heads: number of attention head.
+            mlp_ratio: MLP ratio.
+            qkv_bias: bool argument for query, key, value learnable bias.
+            qk_scale: bool argument to scaling query, key.
+            drop: dropout rate.
+            attn_drop: attention dropout rate.
+            proj_drop: output dropout rate.
+            act_layer: activation function.
+            norm_layer: normalization layer.
+            sr_ratio: input to window size ratio.
+            window_size: window size.
+            last: last layer flag.
+            layer_scale: layer scale coefficient.
+            ct_size: spatial dimension of carrier token local window.
+            do_propagation: enable carrier token propagation.
+        """
         # positional encoding for windowed attention tokens
         self.pos_embed = PosEmbMLPSwinv1D(dim, rank=2, seq_length=window_size**2)
         self.norm1 = norm_layer(dim)
@@ -564,44 +546,36 @@ class TokenInitializer(nn.Module):
                  input_resolution,
                  window_size,
                  ct_size=1):
+        """
+        Args:
+            dim: feature size dimension.
+            input_resolution: input image resolution.
+            window_size: window size.
+            ct_size: spatial dimension of carrier token local window
+        """
         super().__init__()
-        # NOTE: The original kernel/stride calc depends on input_resolution.
-        # For dynamic inference, we will override the pooling in forward.
-        
-        output_size = int(ct_size * input_resolution/window_size)
-        # Safety check for very small resolutions to prevent div by zero
-        output_size = max(1, output_size) 
+
+        # --- Start of fix ---
+        # Original calculation used integer division, creating a mismatch when input_resolution
+        # is not divisible by window_size. Using math.ceil ensures the number of carrier
+        # token groups matches the number of padded local attention windows.
+        output_size = int(ct_size * math.ceil(input_resolution / window_size))
+        # --- End of fix ---
         
         stride_size = int(input_resolution/output_size)
         kernel_size = input_resolution - (output_size - 1) * stride_size
-        
         self.pos_embed = nn.Conv2d(dim, dim, 3, padding=1, groups=dim)
         to_global_feature = nn.Sequential()
         to_global_feature.add_module("pos", self.pos_embed)
-        # This layer is kept for loading weights but bypassed for logic in dynamic forward
         to_global_feature.add_module("pool", nn.AvgPool2d(kernel_size=kernel_size, stride=stride_size))
         self.to_global_feature = to_global_feature
         self.window_size = ct_size
-        self.window_block_size = window_size # store original window size
 
     def forward(self, x):
-        # x is already padded to be multiple of window_block_size in FasterViTLayer
-        # Use pos embed first
-        x = self.pos_embed(x)
-        
-        B, C, H, W = x.shape
-        
-        # Calculate target size dynamically: (H // window_size) * ct_size
-        # This ensures we get 'ct_size' tokens per window block
-        target_h = (H // self.window_block_size) * self.window_size
-        target_w = (W // self.window_block_size) * self.window_size
-        
-        # Use AdaptiveAvgPool to handle non-integer strides (e.g. 7 -> 2)
-        x = F.adaptive_avg_pool2d(x, (target_h, target_w))
-
+        x = self.to_global_feature(x)
         B, C, H, W = x.shape
         ct = x.view(B, C, H // self.window_size, self.window_size, W // self.window_size, self.window_size)
-        ct = ct.permute(0, 2, 4, 3, 5, 1).reshape(-1, H*W, C)
+        ct = ct.permute(0, 2, 4, 3, 5, 1).reshape(-1, self.window_size * self.window_size, C)
         return ct
 
 
@@ -632,6 +606,28 @@ class FasterViTLayer(nn.Module):
                  hierarchy=True,
                  do_propagation=False
                  ):
+        """
+        Args:
+            dim: feature size dimension.
+            depth: layer depth.
+            input_resolution: input resolution.
+            num_heads: number of attention head.
+            window_size: window size.
+            ct_size: spatial dimension of carrier token local window.
+            conv: conv_based stage flag.
+            downsample: downsample flag.
+            mlp_ratio: MLP ratio.
+            qkv_bias: bool argument for query, key, value learnable bias.
+            qk_scale: bool argument to scaling query, key.
+            drop: dropout rate.
+            attn_drop: attention dropout rate.
+            drop_path: drop path rate.
+            layer_scale: layer scale coefficient.
+            layer_scale_conv: conv layer scale coefficient.
+            only_local: local attention flag.
+            hierarchy: hierarchical attention flag.
+            do_propagation: enable carrier token propagation.
+        """
         super().__init__()
         self.conv = conv
         self.transformer_block = False
@@ -663,59 +659,46 @@ class FasterViTLayer(nn.Module):
                 for i in range(depth)])
             self.transformer_block = True
         self.downsample = None if not downsample else Downsample(dim=dim)
-        if len(self.blocks) and not only_local and hierarchy and not self.conv:
-             # Check divisibility for initial setup, though we pad in forward now
-             if input_resolution // window_size > 1:
-                self.global_tokenizer = TokenInitializer(dim,
-                                                        input_resolution,
-                                                        window_size,
-                                                        ct_size=ct_size)
-                self.do_gt = True
-             else:
-                 self.do_gt = False
+        if len(self.blocks) and not only_local and input_resolution // window_size > 1 and hierarchy and not self.conv:
+            self.global_tokenizer = TokenInitializer(dim,
+                                                     input_resolution,
+                                                     window_size,
+                                                     ct_size=ct_size)
+            self.do_gt = True
         else:
             self.do_gt = False
 
         self.window_size = window_size
 
     def forward(self, x):
-        B, C, H, W = x.shape
-        
-        # Dynamic Padding Logic: Ensure H and W are divisible by window_size
-        pad_l = pad_t = 0
-        pad_r = (self.window_size - W % self.window_size) % self.window_size
-        pad_b = (self.window_size - H % self.window_size) % self.window_size
-        
-        if self.transformer_block and (pad_r > 0 or pad_b > 0):
-            x = F.pad(x, (pad_l, pad_r, pad_t, pad_b))
-            _, _, Hp, Wp = x.shape
-        else:
-            Hp, Wp = H, W
-
         ct = self.global_tokenizer(x) if self.do_gt else None
-        
+        B, C, H, W = x.shape
+
         if self.transformer_block:
-            x = window_partition(x, self.window_size)
+            window_size = self.window_size
+            pad_h = (window_size - H % window_size) % window_size
+            pad_w = (window_size - W % window_size) % window_size
+            if pad_h > 0 or pad_w > 0:
+                x = torch.nn.functional.pad(x, (0, pad_w, 0, pad_h))
             
-        for bn, blk in enumerate(self.blocks):
-            x, ct = blk(x, ct)
+            B, C, H_pad, W_pad = x.shape
+
+            x = window_partition(x, window_size)
             
-        if self.transformer_block:
-            x = window_reverse(x, self.window_size, Hp, Wp, B)
-        
-        # Crop back to original size if padded
-        if self.transformer_block and (pad_r > 0 or pad_b > 0):
-            x = x[:, :, :H, :W]
-        
-        # x is (B, C, H, W) here (original size)
-        # Capture the feature map BEFORE downsampling for hierarchical outputs
-        x_before_downsample = x 
+            for bn, blk in enumerate(self.blocks):
+                x, ct = blk(x, ct)
+
+            x = window_reverse(x, window_size, H_pad, W_pad, B)
+
+            if pad_h > 0 or pad_w > 0:
+                x = x[:, :, :H, :W].contiguous()
+        else:
+            for bn, blk in enumerate(self.blocks):
+                x, ct = blk(x, ct)
 
         if self.downsample is None:
-            return x, x_before_downsample
-        
-        # Return next_stage_input, current_stage_feature
-        return self.downsample(x), x_before_downsample
+            return x
+        return self.downsample(x)
 
 
 class FasterViT(nn.Module):
@@ -735,7 +718,7 @@ class FasterViT(nn.Module):
                  resolution=224,
                  drop_path_rate=0.2,
                  in_chans=3,
-                 num_classes=1000,
+                 num_classes=0, # Default to 0 for backbone usage
                  qkv_bias=True,
                  qk_scale=None,
                  drop_rate=0.,
@@ -746,9 +729,34 @@ class FasterViT(nn.Module):
                  hat=[False, False, True, False],
                  do_propagation=False,
                  **kwargs):
+        """
+        Args:
+            dim: feature size dimension.
+            in_dim: inner-plane feature size dimension.
+            depths: layer depth.
+            window_size: window size.
+            ct_size: spatial dimension of carrier token local window.
+            mlp_ratio: MLP ratio.
+            num_heads: number of attention head.
+            resolution: image resolution.
+            drop_path_rate: drop path rate.
+            in_chans: input channel dimension.
+            num_classes: number of classes.
+            qkv_bias: bool argument for query, key, value learnable bias.
+            qk_scale: bool argument to scaling query, key.
+            drop_rate: dropout rate.
+            attn_drop_rate: attention dropout rate.
+            layer_scale: layer scale coefficient.
+            layer_scale_conv: conv layer scale coefficient.
+            layer_norm_last: last stage layer norm flag.
+            hat: hierarchical attention flag.
+            do_propagation: enable carrier token propagation.
+        """
         super().__init__()
-        num_features = int(dim * 2 ** (len(depths) - 1))
         self.num_classes = num_classes
+        self.depths = depths
+        num_features = int(dim * 2 ** (len(depths) - 1))
+        
         self.patch_embed = PatchEmbed(in_chans=in_chans, in_dim=in_dim, dim=dim)
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
         self.levels = nn.ModuleList()
@@ -767,10 +775,10 @@ class FasterViT(nn.Module):
                                    drop=drop_rate,
                                    attn_drop=attn_drop_rate,
                                    drop_path=dpr[sum(depths[:i]):sum(depths[:i + 1])],
-                                   downsample=(i < 3),
+                                   downsample=(i < len(depths) - 1),
                                    layer_scale=layer_scale,
                                    layer_scale_conv=layer_scale_conv,
-                                   input_resolution=int(2 ** (-2 - i) * resolution),
+                                   input_resolution=int(resolution / (4 * 2**i)),
                                    only_local=not hat[i],
                                    do_propagation=do_propagation)
             self.levels.append(level)
@@ -778,23 +786,18 @@ class FasterViT(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         self.head = nn.Linear(num_features, num_classes) if num_classes > 0 else nn.Identity()
         self.apply(self._init_weights)
-        
-        # --- Add width_list calculation similar to SMT ---
-        self.width_list = []
-        try:
-            # Perform a dummy forward pass to determine intermediate feature channel sizes
-            self.eval() 
-            dummy_input = torch.randn(1, in_chans, resolution, resolution)
-            with torch.no_grad():
-                 features = self.forward_features(dummy_input)
-            # Extract channel dimension from each feature map in the list
-            self.width_list = [f.size(1) for f in features]
-            self.train() 
-        except Exception as e:
-            print(f"Error during dummy forward pass for width_list calculation: {e}")
-            # Fallback approximation
-            self.width_list = [int(dim * 2 ** i) for i in range(len(depths))]
-            self.train() 
+
+        if in_chans > 0 and resolution > 0:
+            try:
+                with torch.no_grad():
+                    dummy_input = torch.randn(1, in_chans, resolution, resolution)
+                    features = self.forward_features(dummy_input)
+                self.width_list = [f.size(1) for f in features]
+            except Exception as e:
+                print(f"Warning: Could not initialize self.width_list during FasterViT init: {e}")
+                self.width_list = []
+        else:
+            self.width_list = []
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -816,43 +819,35 @@ class FasterViT(nn.Module):
         return {'rpb'}
 
     def forward_features(self, x):
-        outs = []
         x = self.patch_embed(x)
+        features = []
         for level in self.levels:
-            # FasterViTLayer now returns (next_input, current_feature)
-            x, x_feat = level(x)
-            outs.append(x_feat)
-        
-        return outs
+            x = level(x)
+            features.append(x)
+        return features
     
-    def forward_head(self, x):
-        # Assuming x is the last feature map from forward_features if used standalone
-        # In the new logic, forward_features returns a list. 
-        # If we call forward(), we get a list.
-        # This method is mostly for classification tasks using the last feature map.
-        
-        # x should be the feature map of the last stage (e.g. 512 channels)
+    def forward(self, x):
+        """
+        For backbone usage, returns a list of feature maps.
+        """
+        x = self.forward_features(x)
+        return x
+
+    def forward_for_classification(self, x):
+        """
+        Performs forward pass for classification.
+        """
+        features = self.forward_features(x)
+        x = features[-1]
         x = self.norm(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.head(x)
         return x
 
-    def forward(self, x):
-        # Return list of features to satisfy YOLO/detection heads
-        features = self.forward_features(x)
-        return features
-    
-    def _load_state_dict(self, 
-                         pretrained, 
-                         strict: bool = False):
-        _load_checkpoint(self, 
-                         pretrained, 
-                         strict=strict)
-
 
 @register_model
-def faster_vit_0_224(pretrained=False, **kwargs):
+def faster_vit_0(num_classes=0, **kwargs):
     depths = kwargs.pop("depths", [2, 3, 6, 5])
     num_heads = kwargs.pop("num_heads", [2, 4, 8, 16])
     window_size = kwargs.pop("window_size", [7, 7, 7, 7])
@@ -862,9 +857,7 @@ def faster_vit_0_224(pretrained=False, **kwargs):
     mlp_ratio = kwargs.pop("mlp_ratio", 4)
     resolution = kwargs.pop("resolution", 224)
     drop_path_rate = kwargs.pop("drop_path_rate", 0.2)
-    model_path = kwargs.pop("model_path", "/tmp/faster_vit_0.pth.tar")
     hat = kwargs.pop("hat", [False, False, True, False])
-    
     model = FasterViT(depths=depths,
                       num_heads=num_heads,
                       window_size=window_size,
@@ -875,18 +868,13 @@ def faster_vit_0_224(pretrained=False, **kwargs):
                       resolution=resolution,
                       drop_path_rate=drop_path_rate,
                       hat=hat,
+                      num_classes=num_classes,
                       **kwargs)
-    
-    if pretrained:
-        if not Path(model_path).is_file():
-            print(f"Warning: Pretrained model not found at {model_path}")
-        else:
-            model._load_state_dict(model_path)
     return model
 
 
 @register_model
-def faster_vit_1_224(pretrained=False, **kwargs):
+def faster_vit_1(num_classes=0, **kwargs):
     depths = kwargs.pop("depths", [1, 3, 8, 5])
     num_heads = kwargs.pop("num_heads", [2, 4, 8, 16])
     window_size = kwargs.pop("window_size", [7, 7, 7, 7])
@@ -896,9 +884,7 @@ def faster_vit_1_224(pretrained=False, **kwargs):
     mlp_ratio = kwargs.pop("mlp_ratio", 4)
     resolution = kwargs.pop("resolution", 224)
     drop_path_rate = kwargs.pop("drop_path_rate", 0.2)
-    model_path = kwargs.pop("model_path", "/tmp/faster_vit_1.pth.tar")
     hat = kwargs.pop("hat", [False, False, True, False])
-    
     model = FasterViT(depths=depths,
                       num_heads=num_heads,
                       window_size=window_size,
@@ -909,16 +895,13 @@ def faster_vit_1_224(pretrained=False, **kwargs):
                       resolution=resolution,
                       drop_path_rate=drop_path_rate,
                       hat=hat,
+                      num_classes=num_classes,
                       **kwargs)
-
-    if pretrained:
-        if Path(model_path).is_file():
-            model._load_state_dict(model_path)
     return model
 
 
 @register_model
-def faster_vit_2_224(pretrained=False, **kwargs):
+def faster_vit_2(num_classes=0, **kwargs):
     depths = kwargs.pop("depths", [3, 3, 8, 5])
     num_heads = kwargs.pop("num_heads", [2, 4, 8, 16])
     window_size = kwargs.pop("window_size", [7, 7, 7, 7])
@@ -928,9 +911,7 @@ def faster_vit_2_224(pretrained=False, **kwargs):
     mlp_ratio = kwargs.pop("mlp_ratio", 4)
     resolution = kwargs.pop("resolution", 224)
     drop_path_rate = kwargs.pop("drop_path_rate", 0.2)
-    model_path = kwargs.pop("model_path", "/tmp/faster_vit_2.pth.tar")
     hat = kwargs.pop("hat", [False, False, True, False])
-
     model = FasterViT(depths=depths,
                       num_heads=num_heads,
                       window_size=window_size,
@@ -941,15 +922,13 @@ def faster_vit_2_224(pretrained=False, **kwargs):
                       resolution=resolution,
                       drop_path_rate=drop_path_rate,
                       hat=hat,
+                      num_classes=num_classes,
                       **kwargs)
-    if pretrained:
-        if Path(model_path).is_file():
-            model._load_state_dict(model_path)
     return model
 
 
 @register_model
-def faster_vit_3_224(pretrained=False, **kwargs):
+def faster_vit_3(num_classes=0, **kwargs):
     depths = kwargs.pop("depths", [3, 3, 12, 5])
     num_heads = kwargs.pop("num_heads", [2, 4, 8, 16])
     window_size = kwargs.pop("window_size", [7, 7, 7, 7])
@@ -960,9 +939,7 @@ def faster_vit_3_224(pretrained=False, **kwargs):
     resolution = kwargs.pop("resolution", 224)
     drop_path_rate = kwargs.pop("drop_path_rate", 0.3)
     layer_scale = kwargs.pop("layer_scale", 1e-5)
-    model_path = kwargs.pop("model_path", "/tmp/faster_vit_3.pth.tar")
     hat = kwargs.pop("hat", [False, False, True, False])
-
     model = FasterViT(depths=depths,
                       num_heads=num_heads,
                       window_size=window_size,
@@ -976,15 +953,13 @@ def faster_vit_3_224(pretrained=False, **kwargs):
                       layer_scale_conv=None,
                       do_propagation=True,
                       hat=hat,
+                      num_classes=num_classes,
                       **kwargs)
-    if pretrained:
-        if Path(model_path).is_file():
-            model._load_state_dict(model_path)
     return model
 
 
 @register_model
-def faster_vit_4_224(pretrained=False, **kwargs):
+def faster_vit_4(num_classes=0, **kwargs):
     depths = kwargs.pop("depths", [3, 3, 12, 5])
     num_heads = kwargs.pop("num_heads", [4, 8, 16, 32])
     window_size = kwargs.pop("window_size", [7, 7, 7, 7])
@@ -995,9 +970,7 @@ def faster_vit_4_224(pretrained=False, **kwargs):
     resolution = kwargs.pop("resolution", 224)
     drop_path_rate = kwargs.pop("drop_path_rate", 0.3)
     layer_scale = kwargs.pop("layer_scale", 1e-5)
-    model_path = kwargs.pop("model_path", "/tmp/faster_vit_4.pth.tar")
     hat = kwargs.pop("hat", [False, False, True, False])
-
     model = FasterViT(depths=depths,
                       num_heads=num_heads,
                       window_size=window_size,
@@ -1012,15 +985,13 @@ def faster_vit_4_224(pretrained=False, **kwargs):
                       layer_norm_last=False,
                       do_propagation=True,
                       hat=hat,
+                      num_classes=num_classes,
                       **kwargs)
-    if pretrained:
-        if Path(model_path).is_file():
-            model._load_state_dict(model_path)
     return model
 
 
 @register_model
-def faster_vit_5_224(pretrained=False, **kwargs):
+def faster_vit_5(num_classes=0, **kwargs):
     depths = kwargs.pop("depths", [3, 3, 12, 5])
     num_heads = kwargs.pop("num_heads", [4, 8, 16, 32])
     window_size = kwargs.pop("window_size", [7, 7, 7, 7])
@@ -1031,9 +1002,7 @@ def faster_vit_5_224(pretrained=False, **kwargs):
     resolution = kwargs.pop("resolution", 224)
     drop_path_rate = kwargs.pop("drop_path_rate", 0.3)
     layer_scale = kwargs.pop("layer_scale", 1e-5)
-    model_path = kwargs.pop("model_path", "/tmp/faster_vit_5.pth.tar")
     hat = kwargs.pop("hat", [False, False, True, False])
-
     model = FasterViT(depths=depths,
                       num_heads=num_heads,
                       window_size=window_size,
@@ -1048,15 +1017,13 @@ def faster_vit_5_224(pretrained=False, **kwargs):
                       layer_norm_last=False,
                       do_propagation=True,
                       hat=hat,
+                      num_classes=num_classes,
                       **kwargs)
-    if pretrained:
-        if Path(model_path).is_file():
-            model._load_state_dict(model_path)
     return model
 
 
 @register_model
-def faster_vit_6_224(pretrained=False, **kwargs):
+def faster_vit_6(num_classes=0, **kwargs):
     depths = kwargs.pop("depths", [3, 3, 16, 8])
     num_heads = kwargs.pop("num_heads", [4, 8, 16, 32])
     window_size = kwargs.pop("window_size", [7, 7, 7, 7])
@@ -1067,9 +1034,7 @@ def faster_vit_6_224(pretrained=False, **kwargs):
     resolution = kwargs.pop("resolution", 224)
     drop_path_rate = kwargs.pop("drop_path_rate", 0.5)
     layer_scale = kwargs.pop("layer_scale", 1e-5)
-    model_path = kwargs.pop("model_path", "/tmp/faster_vit_6.pth.tar")
     hat = kwargs.pop("hat", [False, False, True, False])
-
     model = FasterViT(depths=depths,
                       num_heads=num_heads,
                       window_size=window_size,
@@ -1084,231 +1049,63 @@ def faster_vit_6_224(pretrained=False, **kwargs):
                       layer_norm_last=False,
                       do_propagation=True,
                       hat=hat,
+                      num_classes=num_classes,
                       **kwargs)
-    if pretrained:
-        if Path(model_path).is_file():
-            model._load_state_dict(model_path)
     return model
-
-
-@register_model
-def faster_vit_4_21k_224(pretrained=False, **kwargs):
-    depths = kwargs.pop("depths", [3, 3, 12, 5])
-    num_heads = kwargs.pop("num_heads", [4, 8, 16, 32])
-    window_size = kwargs.pop("window_size", [7, 7, 14, 7])
-    ct_size = kwargs.pop("ct_size", 2)
-    dim = kwargs.pop("dim", 196)
-    in_dim = kwargs.pop("in_dim", 64)
-    mlp_ratio = kwargs.pop("mlp_ratio", 4)
-    resolution = kwargs.pop("resolution", 224)
-    drop_path_rate = kwargs.pop("drop_path_rate", 0.42)
-    layer_scale = kwargs.pop("layer_scale", 1e-5)
-    model_path = kwargs.pop("model_path", "/tmp/fastervit_4_21k_224_w14.pth.tar")
-    hat = kwargs.pop("hat", [False, False, False, False])
-
-    model = FasterViT(depths=depths,
-                      num_heads=num_heads,
-                      window_size=window_size,
-                      ct_size=ct_size,
-                      dim=dim,
-                      in_dim=in_dim,
-                      mlp_ratio=mlp_ratio,
-                      resolution=resolution,
-                      drop_path_rate=drop_path_rate,
-                      layer_scale=layer_scale,
-                      layer_scale_conv=None,
-                      layer_norm_last=False,
-                      do_propagation=True,
-                      hat=hat,
-                      **kwargs)
-    if pretrained:
-        if Path(model_path).is_file():
-            model._load_state_dict(model_path)
-    return model
-
-
-@register_model
-def faster_vit_4_21k_384(pretrained=False, **kwargs):
-    depths = kwargs.pop("depths", [3, 3, 12, 5])
-    num_heads = kwargs.pop("num_heads", [4, 8, 16, 32])
-    window_size = kwargs.pop("window_size", [7, 7, 24, 12])
-    ct_size = kwargs.pop("ct_size", 2)
-    dim = kwargs.pop("dim", 196)
-    in_dim = kwargs.pop("in_dim", 64)
-    mlp_ratio = kwargs.pop("mlp_ratio", 4)
-    resolution = kwargs.pop("resolution", 384)
-    drop_path_rate = kwargs.pop("drop_path_rate", 0.42)
-    layer_scale = kwargs.pop("layer_scale", 1e-5)
-    model_path = kwargs.pop("model_path", "/tmp/fastervit_4_21k_384_w24.pth.tar")
-    hat = kwargs.pop("hat", [False, False, False, False])
-
-    model = FasterViT(depths=depths,
-                      num_heads=num_heads,
-                      window_size=window_size,
-                      ct_size=ct_size,
-                      dim=dim,
-                      in_dim=in_dim,
-                      mlp_ratio=mlp_ratio,
-                      resolution=resolution,
-                      drop_path_rate=drop_path_rate,
-                      layer_scale=layer_scale,
-                      layer_scale_conv=None,
-                      layer_norm_last=False,
-                      do_propagation=True,
-                      hat=hat,
-                      **kwargs)
-    if pretrained:
-        if Path(model_path).is_file():
-            model._load_state_dict(model_path)
-    return model
-
-
-@register_model
-def faster_vit_4_21k_512(pretrained=False, **kwargs):
-    depths = kwargs.pop("depths", [3, 3, 12, 5])
-    num_heads = kwargs.pop("num_heads", [4, 8, 16, 32])
-    window_size = kwargs.pop("window_size", [7, 7, 32, 16])
-    ct_size = kwargs.pop("ct_size", 2)
-    dim = kwargs.pop("dim", 196)
-    in_dim = kwargs.pop("in_dim", 64)
-    mlp_ratio = kwargs.pop("mlp_ratio", 4)
-    resolution = kwargs.pop("resolution", 512)
-    drop_path_rate = kwargs.pop("drop_path_rate", 0.42)
-    layer_scale = kwargs.pop("layer_scale", 1e-5)
-    model_path = kwargs.pop("model_path", "/tmp/fastervit_4_21k_512_w32.pth.tar")
-    hat = kwargs.pop("hat", [False, False, False, False])
-
-    model = FasterViT(depths=depths,
-                      num_heads=num_heads,
-                      window_size=window_size,
-                      ct_size=ct_size,
-                      dim=dim,
-                      in_dim=in_dim,
-                      mlp_ratio=mlp_ratio,
-                      resolution=resolution,
-                      drop_path_rate=drop_path_rate,
-                      layer_scale=layer_scale,
-                      layer_scale_conv=None,
-                      layer_norm_last=False,
-                      do_propagation=True,
-                      hat=hat,
-                      **kwargs)
-    if pretrained:
-        if Path(model_path).is_file():
-            model._load_state_dict(model_path)
-    return model
-
-
-@register_model
-def faster_vit_4_21k_768(pretrained=False, **kwargs):
-    depths = kwargs.pop("depths", [3, 3, 12, 5])
-    num_heads = kwargs.pop("num_heads", [4, 8, 16, 32])
-    window_size = kwargs.pop("window_size", [7, 7, 48, 24])
-    ct_size = kwargs.pop("ct_size", 2)
-    dim = kwargs.pop("dim", 196)
-    in_dim = kwargs.pop("in_dim", 64)
-    mlp_ratio = kwargs.pop("mlp_ratio", 4)
-    resolution = kwargs.pop("resolution", 768)
-    drop_path_rate = kwargs.pop("drop_path_rate", 0.42)
-    layer_scale = kwargs.pop("layer_scale", 1e-5)
-    model_path = kwargs.pop("model_path", "/tmp/fastervit_4_21k_768_w48.pth.tar")
-    hat = kwargs.pop("hat", [False, False, False, False])
-
-    model = FasterViT(depths=depths,
-                      num_heads=num_heads,
-                      window_size=window_size,
-                      ct_size=ct_size,
-                      dim=dim,
-                      in_dim=in_dim,
-                      mlp_ratio=mlp_ratio,
-                      resolution=resolution,
-                      drop_path_rate=drop_path_rate,
-                      layer_scale=layer_scale,
-                      layer_scale_conv=None,
-                      layer_norm_last=False,
-                      do_propagation=True,
-                      hat=hat,
-                      **kwargs)
-    if pretrained:
-        if Path(model_path).is_file():
-            model._load_state_dict(model_path)
-    return model
-
 
 if __name__ == '__main__':
-    import torch
-    import copy
-    
-    # 設定測試參數
-    img_h, img_w = 640, 480 # 測試不同尺寸
-    print(f"--- Creating FasterViT-0-224 model (Testing with input {img_h}x{img_w}) ---")
-    
-    # 1. 建立模型
-    try:
-        model = faster_vit_0_224(pretrained=False)
-        print("Model created successfully.")
-    except Exception as e:
-        print(f"Error creating model: {e}")
-        exit(1)
+    # Test FasterViT model creation and forward pass as a backbone
+    print("Testing FasterViT-0 as backbone:")
+    # resolution is important for calculating input_resolution for layers and width_list
+    model_0 = faster_vit_0(resolution=224, in_chans=3, num_classes=0)
+    dummy_tensor = torch.randn(2, 3, 224, 224)
 
-    # 2. 檢查 width_list (這是 YOLO 需要的屬性)
-    print("Calculated width_list:", model.width_list)
+    print(f"Model: {model_0.__class__.__name__}")
+    print(f"Width list: {model_0.width_list}")
 
-    # 3. 測試前向傳播 (Forward Pass)
-    input_tensor = torch.rand(2, 3, img_h, img_w)
-    print(f"\n--- Testing Forward Pass (Input: {input_tensor.shape}) ---")
+    # Test backbone output
+    features_list = model_0(dummy_tensor)
+    print(f"Number of feature maps returned: {len(features_list)}")
+    for i, feat in enumerate(features_list):
+        print(f"Shape of feature map {i+1}: {feat.shape}")
 
-    model.eval()
-    try:
-        with torch.no_grad():
-            # 這裡調用 model(input_tensor)，在修改後的代碼中應返回 list
-            output_features = model(input_tensor)
-        
-        print("Forward pass successful.")
+    # Test FasterViT-1 with a classification head
+    print("\nTesting FasterViT-1 with classification head (example):")
+    model_1_cls = faster_vit_1(resolution=256, in_chans=3, num_classes=100) # Example num_classes
+    dummy_tensor_cls = torch.randn(2, 3, 256, 256)
 
-        # 4. 驗證輸出類型 (解決 'Tensor' has no attribute 'insert' 的關鍵)
-        if isinstance(output_features, list):
-            print("Output type: List (Correct format for YOLO/Detection)")
-        else:
-            print(f"Output type: {type(output_features)} (WARNING: This might cause issues with YOLO)")
+    print(f"Model: {model_1_cls.__class__.__name__}")
+    print(f"Width list: {model_1_cls.width_list}")
 
-        print("Output feature shapes:")
-        runtime_widths = []
-        for i, features in enumerate(output_features):
-            print(f"Stage {i+1}: {features.shape}") # 預期格式: [B, C, H, W]
-            runtime_widths.append(features.shape[1])
+    # To get classification output:
+    class_output = model_1_cls.forward_for_classification(dummy_tensor_cls)
+    print(f"Shape of classification output: {class_output.shape}")
 
-        # 5. 驗證 width_list 與實際輸出是否一致
-        print(f"\nRuntime output channels: {runtime_widths}")
-        
-        # 期望的通道數
-        expected_channels = [64, 128, 256, 512]
-        
-        if runtime_widths == expected_channels:
-            print(f"Channels verified: MATCH {expected_channels}")
-        else:
-            print(f"Channels MISMATCH! Expected {expected_channels}, got {runtime_widths}")
+    # The main forward() will still return features list for backbone usage
+    features_list_1 = model_1_cls(dummy_tensor_cls)
+    print(f"Number of feature maps returned by FasterViT-1 forward(): {len(features_list_1)}")
+    for i, feat in enumerate(features_list_1):
+        print(f"Shape of FasterViT-1 feature map {i+1}: {feat.shape}")
 
-        if model.width_list == runtime_widths:
-            print("Width list verified: MATCH")
-        else:
-            print(f"Width list verified: MISMATCH (Expected {model.width_list}, got {runtime_widths})")
-        
-        # 6. 測試 Deepcopy (Ultralytics 訓練過程會用到)
-        print("\n--- Testing deepcopy ---")
-        copied_model = copy.deepcopy(model)
-        print("Deepcopy successful.")
+    # Example: Simulate Ultralytics accessing specific features (P3, P4, P5 equivalents)
+    # FasterViT has 4 stages. The outputs from stages 2, 3, 4 are typically used.
+    if len(features_list_1) == 4:
+        # NOTE: Ultralytics typically uses features from intermediate layers.
+        # In a 4-stage backbone, this often corresponds to the outputs of stages 2, 3, and 4.
+        # For this model, that would be indices 1, 2, and 3 from the 'features_list'.
+        p3_equivalent = features_list_1[1]
+        p4_equivalent = features_list_1[2]
+        p5_equivalent = features_list_1[3]
+        print(f"\nSimulated access for neck input:")
+        print(f"P3 equivalent shape: {p3_equivalent.shape}")
+        print(f"P4 equivalent shape: {p4_equivalent.shape}")
+        print(f"P5 equivalent shape: {p5_equivalent.shape}")
 
-        # 測試複製後的模型
-        with torch.no_grad():
-             output_copied = copied_model(input_tensor)
-        print("Copied model forward pass successful.")
-        
-        # 簡單驗證複製模型輸出形狀
-        assert len(output_copied) == len(output_features)
-        print("Copied model output shapes verified.")
-
-    except Exception as e:
-        print(f"\nError during testing: {e}")
-        import traceback
-        traceback.print_exc()
+    # Test width_list with different input size
+    print("\nTesting FasterViT-0 with resolution=640:")
+    model_0_large = faster_vit_0(resolution=640, in_chans=3, num_classes=0)
+    dummy_tensor_large = torch.randn(1, 3, 640, 640)
+    print(f"Width list for FasterViT-0 (640): {model_0_large.width_list}")
+    features_large = model_0_large(dummy_tensor_large)
+    for i, feat in enumerate(features_large):
+        print(f"Shape of feature map {i+1} (640 input): {feat.shape}")

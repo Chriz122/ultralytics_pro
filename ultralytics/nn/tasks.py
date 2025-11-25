@@ -850,9 +850,6 @@ from ultralytics.nn.modules import (
     vheat_tiny, 
     vheat_small, 
     vheat_base,
-    vHeat_MoE_t, 
-    vHeat_MoE_s, 
-    vHeat_MoE_b,
     LSNet_T,
     LSNet_S,
     LSNet_B,
@@ -861,10 +858,6 @@ from ultralytics.nn.modules import (
     transxnet_tiny, 
     transxnet_small, 
     transxnet_base,
-    transnext_micro, 
-    transnext_tiny, 
-    transnext_small, 
-    transnext_base,
     parcnetv2_xt, 
     parcnetv2_tiny, 
     parcnetv2_small, 
@@ -905,37 +898,6 @@ from ultralytics.nn.modules import (
     restv2_small, 
     restv2_base, 
     restv2_large,
-    medformer_tiny, 
-    medformer_small, 
-    medformer_base,
-    tiny_vit_5m, 
-    tiny_vit_11m, 
-    tiny_vit_21m,
-    tinyvim_s, 
-    tinyvim_b, 
-    tinyvim_l,
-    mamba_vision_T, 
-    mamba_vision_T2, 
-    mamba_vision_S, 
-    mamba_vision_B, 
-    mamba_vision_L, 
-    mamba_vision_L2,
-    flash_intern_image_t, 
-    flash_intern_image_s, 
-    flash_intern_image_b,
-    dsan_t,
-    dsan_s, 
-    dsan_b,
-    vssd_micro_e300, 
-    vssd_tiny_e300, 
-    vssd_small_e300, 
-    vssd_base_e300,
-    sparx_mamba_t, 
-    sparx_mamba_s, 
-    sparx_mamba_b,
-    groupmamba_tiny,
-    groupmamba_small,
-    groupmamba_base,
     VanillaNet,
     UniRepLKNet,
     OverLoCK,
@@ -996,10 +958,6 @@ from ultralytics.nn.modules import (
     IEMA,
     DASI,
     PST,
-    VSSBlock, 
-    SimpleStem, 
-    VisionClueMerge, 
-    XSSBlock,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -2748,10 +2706,6 @@ def parse_model(d, ch, verbose=True):
             DSConv,
             torch.nn.ConvTranspose2d,
             MFAM,
-            VSSBlock, 
-            SimpleStem, 
-            VisionClueMerge, 
-            XSSBlock,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
@@ -2875,7 +2829,6 @@ def parse_model(d, ch, verbose=True):
             C3k2_DSConv, 
             DSC3k2,
             PST,
-            XSSBlock,
         }
     )
     for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
@@ -3149,14 +3102,11 @@ def parse_model(d, ch, verbose=True):
                    QARepVGGV2_A1, QARepVGGV2_A2, QARepVGGV2_B0, QARepVGGV2_B1, QARepVGGV2_B1g2, QARepVGGV2_B1g4, QARepVGGV2_D2se, identityformer_s12, identityformer_s24, identityformer_s36, 
                    identityformer_m36, identityformer_m48, randformer_s12, randformer_s24, randformer_s36, randformer_m36, randformer_m48, poolformerv2_s12, poolformerv2_s24, poolformerv2_s36, 
                    poolformerv2_m36, poolformerv2_m48, convformer_s18, convformer_s36, convformer_m36, convformer_b36, caformer_s18, caformer_s36, caformer_m36, caformer_b36, iformer_small, 
-                   iformer_base, iformer_large, van_b0, van_b1, van_b2, van_b3, van_b4, van_b5, van_b6, vheat_tiny, vheat_small, vheat_base,  vHeat_MoE_t, vHeat_MoE_s, vHeat_MoE_b, 
-                   RepLKNet31B, RepLKNet31L, RepLKNetXL, LSNet_T, LSNet_S, LSNet_B, StripNet_tiny, StripNet_small, transxnet_tiny, transxnet_small, transxnet_base, parcnetv2_xt, parcnetv2_tiny, 
-                   parcnetv2_small, parcnetv2_base, MALA_T, MALA_S, MALA_B, MALA_L, mpvit_tiny, mpvit_xsmall, mpvit_small, mpvit_base, uninext_t, uninext_s, uninext_b, stvit_small, stvit_base, 
-                   stvit_large, fat_b0, fat_b1, fat_b2, fat_b3, debi_tiny, debi_small, debi_base, maxvit_tiny, maxvit_small, maxvit_base, maxvit_large, scalable_vit_s, scalable_vit_b, scalable_vit_l, 
-                   rest_lite, rest_small, rest_base, rest_large, restv2_tiny, restv2_small, restv2_base, restv2_large, medformer_tiny, medformer_small, medformer_base, tinyvim_s, tinyvim_b, tinyvim_l, 
-                   mamba_vision_T, mamba_vision_T2, mamba_vision_S, mamba_vision_B, mamba_vision_L, mamba_vision_L2, flash_intern_image_t, flash_intern_image_s, flash_intern_image_b, dsan_t, dsan_s, dsan_b,
-                   tiny_vit_5m, tiny_vit_11m, tiny_vit_21m, vssd_micro_e300, vssd_tiny_e300, vssd_small_e300, vssd_base_e300, transnext_micro, transnext_tiny, transnext_small, transnext_base,
-                   sparx_mamba_t, sparx_mamba_s, sparx_mamba_b, groupmamba_tiny, groupmamba_small, groupmamba_base}:
+                   iformer_base, iformer_large, van_b0, van_b1, van_b2, van_b3, van_b4, van_b5, van_b6, vheat_tiny, vheat_small, vheat_base, RepLKNet31B, RepLKNet31L, RepLKNetXL, 
+                   LSNet_T, LSNet_S, LSNet_B, StripNet_tiny, StripNet_small, transxnet_tiny, transxnet_small, transxnet_base, parcnetv2_xt, parcnetv2_tiny, parcnetv2_small, parcnetv2_base, 
+                   MALA_T, MALA_S, MALA_B, MALA_L, mpvit_tiny, mpvit_xsmall, mpvit_small, mpvit_base, uninext_t, uninext_s, uninext_b, stvit_small, stvit_base, stvit_large, fat_b0, fat_b1, 
+                   fat_b2, fat_b3, debi_tiny, debi_small, debi_base, maxvit_tiny, maxvit_small, maxvit_base, maxvit_large, scalable_vit_s, scalable_vit_b, scalable_vit_l, rest_lite, rest_small, 
+                   rest_base, rest_large, restv2_tiny, restv2_small, restv2_base, restv2_large}:
             m = m(*args)
             c2 = m.width_list 
             backbone = True
