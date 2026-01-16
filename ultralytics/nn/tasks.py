@@ -3120,7 +3120,7 @@ def parse_model(d, ch, verbose=True):
         else:
             m_ = torch.nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
             t = str(m)[8:-2].replace('__main__.', '')  # module type
-        m.np = sum(x.numel() for x in m_.parameters())  # number params
+        m_.np = sum(x.numel() for x in m_.parameters())  # number params
         m_.i, m_.f, m_.type = i + 4 if backbone else i, f, t  # attach index, 'from' index, type
 
         # m_ = torch.nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
