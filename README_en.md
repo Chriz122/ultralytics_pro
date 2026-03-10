@@ -5,7 +5,7 @@
 ## User Guide
 
 Supported Version
-- Recommended: `ultralytics==8.3.225`
+- Recommended: `ultralytics==8.4.6`
 - Install additional dependencies:
   ```powershell
   pip install -r requirements.txt
@@ -66,7 +66,8 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov5-EffectiveSE.yaml`           | EffectiveSE (Improved SE Attention)                            | Adds to C3 module, strengthens channel reweighting, low computation cost       | General accuracy improvement                         |
 | `yolov5-GAMAttention.yaml`           | GAMAttention (Global Attention Module) backbone | Enhances global attention mechanism                       | Tasks requiring strong attention mechanisms       |
 | `yolov5-goldyolo.yaml`           |          goldyolo (Integrated Optimization Design) | Integrates multiple improvement strategies, improves AP and speed ratio      | Scenarios seeking overall performance improvement         |
-| `yolov5-hornet-backbone.yaml` / `yolov5-hornet-neck.yaml`           | Hornet (Recursive Gated Convolution) backbone                               | Uses `HorNet` blocks for backbone or neck, improves efficiency and performance   | High-accuracy tasks                     |
+| `yolov5-hornet-backbone.yaml` / `yolov5-hornet-neck.yaml`           | Hornet (Recursive Gated Convolution) backbone                               | Uses HorNet blocks for backbone or neck, improves efficiency and performance   | High-accuracy tasks                     |
+| `yolov5-ihp.yaml`           | IHP (Independent Hierarchy Pyramid) Neck | Replaces FPN/PAN with IHP architecture, reduces feature fusion conflicts and improves multi-scale efficiency | Real-time detection and lightweight tasks |
 | `yolov5-l-mobilenetv3s.yaml` / `yolov5-mobile3s.yaml` / `yolov5-Lite-*` |                   MobileNet / Lite series backbone/variant | Ultra-lightweight, low-compute deployment                   | Mobile/edge deployment                      |
 | `yolov5-LeakyReLU.yaml`           |                         Changes activation to LeakyReLU | More conservative activation choice (beneficial for some convergence)         | Training stability adjustment for some datasets                  |
 | `yolov5-mobile3s.yaml` / `yolov5-mobilv3l.yaml`           |                   MobileNetv3 backbone/variant               | Ultra-lightweight, low-compute deployment                   | Mobile/edge deployment                      |
@@ -80,6 +81,7 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov5-ShuffleAttention.yaml` / `yolov5-Shufflenetv2.yaml`             | ShuffleNetV2 / ShuffleAttention backbone | Enhances channel and spatial attention mechanism                       | Tasks requiring strong attention mechanisms       |
 | `yolov5-SimSPPF.yaml`           | SimSPPF (Simple SPPF) backbone | Simplified SPPF module                       | Tasks requiring efficient feature extraction       |
 | `yolov5-SKAttention.yaml`           |  SKAttention (Selective Kernel Attention) backbone | Enhances selective kernel attention mechanism                       | Scenarios with significant multi-scale/shape variation       |
+| `yolov5-sn2.yaml`           | SN² Architecture                                                     | Enhances multi-scale feature fusion and efficient convolution design, improves small object and complex scene performance                         | Complex backgrounds / Multi-object scenarios / Multi-scale targets / Small objects                      |
 | `yolov5-SPPCSPC.yaml`           | SPPCSPC (SPP + CSP variant) backbone | Combines SPP and CSP, enhances multi-scale pooling and feature representation       | Small object and representation stability improvement               |
 | `yolov5-transformer.yaml`           | Transformer module                                           | Adds `TransformerBlock` at the end of backbone, improves global context modeling | Long-range dependency or complex scenarios             |
 | `yolov5-TripletAttention.yaml`           | TripletAttention backbone | Enhances triplet attention mechanism                       | Tasks requiring strong attention mechanisms       |
@@ -130,6 +132,7 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov7-tiny-RepNCSPELAN.yaml`           |         RepNCSPELAN (Composite Module) backbone | Combines Rep design with NCSPELAN-like optimization  | Balances training representation and inference efficiency         |
 | `yolov7-tiny-rtdetr.yaml`           | RT-DETR head                                        | Replaces detection head with `RTDETRDecoder`, pursuing more stable localization and classification     | Requires high accuracy while providing real-time performance           |
 | `yolov7-tiny-simple.yaml`           |          Simplified YOLOv7-tiny | Reduces parameters and computation, improves speed              | Scenarios requiring ultra-fast inference            |
+| `yolov7-tiny-sn2.yaml`           | SN² Architecture                                                     | Enhances multi-scale feature fusion and efficient convolution design, improves small object and complex scene performance                         | Complex backgrounds / Multi-object scenarios / Multi-scale targets / Small objects                      |
 | `yolov7-u6.yaml`           |        YOLOv7-u6 (Large Scale Input) | Suitable for high-resolution input, improves small object detection         | High-resolution images / small object detection         |
 
 ### YOLOv8 Series
@@ -161,6 +164,7 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov8-C2f-StarNet.yaml` | C2f + StarNet backbone | Combines C2f with StarNet                       | Tasks requiring strong attention mechanisms       |
 | `yolov8-C2f-UniRepLKNetBlock.yaml` | C2f + UniRepLKNetBlock backbone | Combines C2f with UniRepLKNetBlock                       | Tasks requiring efficient feature extraction       |
 | `yolov8-CAConv.yaml` | CAConv (Coordinate Attention Convolution)                        | Integrates coordinate attention, strengthens spatial position and channel relationships             | Fine localization, complex background scenarios               |
+| `yolov8-ChannelAggregationFFN.yaml` | ChannelAggregationFFN backbone | Introduces ChannelAggregationFFN (MogaNet module) for channel feature aggregation and cross-channel interaction, enhancing feature representation and efficiency | Complex scenarios and high-performance object detection tasks |
 | `yolov8-CNeB-neck.yaml` | CNeB-neck (Cross-Stage Network Block) neck                             | Adjusts Neck structure to improve feature fusion or lightweighting               | Scenarios seeking balance between efficiency and accuracy             |
 | `yolov8-CoordAtt.yaml` | CoordAtt (Coordinate Attention)                                     | Adds coordinate attention to C2f module, captures direction and position-sensitive information | Small objects, scenarios where positional information is important               |
 | `yolov8-CPAarch.yaml` | CPAarch (Channel and Position Attention Architecture) backbone | Combines channel and position attention mechanisms                       | Tasks requiring strong attention mechanisms       |
@@ -173,8 +177,10 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov8-DiT-C2f-UIB-FMDI.yaml` | DiT + C2f + UIB (Unified Interaction block) + FMDI (Feature Multi-Dimension Interaction) backbone | Combines multiple modules to enhance representation capability                       | High-accuracy tasks             |
 | `yolov8-ECAAttention.yaml` | ECAAttention (Efficient Channel Attention) backbone | Efficient channel attention mechanism                       | Tasks requiring strong attention mechanisms       |
 | `yolov8-EffectiveSE.yaml` | EffectiveSE (Improved SE Attention)                            | Adds to C3 module, strengthens channel reweighting, low computation cost       | General accuracy improvement                         |
+| `yolov8-Extend.yaml` | Extend（YOLOv8-Extend Improved Architecture） | Integrates GSConv, BiFPN, CBAM and lightweight modules to enhance multi-scale feature fusion and small object detection capability | Complex scenes and small object detection tasks |
 | `yolov8-Faster-Block-CGLU.yaml` | Faster-Block + CGLU (Convolutional Gated Linear Unit) backbone | Combines Faster-Block with CGLU                       | Tasks requiring efficient feature extraction       |
 | `yolov8-Faster-EMA.yaml` | Faster-EMA (Exponential Moving Average) backbone | Combines Faster-Block with EMA                       | Training-deployment integration optimization       |
+| `yolov8-FasterNet.yaml` | FasterNet (High-efficiency backbone) | Enhances feature flow and inference efficiency | Edge devices / Mobile |
 | `yolov8-GAMAttention.yaml` | GAMAttention (Global Attention Module) backbone | Enhances global attention mechanism                       | Tasks requiring strong attention mechanisms       |
 | `yolov8-goldyolo.yaml` | goldyolo (Integrated Optimization Design) | Collection of multiple improvement strategies, improves AP and speed ratio      | Scenarios seeking overall performance improvement         |
 | `yolov8-hornet-backbone.yaml` | Hornet (Recursive Gated Convolution) backbone                               | Uses `HorNet` blocks for backbone or neck, improves efficiency and performance   | High-accuracy tasks                     |
@@ -187,11 +193,14 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov8-Lite-g.yaml` | Lite-g (Lightweight Variant with Ghost Module) backbone | Lightweight variant combined with Ghost module                       | Mobile/edge deployment         |
 | `yolov8-Lite-s.yaml` | Lite-s (Lightweight Small Variant) backbone | Lightweight small variant                       | Mobile/edge deployment         |
 | `yolov8-MHSA.yaml` | MHSA (Multi-Head Self-Attention) backbone | Enhances multi-head self-attention mechanism                       | Tasks requiring strong attention mechanisms       |
+| `yolov8-MLA.yaml` | MLA (Mixed Local Attention module) | Introduces Mixed Local Channel Attention (MLA) into the YOLOv8 backbone to capture both channel and local spatial features, enhancing representation for small objects and complex scenes | Enhances small-object detection and performance in complex scenes |
 | `yolov8-mobile3s.yaml` | Mobile3s backbone | Lightweight MobileNetv3 feature extraction                       | Mobile/edge deployment         |
 | `yolov8-mobileone-backbone.yaml` | MobileOne backbone | Lightweight MobileOne feature extraction                       | Mobile/edge deployment         |
 | `yolov8-MobileOne.yaml` | MobileOne neck | Neck enhancing feature fusion                       | Tasks requiring strong feature fusion       |
 | `yolov8-mobilev3l.yaml` | MobileV3-Large backbone | Lightweight MobileNetv3 Large feature extraction                       | Mobile/edge deployment         |
+| `yolov8-MogaNet.yaml` | MogaNet module | Uses MogaNet's channel-aggregation design to enhance cross-channel feature interaction and efficiency, strengthening representation capability in the YOLOv8 backbone | High-performance, lightweight object detection |
 | `yolov8-MSFM.yaml` | MSFM (Multi-Scale Feature Module) backbone | Module enhancing multi-scale features                       | Tasks requiring multi-scale feature extraction       |
+| `yolov8-MultiOrderGatedAggregation.yaml` | Multi-Order Gated Aggregation module | Introduces a Multi-Order Gated Aggregation mechanism to enhance channel and spatial feature interactions, leveraging multi-order feature sequences and gated learning to improve representation capability | Complex scenes and fine-grained object detection |
 | `yolov8-ODConvNext.yaml` | ODConvNext (Dynamic Convolution Next)                                | Introduces `ODConv`, a dynamic convolution with multi-dimensional learning | Complex feature demand scenarios                     |
 | `yolov8-p2.yaml`、`yolov8-p34.yaml`、`yolov8-p6.yaml`、 `yolov8-p7.yaml` |Adjust output levels (P2/P34/P6/P7 correspond to different pyramid layers)               | Supports larger/smaller scale detection needs (P7 is better for large scale)               | General object detection, specialized for small/medium/large objects                   |
 | `yolov8-PPLCNet.yaml` | PPLCNet (PaddlePaddle Lightweight Network) backbone | Lightweight PPLCNet feature extraction                       | Mobile/edge deployment         |
@@ -207,17 +216,20 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov8-SimAM.yaml` | SimAM (Simple Attention Module) backbone | Simplified attention module                       | Tasks requiring strong attention mechanisms       |
 | `yolov8-SimSPPF.yaml` | SimSPPF (Simple SPPF) backbone | Simplified SPPF module                       | Tasks requiring efficient feature extraction       |
 | `yolov8-SKAttention.yaml` | SKAttention (Selective Kernel Attention) backbone | Enhances selective kernel attention mechanism                       | Scenarios with significant multi-scale/shape variation       |
+| `yolov8-sn2.yaml` | SN² architecture | Enhances multi-scale feature fusion and efficient convolution design, improving performance on small objects and complex scenes | Complex backgrounds / multi-object scenes / multi-scale targets / small objects |
 | `yolov8-SPDConv.yaml` | SPDConv (Spatially Pooled Convolution) backbone | Enhances spatially pooled convolution feature extraction                       | Tasks requiring efficient feature extraction       |
 | `yolov8-SPPCSPC.yaml` | SPPCSPC (SPP + CSP variant) backbone | Combines SPP and CSP, enhances multi-scale pooling and feature representation       | Small object and representation stability improvement               |
 | `yolov8-StripNet-sn2.yaml` | StripNet-sn2 (Strip Backbone Network)                                               | Strip convolution reduces computation, enhances multi-scale feature fusion, maintains lightweight design and improves small object detection capability                         | Mobile / lightweight scenarios / Small objects / Multi-scale targets                       |
 | `yolov8-SwinTransformer.yaml` | Swin Transformer backbone | Transformer enhancing local and global features                       | Tasks requiring strong context understanding capabilities       |
 | `yolov8-TripletAttention.yaml` | TripletAttention backbone | Enhances triplet attention mechanism                       | Tasks requiring strong attention mechanisms       |
 | `yolov8-VanillaNet.yaml` | VanillaNet (Minimalist Network)                                   | Uses `VanillaNet` as backbone, pursues the simplest architecture       | Scenarios requiring easy deployment/debugging             |
+| `yolov8-C2f-UIB-seg.yaml` | C2f + UIB (Unified Instance Boundary) segmentation module | Combines the C2f structure with a UIB segmentation branch to enhance boundary awareness and instance segmentation capability within YOLOv8 | Fine-grained instance segmentation and boundary prediction tasks |
+| `yolov8-MobileViT-seg.yaml` | MobileViT (lightweight backbone network) | Lightweight design, improves efficiency | Mobile / lightweight deployment scenarios |
 
 ### YOLOv9 Series
 | Model Name                                  | Improved Module / Architecture (Summary)                                               | Improvements over Original YOLO                      | Strengths & Application Scenarios                         |
 |------------------------------------------------|---------------------------------------------------------------------:|-----------------------------------------|--------------------------------------|
-| `yolov9*.yaml`           | Standard YOLOv9  | Standard YOLOv9          | General object detection                     |
+| `yolov9*.yaml` / `gelan*.yaml`          | Standard YOLOv9  | Standard YOLOv9          | General object detection                     |
 | `gelan-c-AKConv.yaml`           | AKConv (Adaptive Kernel Convolution)                                   | Replaces standard convolution, improves adaptability to objects of different sizes and shapes     | Small objects or irregularly shaped objects             |
 | `gelan-c-DCNV3RepNCSPELAN4.yaml`           | DCNv3 + RepNCSPELAN (Deformable Convolution + Re-parameterization/Composite Module)                       | Adapts to deformable objects, training-inference trade-off               | Non-rigid objects / complex shapes                 |
 | `gelan-c-DualConv.yaml`           | DualConv (Dual Path Convolution)                                                     | Improves channel/spatial information separation and fusion                 | Complex backgrounds / multi-scale                    |
@@ -256,7 +268,7 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov10n-C2f-SENetV1.yaml`           | SENetV1 (Channel Attention Network V1)                                      | Improves channel feature extraction                            | Complex backgrounds / Multi-scale objects                 |
 | `yolov10n-C2f-SENetV2.yaml`           | SENetV2 (Channel Attention Network V2)                                      | Improves channel feature extraction                            | Complex backgrounds / Multi-scale objects                 |
 | `yolov10n-C2f-Triple.yaml`           | Triple (Multiple Feature Fusion Module)                                      | Enhances multiple feature fusion                            | Complex scenarios / Multi-scale objects                 |
-| `yolov10n-CCFM.yaml`           | CCFM (Cross-Channel Feature Fusion Module)                                 | Improves multi-channel cross-layer fusion, enhances representation quality                   | Complex backgrounds, multi-object scenarios               |
+| `yolov10n-CCFM.yaml`           | CCFM (Cross-Scale Feature Fusion Module)                                 | Improves multi-channel cross-layer fusion, enhances representation quality                   | Complex backgrounds, multi-object scenarios               |
 | `yolov10n-DAT.yaml`           | DAT (Dual Attention Variant)                                                  | Improves feature fusion and background suppression                      | Complex backgrounds / low contrast images               |
 | `yolov10n-DLKA.yaml`           | DLKA (Large Kernel + Deformable Attention)                                              | Expands receptive field, improves performance for distant and irregular objects           | Distant / irregular objects                       |
 | `yolov10n-DynamicConv.yaml`           | DynamicConv (Dynamic Convolution)                                                   | Adaptive convolution for local features                        | Scenarios requiring adaptive local representation                |
@@ -293,10 +305,14 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov11-ASF.yaml`           | ASF (Adaptive Fusion/Attention)                                                  | Improves multi-scale fusion and background suppression                    | Complex backgrounds / Small objects                      |
 | `yolov11-BCN.yaml`           | | BCN (Bidirectional Convolutional Network)                                                | Enhances feature extraction and fusion                          | Complex backgrounds / Multi-scale objects                 |
 | `yolov11-BiFPN.yaml`           | BiFPN (Bidirectional Feature Pyramid Network)                                                | Enhances multi-scale feature fusion                         | Multi-scale object detection                        |
+| `yolov11-C2PSA-Agent.yaml`           | C2PSA (Position-Sensitive Attention) combined with Agent Attention mechanism in the YOLOv11 Backbone enhances channel and spatial attention calculations, making global context modeling more efficient and improving accuracy under high-resolution scenarios | Strengths & Application Scenarios | Complex backgrounds / Multi-object scenes |
 | `yolov11-C2PSA-CGA.yaml`           | C2PSA (Channel-Position Self-Attention) combined with CGA (Channel Guided Attention)                       | Enhances channel and position interaction                       | Complex backgrounds, multi-object scenarios                   |
 | `yolov11-C2PSA-DAT.yaml`           | C2PSA combined with DAT (Dual Attention Transformer)                                   | Combines local and global attention to improve representation capability             | Complex backgrounds, multi-object scenarios                   |
 | `yolov11-C2PSA-DiT-CCFM.yaml` / `yolov11-C2PSA-DiT.yaml`| C2PSA combined with DiT (Dual Transformer) (and CCFM (Cross-Channel Fusion Module)) | Enhances channel/position interaction, improves global context modeling capability | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-C2PSA-KS.yaml` | C2PSA (Position-Sensitive Attention) combined with Kernel Selection (KS) module | Enhances multi-scale receptive field modeling and spatial attention representation | Multi-scale complex scenarios, small object detection |
 | `yolov11-C2PSA-SENetV2-LightHGNetV2-l.yaml` / `yolov11-C2PSA-SENetV2-LightHGNetV2-l-CCFM.yaml`| C2PSA combined with SENetV2 and LightHGNetV2-l (Lightweight Backbone) (and CCFM (Cross-Channel Fusion Module))         | Lightweight design, enhances channel and position interaction               | Mobile / lightweight scenarios                      |
+| `yolov11-C2PSA_HV_LCA.yaml` | C2PSA (Position-Sensitive Attention) + HV-LCA (Horizontal-Vertical Local Channel Attention) module | Enhances direction sensitivity and detail recognition capability | Detection tasks for elongated targets and structured scenes |
+| `yolov11-C2PSA_HV_LCA_DynamicTanh.yaml` / `yolov11-C2PSA_HV_LCA_DynamicTanh-CCFM.yaml` | C2PSA (Position-Sensitive Attention) + HV-LCA + DynamicTanh + CCFM | Strengthens non-linear expression and cross-channel fusion capability | High-precision and multi-scale complex scenes |
 | `yolov11-C3k2-ConvNeXtV2Block-BiFPN.yaml` / `yolov11-C3k2-ConvNeXtV2Block-BiFPN.yaml`| C3k2 (New block) with ConvNeXtV2 Block and BiFPN                      | Improves representation flow and multi-scale fusion                    | Medium-large models requiring stronger representation capability           |
 | `yolov11-C3K2-DiTBlock.yaml` | C3K2 with DiT Block (Dual Transformer Block) | Improves representation flow and global context modeling                | Medium-large models requiring stronger representation capability           |
 | `yolov11-C3k2-FasterBlock-OREPA-v10Detect.yaml` | C3k2 with FasterBlock and OREPA (Re-parameterized Attention) | Improves representation flow and inference efficiency                      | Medium-large models requiring stronger representation capability           |
@@ -305,66 +321,123 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov11-C3k2-UIB-CCFM.yaml` / `yolov11-C3k2-UIB-FMDI.yaml` / `yolov11-C3k2-UIB.yaml` | C3k2 with UIB (Unified Interaction Block)| Improves representation flow and channel/position interaction                  | Medium-large models requiring stronger representation capability           |
 | `yolov11-C3k2-WTConv.yaml` | C3k2 with WTConv (Weighted Convolution)| Improves representation flow and fusion efficiency                      | Medium-large models requiring stronger representation capability           |
 | `yolov11-CAFormer.yaml`    | CAFormer (Channel Attention Transformer)                                           | Combines channel attention and global context modeling               | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-CAS-ViT.yaml` | CAS-ViT (Channel Attention Sparse ViT) module | Enhances global context and channel interaction capabilities | High precision and multi-scale complex scenarios |
 | `yolov11-CCFM.yaml` / `yolov11-CCFM-C2PSA-DAT.yaml` / `yolov11-CCFM-C2PSA-DAT-v10Detect.yaml`| CCFM combined with C2PSA / DAT etc. composite attention                                           | Enhances channel/position interaction and cross-layer fusion                  | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-Conv2Former.yaml` | ConvFormer (Convolution + Transformer Hybrid) | Combines local convolution and global attention | Complex backgrounds / Multi-object scenarios |
 | `yolov11-ConvFormer.yaml`      | ConvFormer (Convolution + Transformer Hybrid)                                       | Combines local convolution and global attention                     | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-ConViT.yaml` | ConViT module | Integrates ConViT (Convolution + Vision Transformer) into YOLOv11, combining convolution and self-attention to capture both local textures and global semantics | Complex scenes and multi-scale object detection tasks |
+| `yolov11-ConvNeXt.yaml` / `yolov11-ConvNeXtv2.yaml` | ConvNeXt (V2) module | Utilizes the modern ConvNeXt (V2) convolutional architecture in YOLOv11 to enhance feature extraction performance and multi-scale feature representation | High precision and multi-scale complex scenarios |
 | `yolov11-COSNet.yaml`          | COSNet (Channel Attention + Spatial Attention)                                         | Combines channel and spatial attention, improves feature representation capability       | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-DeBiFormer.yaml` | DeBiFormer (Decomposed Bi-Level Transformer) module | Enhances global and local attention modeling capabilities, improves semantic expression and detail capture through decomposed bi-level attention | High precision and multi-scale complex scenarios |
 | `yolov11-DecoupleNet.yaml`      | DecoupleNet (Decoupled Head Design)                                                | Separates classification and regression tasks, improves accuracy                  | Scenarios requiring high accuracy                        |
 | `yolov11-DiT-C3k2-UIB-CCFM.yaml` | DiT combined with C3k2, UIB and CCFM                                               | Enhances channel/position interaction and global context modeling             | Complex backgrounds, multi-object scenarios                   |
 | `yolov11-DiT-C3k2-UIB-FMDI-IDetect.yaml` / `yolov11-DiT-C3k2-UIB-FMDI.yaml`  | DiT combined with C3k2, UIB and FMDI (Feature Multi-Scale Bidirectional Interaction)| Enhances channel/position interaction and global context modeling             | Complex backgrounds, multi-object scenarios                   |
 | `yolov11-DiT-C3k2-WTConv-CCFM.yaml` | DiT combined with C3k2, WTConv and CCFM                                               | Enhances channel/position interaction and global context modeling             | Complex backgrounds, multi-object scenarios                   |
 | `yolov11-DiT-CCFM-IDetect.yaml` / `yolov11-DiT-CCFM.yaml`  | DiT combined with CCFM (Cross-Channel Fusion Module)                                | Enhances channel/position interaction and global context modeling             | Complex backgrounds, multi-object scenarios                   |
 | `yolov11-DiT.yaml`               | DiT (Dual Transformer)                                                   | Improves global context modeling capability                       | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-DSAN-CCFM.yaml` | DSAN (Dual-Scale Attention Network) + CCFM module | Enhances multi-scale attention and channel feature interaction | High precision and multi-scale complex scenarios |
 | `yolov11-DySnakeConv.yaml`               | DySnakeConv (Dynamic Snake Convolution)                                               | Improves feature representation and flow capability                       | Complex backgrounds, multi-object scenarios                   |
-| `yolov11-EfficientNet-CCFM-v10Detect.yaml` | EfficientNet combined with CCFM (Cross-Channel Fusion Module)                    | Enhances channel/position interaction and global context modeling             | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-EfficientNet-CCFM-v10Detect.yaml` | EfficientNet combined with CCFM (Cross-Scale Feature Fusion Module)                    | Enhances channel/position interaction and global context modeling             | Complex backgrounds, multi-object scenarios                   |
 | `yolov11-EfficientNet-OREPA-v10Detect.yaml` | EfficientNet combined with OREPA (Re-parameterized Attention)                               | Improves representation flow and inference efficiency                      | Medium-large models requiring stronger representation capability           |
 | `yolov11-EfficientNet.yaml`               | EfficientNet                                                               | Improves representation flow and inference efficiency                      | Medium-large models requiring stronger representation capability           |
-| `yolov11-EfficientViM.yaml` / `yolov11-EfficientViT_MIT.yaml` | EfficientViM / EfficientViT_MIT (Efficient Transformer)                        | Improves global context modeling and efficiency                     | Complex backgrounds, multi-object scenarios                   |
-| `yolov11-EMOv2.yaml`               | EMOv2 (Context-Aware Module)                                                   | Combines context awareness to improve representation capability                     | Complex backgrounds, multi-object scenarios                   |
-| `yolov11-EViT.yaml`               | EViT (Efficient Vision Transformer)                                   | Improves global context modeling and efficiency                     | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-EfficientNetV1.yaml` / `yolov11-EfficientNetV2.yaml`  | EfficientNet V1 / V2 Backbone | Scales width/depth/resolution proportionally to improve feature extraction efficiency and performance | Edge devices / Mobile platforms |
+| `yolov11-EfficientViM.yaml` / `yolov11-EfficientViT_microsoft.yaml` / `yolov11-EfficientViT_MIT.yaml` | EfficientViM / EfficientViT_microsoft (Memory-Efficient Vision Transformer) / EfficientViT_MIT (Efficient Transformer) | Improves global and local feature modeling with more efficient attention design | Lightweight and high performance |
+| `yolov11-EMO.yaml` / `yolov11-EMOv2.yaml`               | EMO(v2) (Context-Aware Module) | Enhances representation capability by integrating context awareness | Complex backgrounds / Multi-object scenarios |
+| `yolov11-EViT.yaml` / `yolov11-EViT-CCFM.yaml`               | EViT (Efficient Vision Transformer) + CCFM | Improves global context modeling and efficiency | Complex backgrounds / Multi-object scenarios |
+| `yolov11-FaNet.yaml` | FaNet (Feature Amplification Network) module | Enhances feature representation and detection performance in complex scenes through spatial context and detail refinement mechanisms | Multi-scale complex scenes, small object detection |
 | `yolov11-FasterNet.yaml`               | FasterNet (High-Efficiency Backbone)                                               | Enhances representation flow and inference efficiency                      | Edge devices / mobile terminals            |
+| `yolov11-FastViT.yaml` | FastViT Backbone | Combines FastViT with convolution and high-speed self-attention structures to enhance global context modeling and computational efficiency | Lightweight and high performance |
+| `yolov11-FAT.yaml` | FAT (Feature Aggregation Transformer) module | Transformer-based feature aggregation mechanism to strengthen global and multi-scale feature interaction | Multi-scale complex scenarios |
+| `yolov11-FDConv.yaml` | FDConv (Frequency-Domain Convolution) module | Utilizes frequency-domain features to enhance spatial detail and texture representation capabilities | High precision and multi-scale complex scenarios |
+| `yolov11-FlashInternImage-CCFM.yaml` | Flash InternImage + CCFM module | Enhances efficient attention computation and channel feature fusion capabilities | High precision and multi-scale complex scenarios |
 | `yolov11-FloraNet.yaml`           | FloraNet (Lightweight Backbone)                                               | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-FMDI.yaml`               | FMDI (Feature Multi-Scale Bidirectional Interaction)                                               | Enhances multi-scale feature fusion                         | Multi-scale object detection                        |
+| `yolov11-FocalNet.yaml` | FocalNet module | Utilizes the FocalNet structure to enhance YOLOv11's attention and local feature modeling capabilities, improving long-range dependencies and detail extraction with Focal Attention | High precision and multi-scale complex scenarios |
+| `yolov11-GCViT.yaml` | GCViT (Global Context Vision Transformer) module | Combines global and local self-attention mechanisms to improve long-range and short-range feature interactions, effectively modeling global context | High precision and multi-scale complex scenarios |
+| `yolov11-GhostNetv1.yaml` / `yolov11-GhostNetv2.yaml` | GhostNet v1 / v2 module | Adopts GhostNet v1 / v2 lightweight networks as YOLOv11 Backbone, using Ghost modules to generate fewer redundant feature maps, improving efficiency and speed | Edge devices / Mobile platforms |
 | `yolov11-GLNet.yaml`             | GLNet (Global-Local Network)                                                | Combines global and local features                         | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-GroupMixFormer.yaml` | GroupMixFormer Backbone module | Introduces the GroupMixFormer architecture to enhance global and local feature interaction capabilities | High precision and multi-scale complex scenarios |
+| `yolov11-GSPN.yaml` | GSPN (Generalized Spatial Propagation Network) module | Introduces the GSPN spatial propagation mechanism to directly model long-range spatial dependencies on 2D feature maps, improving global context modeling efficiency through line-scan propagation | High-resolution and global context object detection |
+| `yolov11-HorNet.yaml` | HorNet Backbone | Adopts HorNet (High-Order Spatial Interaction Network) to model high-order spatial interactions, combining convolution efficiency with long-range dependency modeling capabilities | High precision and multi-scale complex scenarios |
 | `yolov11-hyper.yaml`             | hyper (Hyperparameter or Special Structure Integration)                                              | Model architecture/training strategy adjustment to improve stability            | Specific dataset optimization                         |
 | `yolov11-IdentityFormer.yaml`    | IdentityFormer (Lightweight Transformer)                                      | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-iFormer.yaml`           | iFormer (Hybrid Convolution and Transformer)                                       | Combines local convolution and global attention                     | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-InceptionNext.yaml` | InceptionNeXt Backbone | Introduces the InceptionNeXt large-kernel convolution architecture, enhancing the receptive field while improving computational efficiency | Multi-scale complex scenarios, small object detection |
 | `yolov11-KW_ResNet.yaml`         | KW_ResNet (Key Re-parameterized ResNet)                                            | Improves representation flow and inference efficiency                      | Medium-large models requiring stronger representation capability           |
 | `yolov11-LAE.yaml`               | LAE (Lightweight Attention Enhancement)                                               | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-LAUDNet.yaml`           | LAUDNet (Lightweight Backbone)                                               | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
+| `yolov11-LCA_DynamicTanh_Concat.yaml` | LCA + DynamicTanh Feature Fusion Module | Combines LCA (Local Context Attention) and DynamicTanh activation function, and enhances local context modeling and feature adaptive adjustment capabilities through cross-layer feature fusion using Concat | Multi-scale object detection |
 | `yolov11-LightHGNetV2-l.yaml`    | LightHGNetV2-l (Lightweight Backbone)                                               | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
+| `yolov11-LSKNet.yaml` | LSKNet (Large Selective Kernel Network) Backbone | Introduces the LSKNet large selective kernel architecture, dynamically adjusts the receptive field through the LSK Block and spatial selection mechanism to capture long-range context and enhance small object feature representation | Small object and remote sensing target detection |
 | `yolov11-LSNet.yaml`             | LSNet (Lightweight Backbone)                                               | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
-| `yolov11-Mamba-v10Detect.yaml` / `yolov11-Mamba.yaml`  | Mamba (Multi-Scale Attention Module)                                               | Enhances multi-scale feature fusion                         | Multi-scale object detection                        |
+| `yolov11-LWGANet.yaml` | LWGANet (Light-Weight Group Attention Network) Backbone | Introduces the LWGANet lightweight group attention architecture to enhance multi-scale feature modeling efficiency | Lightweight small object and remote sensing target detection |
+| `yolov11-MAFPN.yaml` | MAFPN (Multi‑Branch Auxiliary Feature Pyramid Network) Neck module | Adopts the MAFPN multi-branch auxiliary pyramid feature fusion design in YOLOv11, using Superficial Assisted Fusion (SAF) to strengthen shallow detail transmission and Advanced Assisted Fusion (AAF) to deepen multi-scale feature fusion, comprehensively combining high/low-level semantics and detail information | Multi-scale complex scenarios |
+| `yolov11-MALA.yaml` | MALA (Magnitude-Aware Linear Attention) module | Introduces MALA magnitude-aware linear attention, maintaining the O(N) computational complexity of Linear Attention while incorporating Query magnitude information, making the attention distribution closer to Softmax Attention and enhancing feature modeling capability | Multi-scale complex scenarios, small object detection |
+| `yolov11-Mamba-v10Detect.yaml` / `yolov11-Mamba.yaml` / `yolov11-MambaOut.yaml`  | Mamba (Multi-Scale Attention Module)                                               | Enhances multi-scale feature fusion                         | Multi-scale object detection                        |
 | `yolov11-MASF.yaml`              | MASF (Multi-Scale Adaptive Feature)                                               | Enhances multi-scale feature fusion                         | Multi-scale object detection                        |
+| `yolov11-MaxViT.yaml` | MaxViT Backbone | Adopts the MaxViT structure to capture both detailed and global context features | Multi-scale complex scene object detection |
 | `yolov11-MLLA.yaml`             | MLLA (Multi-Level Lightweight Attention)                                               | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
-| `yolov11-MobileNetv4.yaml`      | MobileNetv4 (Lightweight Backbone)                                               | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
+| `yolov11-MobileNetv1~4.yaml`      | MobileNetv1~4 (Lightweight Backbone)                                               | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
+| `yolov11-MobileOne.yaml` | MobileOne series Backbone/variant | Ultra-lightweight, low-computation deployment | Mobile devices/Edge deployment |
+| `yolov8-MobileViTv1.yaml` / `yolov8-MobileViTv2.yaml` | MobileViT (Lightweight Backbone Network) | Lightweight design, improves efficiency | Mobile/Lightweight scenarios |
+| `yolov11-MogaNet.yaml` | MogaNet module | Utilizes MogaNet's channel aggregation design to enhance channel feature interaction and efficiency, strengthening representation capability in the YOLOv8 Backbone | High-performance and lightweight object detection |
+| `yolov11-MSPANet.yaml` | MSPANet (Multi-Scale Pyramid Attention Network) Backbone | Introduces MSPANet multi-scale pyramid attention to enhance multi-scale context representation | Complex scenarios/Multi-scale targets |
+| `yolov11-MultiOrderGatedAggregation-CCFM.yaml` | Multi-Order Gated Aggregation module + CCFM module | Introduces Multi-Order Gated Aggregation mechanism to strengthen channel and spatial feature interaction, leveraging multi-order feature sequences and gated learning to improve representation capability | Complex scenarios and fine-grained object detection |
+| `yolov11-NextViT.yaml` | NextViT Backbone | Combines CNN and Transformer components in NextViT to balance local convolution details and global attention modeling, enhancing feature representation | Complex scenarios and fine-grained object detection |
+| `yolov11-NFNet.yaml` | NFNet (Normalizer-Free Network) Backbone | Utilizes NFNet to improve training stability and feature extraction capability | High-resolution and performance-sensitive object detection tasks |
+| `yolov11-OREPA-C2PSA-DAT-v10Detect.yaml` | OREPA (Re-parameterized Attention) + CCFM + C2PSA/DAT composite attention | Strengthens channel/position interaction and cross-layer fusion | Complex backgrounds/Multi-object scenarios |
+| `yolov11-OREPA.yaml` / `yolov11-OREPA-v10Detect.yaml` | OREPA (Re-parameterized Attention) | Improves representation flow and inference efficiency | Medium-large models requiring stronger representation capability |
+| `yolov11-OrthoNet.yaml` | OrthoNet Backbone | Adopts OrthoNet orthogonal convolutional network architecture, using orthogonal filters to enhance feature independence and diversity, improving generalization and detail capture capability | Complex scenarios and fine-grained object detection |
 | `yolov11-OverLoCK.yaml`         | OverLoCK (Cross-Level Attention Module)                                               | Enhances cross-level feature fusion                         | Multi-scale object detection                        |
 | `yolov11-PKINet.yaml`           | PKINet (Position Key Interaction Network)                                               | Enhances position interaction representation                           | Complex backgrounds, multi-object scenarios                   |
-| `yolov11-PoolFormerv2.yaml`    | PoolFormerv2 (Lightweight Pooling Transformer)                                     | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
+| `yolov11-PolaFormer.yaml` | PolaFormer (Polarized Self‑Attention Transformer) Backbone | Adopts PolaFormer, combining polarized attention and Transformer structure to enhance local and global semantic perception and interaction | Complex backgrounds / Multi-object scenarios |
+| `yolov11-PoolFormerv1.yaml` / `yolov11-PoolFormerv2.yaml`    | PoolFormerv1 / v2 (Lightweight Pooling Transformer)                                     | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-pst.yaml`              | PST (Pyramid Sparse Transformer) | Improves multi-scale feature fusion and global context modeling efficiency | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-PVTv2.yaml` | PVTv2 (Pyramid Vision Transformer v2) Backbone module | Adopts the PVTv2 pyramid vision Transformer structure to enhance multi-scale self-attention feature extraction and global context modeling capabilities in YOLOv11 | High precision and multi-scale complex scenarios |
 | `yolov11-QARepVGG.yaml`         | QARepVGG (Quantized Re-parameterized VGG)                                             | Strong training, simplified inference                            | Requires deployment efficiency while maintaining high representation capability            |
 | `yolov11-RandFormer.yaml`       | RandFormer (Random Attention Transformer)                                      | Improves global context modeling and efficiency                     | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-RAVLT.yaml` | RAVLT (Rank-Augmented Vision Linear Transformer) Backbone | Adopts the RAVLT architecture and introduces the RALA (Rank-Augmented Linear Attention) mechanism, improving the rank and representation capability of feature matrices while maintaining the computational efficiency of linear attention, better modeling spatial features and global context | Small object and complex background detection tasks |
+| `yolov11-RDNet.yaml` | RDNet (Revitalized Dense Network) Backbone Module | Adopts the RDNet architecture (improved from DenseNet), enhancing dense concatenation mechanisms and channel expansion strategies to improve feature reuse and representation capability, strengthening multi-layer feature fusion and representation efficiency | Lightweight and high-precision object detection |
+| `yolov11-RepGFPN.yaml` | RepGFPN (Re-parameterized Feature Pyramid Network) | Improves the representation capability of the feature pyramid | Complex scenes / Multi-scale objects |
 | `yolov11-RepLKNet.yaml`         | RepLKNet (Re-parameterized Large Kernel Network)                                             | Strong training, simplified inference                            | Requires deployment efficiency while maintaining high representation capability            |
+| `yolov11-RepVGG.yaml` | RepVGG (Re-parameterized VGG) | Multi-branch during training, merged into a single convolution for inference, balancing accuracy and speed | Scenarios requiring both training accuracy and inference efficiency |
+| `yolov11-RepViT.yaml` | RepViT Backbone | Combines Rep and ViT for feature extraction | Tasks requiring efficient feature extraction |
+| `yolov11-ResNet.yaml` | ResNet Backbone | Enhances feature extraction for classification tasks | Basic object detection |
 | `yolov11-ResNet_MoE.yaml`       | ResNet_MoE (Mixture of Experts)                                               | Improves model capacity and representation capability                       | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-RevCol.yaml` | RevCol (Reversible Column Network) Backbone Module | Adopts the RevCol reversible column network architecture, utilizing multiple column subnetworks and multi-level reversible connections to establish reversible feature transmission. This allows features to gradually decouple within the network while preserving information, enhancing multi-scale feature modeling and memory efficiency | Small object and complex background detection tasks |
 | `yolov11-RFAConv.yaml`          | RFAConv (Re-parameterized Attention Convolution)                                               | Improves representation flow and inference efficiency                      | Medium-large models requiring stronger representation capability           |
+| `yolov11-RMT.yaml` | RMT (Retentive Networks Meet Vision Transformers) Backbone | Adopts the RMT vision Transformer architecture, combining the RetNet retention mechanism with Vision Transformer. Through the spatial decay matrix, it introduces explicit spatial priors and reduces global modeling computation, enhancing long-range feature modeling and global context understanding capabilities | Complex scenarios / Multi-scale targets |
+| `yolov11-SBCFormer.yaml` | SBCFormer (Single-Board-Computer Former) Backbone | Adopts the SBCFormer CNN-ViT hybrid architecture, balancing local and global feature modeling while maintaining low computational cost | Mobile devices / Edge deployment |
 | `yolov11-SFSCNet.yaml`          | SFSCNet (Spatial Frequency Selection Convolution Network)                                           | Improves feature representation and flow capability                       | Complex backgrounds, multi-object scenarios                   |
 | `yolov11-SGFormer.yaml`         | SGFormer (Sparse Global Attention Transformer)                                   | Improves global context modeling and efficiency                     | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-ShuffleNetv2.yaml` | ShuffleNetv2 Backbone | Lightweight ShuffleNetv2 feature extraction | Mobile devices / Edge deployment |
+| `yolov11-SimRepCSP.yaml` | SimRepCSP (Simple Re-parameterized Cross Stage Partial) Backbone | Adopts the SimRepCSP structure, combining CSP (Cross Stage Partial) feature partitioning mechanism with Structural Re-parameterization convolution. During training, multi-branch convolution is used to learn richer features, and during inference, it is merged into a single convolution to reduce computation and improve inference speed | Mobile devices / Edge deployment |
 | `yolov11-SlabPVTv2.yaml`        | SlabPVTv2 (Lightweight Pyramid Vision Transformer)                        | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-SlabSwinTransformer.yaml` | SlabSwinTransformer (Lightweight Swin Transformer)                        | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-SlimNeck.yaml`         | SlimNeck (Lightweight Neck Design)                                               | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-SMT.yaml`              | SMT (Sparse Mixed Transformer)                                               | Improves global context modeling and efficiency                     | Complex backgrounds, multi-object scenarios                   |
+|`yolov11-sn2.yaml`           | SN² Architecture | Enhances multi-scale feature fusion and efficient convolution design, improving performance on small objects and complex scenes | Complex backgrounds / Multi-object scenarios / Multi-scale targets / Small objects |
 | `yolov11-SoftHGNN.yaml`         | SoftHGNN (Soft Hyper Graph Neural Network)                                               | Models high-level semantic relationships and enhances multi-scale feature reallocation and fusion                         | Complex backgrounds, multi-object scenarios                   |
 | `yolov11-SPANet.yaml`           | SPANet (Spatial Attention Network)                                               | Combines spatial attention to improve representation capability                   | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-StarNet.yaml` | StarNet Backbone | Combines StarNet | Tasks requiring strong attention mechanisms |
 | `yolov11-StripMLPNet.yaml`      | StripMLPNet (Strip MLP Network)                                               | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-StripNet-sn2.yaml` | StripNet-sn2 (Strip Backbone Network)                                               | Strip convolution reduces computation, enhances multi-scale feature fusion, maintains lightweight design and improves small object detection capability                         | Mobile / lightweight scenarios / Small objects / Multi-scale targets                       |
-| `yolov11-STViT-CCFM.yaml` | STViT-CCFM (Lightweight Transformer + CCFM) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
+| `yolov11-StripNet.yaml`     | StripNet Backbone | Strip convolution reduces computation, enhances multi-scale feature fusion | Mobile devices / Lightweight scenarios |
+| `yolov11-STViT.yaml` / `yolov11-STViT-CCFM.yaml` | STViT-CCFM (Lightweight Transformer + CCFM) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
+| `yolov11-SwiftFormer.yaml` | SwiftFormer Backbone | Adopts the SwiftFormer lightweight vision Transformer architecture to replace traditional self-attention computation, reducing computational complexity while maintaining global feature modeling capability | Mobile devices / Lightweight scenarios |
+| `yolov11-SwinTransformerv1.yaml` / `yolov11-SwinTransformerv2.yaml` | Swin Transformer v1 / v2 Backbone | Adopts the improved Swin Transformer v1 / v2 architecture to enhance multi-scale feature modeling and global context understanding capabilities | High precision and multi-scale complex scenarios ||
 | `yolov11-TransNeXt.yaml`    | TransNeXt (Aggregated Attention + Convolutional GLU) | Introduces Aggregated Attention to enhance global perception + Convolutional GLU to strengthen local feature modeling   | Complex backgrounds / Multi-object scenes / Multi-scale targets |
 | `yolov11-TransXNet.yaml`    | TransXNet (D‑Mixer + MS-FFN)                         | Dynamically captures global + local features (IDConv + OSRA) + multi-scale fusion to enhance representation capability  | Complex backgrounds / Multi-object scenes / Multi-scale targets |
 | `yolov11-UniNeXt-CCFM.yaml` | UniNeXt-CCFM (Universal Backbone + CCFM)             | High-dimensional feature fusion + local and global feature modeling + consistently improves performance of various STMs | Complex backgrounds / Multi-object scenes / Multi-scale targets |
 | `yolov11-VAN.yaml`              | VAN (Visual Attention Network)                                               | Combines channel attention and global context modeling               | Complex backgrounds, multi-object scenarios                   |
+| `yolov11-VanillaNet.yaml` | VanillaNet (Minimalist Network) | Uses `VanillaNet` as the backbone, pursuing the simplest architecture | Scenarios requiring easy deployment/debugging |
+| `yolov11-VGG.yaml` | VGG (Visual Geometry Group Network) Backbone | Adopts the classic VGG convolutional neural network, utilizing multiple layers of 3×3 convolutions and deep stacking structures to extract image features, enhancing feature representation while maintaining a simple structure | Basic object detection |
 | `yolov11-vHeat.yaml`            | vHeat (Lightweight Backbone)                                               | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-WTConvNeXt.yaml`       | WTConvNeXt (Weighted Convolution + ConvNeXt Hybrid)                                       | Combines local convolution and global attention                     | Complex backgrounds, multi-object scenarios                   |
-| `yolov11-C2PSA-DiT-C3k2-WTConv-CCFM-pose.yaml` | C2PSA-DiT-C3k2-WTConv-CCFM (Lightweight Pose Estimation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
+| `yolov11-DiT-C3k2-WTConv-CCFM-pose.yaml` / `yolov11-C2PSA-DiT-C3k2-WTConv-CCFM-pose.yaml` | C2PSA-DiT-C3k2-WTConv-CCFM (Lightweight Pose Estimation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
+| `yolov11-C2PSA-MSDA-pose.yaml` / `yolov11-C2PSA-MSDA-CCFM-pose.yaml` | C2PSA + MSDA + CCFM (Cross-Scale Feature Fusion Module) Backbone | Adopts C2PSA-MSDA attention structure + CCFM feature fusion to enhance keypoint localization and small object recognition capabilities | Small object detection |
 | `yolov11-CoordConv-BiFPN-pose.yaml` | CoordConv-BiFPN (Lightweight Pose Estimation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
+| `yolov11-C3k2-FasterBlock-C2PSA-SENetV2-CCFM-pose.yaml` | C3k2 + FasterBlock + C2PSA + CCFM | Combines C3k2-FasterBlock with C2PSA-SENetV2 and CCFM feature fusion | High-performance and lightweight object detection |
 | `yolov11-EfficientViM-CCFM-pose.yaml` | EfficientViM-CCFM (Lightweight Pose Estimation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-FasterNet-CCFM-pose.yaml` | FasterNet-CCFM (Lightweight Pose Estimation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-GroupMixFormer-CCFM-pose.yaml` | GroupMixFormer-CCFM (Lightweight Pose Estimation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
@@ -372,9 +445,14 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov11-LightHGNetV2-l-CCFM-pose.yaml` | LightHGNetV2-l-CCFM (Lightweight Pose Estimation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-LSNet-CCFM-pose.yaml` | LSNet-CCFM (Lightweight Pose Estimation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-MobileOne-BiFPN-Lite-g-(i)pose.yaml` | MobileOne-BiFPN-Lite-g (Lightweight Pose Estimation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
+| `yolov11-PartialNet-CCFM-pose.yaml` | PartialNet + CCFM (Cross-Scale Feature Fusion Module) | Combines PartialNet Backbone with CCFM feature fusion mechanism, enhancing multi-scale and detailed feature representation through PartialNet's segmented feature processing and CCFM's cross-channel fusion | Complex backgrounds / Multi-scale targets |
+| `yolov11-SHViT-CCFM-pose.yaml` | SHViT + CCFM module | Enhances feature representation through SHViT's hybrid local and global attention mechanism, combined with CCFM to strengthen cross-channel fusion | Small object detection |
 | `yolov11-SlimNeck-BiFPN-pose.yaml` | SlimNeck-BiFPN (Lightweight Pose Estimation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-SwinTransformer-C2PSA-DAT-pose.yaml` | SwinTransformer-C2PSA-DAT (Lightweight Pose Estimation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-SwinTransformer-DiT-pose.yaml` | SwinTransformer-DiT (Lightweight Pose Estimation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
+| `yolov11-UPA-pose.yaml` | UPA (Upsample‑Anything) module | Combines UPA (Upsample‑Anything_Pytorch) feature upsampling mechanism, using a lightweight upsampling strategy to enhance spatial details of low-resolution features to high-resolution outputs | Scenarios requiring fine-grained features |
+| `yolov11-vHeat_MoE-CCFM-pose.yaml` | vHeat_MoE (Mixture of Experts) + CCFM (Cross-Scale Feature Fusion Module) | Enhances model capacity and representation capability | Complex backgrounds / Multi-object scenarios |
+| `yolov11-C3k2-FasterBlock-seg.yaml` | C3k2 + FasterBlock Backbone | Combines C3k2 with FasterBlock | Tasks requiring efficient feature extraction |
 | `yolov11-C3k2-RepVGG-CCFM-seg.yaml` / `yolov11-C3k2-RepVGG-seg.yaml`| C3k2-RepVGG(-CCFM) (Lightweight Semantic Segmentation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-C3k2-SAConv-seg.yaml` | C3k2-SAConv (Lightweight Semantic Segmentation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
 | `yolov11-C3k2-WTConv-CCFM-seg.yaml` | C3k2-WTConv-CCFM (Lightweight Semantic Segmentation Model) | Lightweight design, improves efficiency                         | Mobile / lightweight scenarios                      |
@@ -387,11 +465,15 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov12-ASF.yaml`           | ASF (Adaptive Fusion/Attention)                                                  | Improves multi-scale fusion and background suppression                    | Complex backgrounds / Small objects                      |
 | `yolov12-CCFM.yaml`           | CCFM (Cross-Channel Feature Fusion Module)                                 | Improves multi-channel cross-layer fusion, enhances representation quality                   | Complex backgrounds, multi-object scenarios               |
 | `yolov12-hyper.yaml`           | hyper (Hyperparameter or Special Structure Integration)                                              | Model architecture/training strategy adjustment to improve stability            | Specific dataset optimization                         |
+| `yolov12-MAFPN.yaml` | MAFPN (Multi‑Branch Auxiliary Feature Pyramid Network) Neck module | Adopts the MAFPN multi-branch auxiliary pyramid feature fusion design in YOLOv12, using Superficial Assisted Fusion (SAF) to strengthen shallow detail transmission and Advanced Assisted Fusion (AAF) to deepen multi-scale feature fusion, comprehensively combining high/low-level semantics and detail information | Multi-scale complex scenarios |
 | `yolov12-ShuffleAttention-CCFM.yaml`           | ShuffleAttention + CCFM                                                   | Lightweight attention enhances channel/position interaction                  | Mobile / lightweight scenarios                      |
+| `yolov12-UniRepLKNet.yaml` | UniRepLKNet (Universal Perception Large‑Kernel ConvNet) Backbone Module | Adopts UniRepLKNet as the YOLOv12 Backbone, utilizing large-kernel convolution design and structural re-parameterization strategy to capture extensive spatial context information while maintaining efficient computation and strong representation capability | Multi-scale complex scenarios |
 | `yolov12-EMOv2-CCFM-pose.yaml`           | EMOv2 + CCFM + pose head                                                  | Combines context awareness and pose estimation                       | Human/animal pose estimation                      |
 | `yolov12-TransXNet-CCFM-pose.yaml`           | TransXNet + CCFM + pose head                                              | Combines Transformer and pose estimation                  | High-accuracy pose estimation                         |
 | `yolov12-MobileNetv4-CCFM-seg.yaml`           | MobileNetv4 + CCFM + segmentation head                                     | Combines lightweight design and semantic segmentation                         | Mobile / semantic segmentation                       |
 | `yolov12-MobileNetv4-ShuffleAttention-seg.yaml` | MobileNetv4 + ShuffleAttention + segmentation head                        | Combines lightweight attention and semantic segmentation                     | Mobile / lightweight semantic segmentation                   |
+| `yolov12-UNetv2-seg.yaml` / `yolov12-UNetv2-CCFM-seg.yaml` | UNetv2 + CCFM | Combines the UNetv2 encoder-decoder structure with the CCFM (Cross-Scale Feature Fusion Module) for cross-channel feature fusion | Complex backgrounds |
+| `yolov12-UNetv2-ShuffleAttention-seg.yaml` | UNetv2 + ShuffleAttention | Combines the UNetv2 encoder-decoder structure with ShuffleAttention lightweight channel/spatial interactive attention, enhancing multi-scale semantic representation and context interaction | Mobile devices / Lightweight semantic segmentation |
 
 ### YOLOv13 Series
 | Model Name                                  | Improved Module / Architecture (Summary)                                               | Improvements over Original YOLO                      | Strengths & Application Scenarios                         |
@@ -399,11 +481,35 @@ This project provides organized and extended ultralytics model configurations an
 | `yolov13.yaml`                                   | Standard YOLOv13                                                   | Standard YOLOv13          | General object detection                     |
 | `yolov13-sn2.yaml`                                | SN² architecture                                                     | Lightweight design, improves efficiency                         | Multi-scale targets / Complex backgrounds / Mobile high-efficiency detection                      |
 
+### YOLO26 Series
+| Model Name                                  | Improved Module / Architecture (Summary)                                               | Improvements over Original YOLO                      | Strengths & Application Scenarios                         |
+|------------------------------------------------|---------------------------------------------------------------------:|-----------------------------------------|--------------------------------------|
+| `yolo26.yaml` / `yolo26-p2.yaml` / `yolo26-p6.yaml` | Adjust output levels (P2/P6 correspond to different pyramid layers) | Supports larger/smaller scale detection needs (P6 is better for large scale) | General object detection, specialized for small/medium/large objects |
+| `yoloe-26.yaml` | YOLOEDetect head | Open-vocabulary object detection model | Suitable for open-vocabulary, general object detection |
+
 ## models directory structure
 ```
 ultralytics_pro\ultralytics\cfg\models
 │  README.md
 │  
+├─26
+│  ├─Classtify
+│  │      yolo26-cls.yaml
+│  │      
+│  ├─Detect
+│  │      yolo26-p2.yaml
+│  │      yolo26-p6.yaml
+│  │      yolo26.yaml
+│  │      yoloe-26.yaml
+│  │      
+│  ├─OBB
+│  ├─Pose
+│  │      yolo26-pose.yaml
+│  │      
+│  └─Segment
+│          yolo26-seg.yaml
+│          yoloe-26-seg.yaml
+│          
 ├─alss-yolo
 │  ├─Detect
 │  │      alss-yolo-m.yaml
@@ -659,16 +765,142 @@ ultralytics_pro\ultralytics\cfg\models
 ├─maf-yolo
 │  ├─Classify
 │  ├─Detect
+│  │      MAF-YOLOv2-lite-n-quick.yaml
 │  │      MAF-YOLOv2-lite-n.yaml
 │  │      MAF-YOLOv2-m.yaml
 │  │      MAF-YOLOv2-n.yaml
+│  │      MAF-YOLOv2-s-C2PSA-SENetV2.yaml
 │  │      MAF-YOLOv2-s-C2PSA.yaml
 │  │      MAF-YOLOv2-s-DiT.yaml
+│  │      MAF-YOLOv2-s-PSA-SENetV2.yaml
 │  │      MAF-YOLOv2-s.yaml
 │  │      
 │  ├─OBB
 │  ├─Pose
+│  │      MAF-YOLOv2-s-pose.yaml
+│  │      
 │  └─Segment
+├─Master
+│  ├─v0
+│  │  ├─Detect
+│  │  │      yolo-master-l.yaml
+│  │  │      yolo-master-m.yaml
+│  │  │      yolo-master-n.yaml
+│  │  │      yolo-master-s.yaml
+│  │  │      yolo-master-x.yaml
+│  │  │      
+│  │  ├─OBB
+│  │  │      yolo-master-obb-l.yaml
+│  │  │      yolo-master-obb-m.yaml
+│  │  │      yolo-master-obb-n.yaml
+│  │  │      yolo-master-obb-s.yaml
+│  │  │      yolo-master-obb-x.yaml
+│  │  │      yolo-master-obb.yaml
+│  │  │      
+│  │  ├─Pose
+│  │  │      yolo-master-pose-l.yaml
+│  │  │      yolo-master-pose-m.yaml
+│  │  │      yolo-master-pose-n.yaml
+│  │  │      yolo-master-pose-s.yaml
+│  │  │      yolo-master-pose-x.yaml
+│  │  │      yolo-master-pose.yaml
+│  │  │      
+│  │  └─Segment
+│  │          yolo-master-seg-l.yaml
+│  │          yolo-master-seg-m.yaml
+│  │          yolo-master-seg-n.yaml
+│  │          yolo-master-seg-s.yaml
+│  │          yolo-master-seg-x.yaml
+│  │          
+│  └─v0_1
+│      ├─Detect
+│      │      yolo-master-l.yaml
+│      │      yolo-master-m.yaml
+│      │      yolo-master-n.yaml
+│      │      yolo-master-s.yaml
+│      │      yolo-master-x.yaml
+│      │      
+│      ├─OBB
+│      │      yolo-master-obb-l.yaml
+│      │      yolo-master-obb-m.yaml
+│      │      yolo-master-obb-n.yaml
+│      │      yolo-master-obb-s.yaml
+│      │      yolo-master-obb-x.yaml
+│      │      yolo-master-obb.yaml
+│      │      
+│      ├─Pose
+│      │      yolo-master-pose-l.yaml
+│      │      yolo-master-pose-m.yaml
+│      │      yolo-master-pose-n.yaml
+│      │      yolo-master-pose-s.yaml
+│      │      yolo-master-pose-x.yaml
+│      │      yolo-master-pose.yaml
+│      │      
+│      └─Segment
+│              yolo-master-seg-l.yaml
+│              yolo-master-seg-m.yaml
+│              yolo-master-seg-n.yaml
+│              yolo-master-seg-s.yaml
+│              yolo-master-seg-x.yaml
+│              yolo-master-seg.yaml
+│              
+├─Other
+│  ├─FasterNet
+│  │  ├─v10
+│  │  ├─v11
+│  │  │  └─Detect
+│  │  ├─v12
+│  │  ├─v5
+│  │  └─v8
+│  │      ├─Detect
+│  │      │      yolov8-FasterNet-L.yaml
+│  │      │      yolov8-FasterNet-M.yaml
+│  │      │      yolov8-FasterNet-S.yaml
+│  │      │      yolov8-FasterNet-T0.yaml
+│  │      │      yolov8-FasterNet-T1.yaml
+│  │      │      yolov8-FasterNet-T2.yaml
+│  │      │      
+│  │      ├─OBB
+│  │      ├─Pose
+│  │      └─Segment
+│  ├─MogaNet
+│  │  └─v8
+│  │      └─Detect
+│  │              yolov8-MogaNet-base.yaml
+│  │              yolov8-MogaNet-large.yaml
+│  │              yolov8-MogaNet-small.yaml
+│  │              yolov8-MogaNet-tiny.yaml
+│  │              yolov8-MogaNet-xlarge.yaml
+│  │              yolov8-MogaNet-xtiny.yaml
+│  │              
+│  ├─ParCNetv2
+│  │  └─v8
+│  │      └─Detect
+│  │              yolov8-ParCNetv2-B.yaml
+│  │              yolov8-ParCNetv2-S.yaml
+│  │              yolov8-ParCNetv2-T.yaml
+│  │              yolov8-ParCNetv2-XT.yaml
+│  │              
+│  ├─PartialNet
+│  │  └─v8
+│  │      └─Detect
+│  │              yolov8-PartialNet-L.yaml
+│  │              yolov8-PartialNet-M.yaml
+│  │              yolov8-PartialNet-S.yaml
+│  │              
+│  ├─StripNet
+│  │  └─v8
+│  │      └─Detect
+│  │              yolov8-StripNet-S.yaml
+│  │              yolov8-StripNet-T.yaml
+│  │              
+│  └─vHeat
+│      └─v8
+│          └─Detect
+│                  yolov8-vHeat-B.yaml
+│                  yolov8-vHeat-S.yaml
+│                  yolov8-vHeat-T.yaml
+│                  
 ├─PicoDet
 │  ├─Detect
 │  │      PicoDet-l.yaml
@@ -914,12 +1146,17 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov11-ASF.yaml
 │  │      yolov11-BCN.yaml
 │  │      yolov11-BiFPN.yaml
+│  │      yolov11-C2PSA-Agent.yaml
 │  │      yolov11-C2PSA-CGA.yaml
 │  │      yolov11-C2PSA-DAT.yaml
 │  │      yolov11-C2PSA-DiT-CCFM.yaml
 │  │      yolov11-C2PSA-DiT.yaml
+│  │      yolov11-C2PSA-KS.yaml
 │  │      yolov11-C2PSA-SENetV2-LightHGNetV2-l-CCFM.yaml
 │  │      yolov11-C2PSA-SENetV2-LightHGNetV2-l.yaml
+│  │      yolov11-C2PSA_HV_LCA.yaml
+│  │      yolov11-C2PSA_HV_LCA_DynamicTanh-CCFM.yaml
+│  │      yolov11-C2PSA_HV_LCA_DynamicTanh.yaml
 │  │      yolov11-C3k2-ConvNeXtV2Block-BiFPN.yaml
 │  │      yolov11-C3K2-DiTBlock.yaml
 │  │      yolov11-C3k2-FasterBlock-OREPA-v10Detect.yaml
@@ -932,11 +1169,17 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov11-C3k2-UIB.yaml
 │  │      yolov11-C3k2-WTConv.yaml
 │  │      yolov11-CAFormer.yaml
+│  │      yolov11-CAS-ViT.yaml
 │  │      yolov11-CCFM-C2PSA-DAT-v10Detect.yaml
 │  │      yolov11-CCFM-C2PSA-DAT.yaml
 │  │      yolov11-CCFM.yaml
+│  │      yolov11-Conv2Former.yaml
 │  │      yolov11-ConvFormer.yaml
+│  │      yolov11-ConViT.yaml
+│  │      yolov11-ConvNeXt.yaml
+│  │      yolov11-ConvNeXtv2.yaml
 │  │      yolov11-COSNet.yaml
+│  │      yolov11-DeBiFormer.yaml
 │  │      yolov11-DecoupleNet.yaml
 │  │      yolov11-DiT-C3k2-UIB-CCFM.yaml
 │  │      yolov11-DiT-C3k2-UIB-FMDI-IDetect.yaml
@@ -945,60 +1188,120 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov11-DiT-CCFM-IDetect.yaml
 │  │      yolov11-DiT-CCFM.yaml
 │  │      yolov11-DiT.yaml
+│  │      yolov11-DSAN-CCFM.yaml
 │  │      yolov11-DySnakeConv.yaml
 │  │      yolov11-EfficientNet-CCFM-v10Detect.yaml
 │  │      yolov11-EfficientNet-OREPA-v10Detect.yaml
 │  │      yolov11-EfficientNet.yaml
+│  │      yolov11-EfficientNetV1.yaml
+│  │      yolov11-EfficientNetV2.yaml
 │  │      yolov11-EfficientViM.yaml
+│  │      yolov11-EfficientViT_microsoft.yaml
 │  │      yolov11-EfficientViT_MIT.yaml
+│  │      yolov11-EMO.yaml
 │  │      yolov11-EMOv2.yaml
+│  │      yolov11-EViT-CCFM.yaml
 │  │      yolov11-EViT.yaml
+│  │      yolov11-FaNet.yaml
 │  │      yolov11-FasterNet.yaml
+│  │      yolov11-FastViT.yaml
+│  │      yolov11-FAT.yaml
+│  │      yolov11-FDConv.yaml
+│  │      yolov11-FlashInternImage-CCFM.yaml
 │  │      yolov11-FloraNet.yaml
 │  │      yolov11-FMDI.yaml
+│  │      yolov11-FocalNet.yaml
+│  │      yolov11-GCViT.yaml
+│  │      yolov11-GhostNetv1.yaml
+│  │      yolov11-GhostNetv2.yaml
 │  │      yolov11-GLNet.yaml
+│  │      yolov11-GroupMixFormer.yaml
+│  │      yolov11-GSPN.yaml
+│  │      yolov11-HorNet.yaml
 │  │      yolov11-hyper.yaml
 │  │      yolov11-IdentityFormer.yaml
 │  │      yolov11-iFormer.yaml
+│  │      yolov11-InceptionNext.yaml
 │  │      yolov11-KW_ResNet.yaml
 │  │      yolov11-LAE.yaml
 │  │      yolov11-LAUDNet.yaml
+│  │      yolov11-LCA_DynamicTanh_Concat.yaml
 │  │      yolov11-LightHGNetV2-l.yaml
+│  │      yolov11-LSKNet.yaml
 │  │      yolov11-LSNet.yaml
+│  │      yolov11-LWGANet.yaml
+│  │      yolov11-MAFPN.yaml
+│  │      yolov11-MALA.yaml
 │  │      yolov11-Mamba-v10Detect.yaml
 │  │      yolov11-Mamba.yaml
+│  │      yolov11-MambaOut.yaml
 │  │      yolov11-MASF.yaml
+│  │      yolov11-MaxViT.yaml
 │  │      yolov11-MLLA.yaml
+│  │      yolov11-MobileNetv1.yaml
+│  │      yolov11-MobileNetv2.yaml
+│  │      yolov11-MobileNetv3.yaml
 │  │      yolov11-MobileNetv4.yaml
+│  │      yolov11-MobileOne.yaml
+│  │      yolov11-MobileViTv1.yaml
+│  │      yolov11-MobileViTv2.yaml
+│  │      yolov11-MogaNet.yaml
+│  │      yolov11-MSPANet.yaml
+│  │      yolov11-MultiOrderGatedAggregation-CCFM.yaml
+│  │      yolov11-NextViT.yaml
+│  │      yolov11-NFNet.yaml
 │  │      yolov11-OREPA-C2PSA-DAT-v10Detect.yaml
 │  │      yolov11-OREPA-v10Detect.yaml
 │  │      yolov11-OREPA.yaml
+│  │      yolov11-OrthoNet.yaml
 │  │      yolov11-OverLoCK.yaml
 │  │      yolov11-PKINet.yaml
+│  │      yolov11-PolaFormer.yaml
+│  │      yolov11-PoolFormer.yaml
 │  │      yolov11-PoolFormerv2.yaml
 │  │      yolov11-pst.yaml
+│  │      yolov11-PVTv2.yaml
 │  │      yolov11-QARepVGG.yaml
 │  │      yolov11-RandFormer.yaml
+│  │      yolov11-RAVLT.yaml
+│  │      yolov11-RDNet.yaml
 │  │      yolov11-RepGFPN.yaml
 │  │      yolov11-RepLKNet.yaml
+│  │      yolov11-RepVGG.yaml
+│  │      yolov11-RepViT.yaml
+│  │      yolov11-ResNet.yaml
 │  │      yolov11-ResNet_MoE.yaml
+│  │      yolov11-RevCol.yaml
 │  │      yolov11-RFAConv.yaml
 │  │      yolov11-RGBIR.yaml
+│  │      yolov11-RMT.yaml
+│  │      yolov11-SBCFormer.yaml
 │  │      yolov11-SFSCNet.yaml
 │  │      yolov11-SGFormer.yaml
+│  │      yolov11-ShuffleNetv2.yaml
+│  │      yolov11-SimRepCSP.yaml
 │  │      yolov11-SlabPVTv2.yaml
 │  │      yolov11-SlabSwinTransformer.yaml
 │  │      yolov11-SlimNeck.yaml
 │  │      yolov11-SMT.yaml
+│  │      yolov11-sn2.yaml
 │  │      yolov11-SoftHGNN.yaml
 │  │      yolov11-SPANet.yaml
+│  │      yolov11-StarNet.yaml
 │  │      yolov11-StripMLPNet.yaml
 │  │      yolov11-StripNet-sn2.yaml
+│  │      yolov11-StripNet.yaml
 │  │      yolov11-STViT-CCFM.yaml
+│  │      yolov11-STViT.yaml
+│  │      yolov11-SwiftFormer.yaml
+│  │      yolov11-SwinTransformerv1.yaml
+│  │      yolov11-SwinTransformerv2.yaml
 │  │      yolov11-TransNeXt.yaml
 │  │      yolov11-TransXNet.yaml
 │  │      yolov11-UniNeXt-CCFM.yaml
 │  │      yolov11-VAN.yaml
+│  │      yolov11-VanillaNet.yaml
+│  │      yolov11-VGG.yaml
 │  │      yolov11-vHeat.yaml
 │  │      yolov11-WTConvNeXt.yaml
 │  │      yolov11.yaml
@@ -1010,11 +1313,16 @@ ultralytics_pro\ultralytics\cfg\models
 │  ├─Pose
 │  │      yolov11-BiFPN-pose.yaml
 │  │      yolov11-C2PSA-DiT-C3k2-WTConv-CCFM-pose.yaml
+│  │      yolov11-C2PSA-MSDA-CCFM-pose.yaml
+│  │      yolov11-C2PSA-MSDA-pose.yaml
 │  │      yolov11-C3k2-ConvNeXtV2Block-BiFPN-pose.yaml
+│  │      yolov11-C3k2-FasterBlock-C2PSA-SENetV2-CCFM-pose.yaml
 │  │      yolov11-CCFM-C2PSA-DAT-pose.yaml
 │  │      yolov11-CCFM-pose.yaml
 │  │      yolov11-CoordConv-BiFPN-pose.yaml
+│  │      yolov11-DiT-C3k2-WTConv-CCFM-pose.yaml
 │  │      yolov11-EfficientViM-CCFM-pose.yaml
+│  │      yolov11-EfficientViT-Microsoft-CCFM-pose.yaml
 │  │      yolov11-FasterNet-CCFM.yaml
 │  │      yolov11-GroupMixFormer-pose.yaml
 │  │      yolov11-GSConv-BiFPN-pose.yaml
@@ -1024,22 +1332,34 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov11-LWGANet-CCFM-pose.yaml
 │  │      yolov11-MobileOne-BiFPN-Lite-g-ipose.yaml
 │  │      yolov11-MobileOne-BiFPN-Lite-g-pose.yaml
+│  │      yolov11-PartialNet-CCFM-pose.yaml
 │  │      yolov11-pose.yaml
+│  │      yolov11-SBCFormer-CCFM-pose.yaml
+│  │      yolov11-ShuffleNetV2-pose.yaml
+│  │      yolov11-SHViT-CCFM-pose.yaml
 │  │      yolov11-SlimNeck-BiFPN-pose.yaml
 │  │      yolov11-SwinTransformer-C2PSA-DAT-pose.yaml
 │  │      yolov11-SwinTransformer-DiT-pose.yaml
+│  │      yolov11-UPA-pose.yaml
+│  │      yolov11-vHeat_MoE-CCFM-pose.yaml
 │  │      
 │  └─Segment
 │          yoloe-v11-seg.yaml
+│          yolov11-C3k2-FasterBlock-seg.yaml
 │          yolov11-C3k2-RepVGG-CCFM-seg.yaml
 │          yolov11-C3k2-RepVGG-seg.yaml
 │          yolov11-C3k2-SAConv-seg.yaml
 │          yolov11-C3k2-WTConv-CCFM-seg.yaml
 │          yolov11-C3k2-WTConv-seg.yaml
 │          yolov11-CCFM-seg.yaml
+│          yolov11-ConvNeXtv2-seg.yaml
+│          yolov11-EfficientNetV2-seg.yaml
+│          yolov11-GhostNetv2-seg.yaml
 │          yolov11-Haar-seg.yaml
 │          yolov11-hyper-seg.yaml
 │          yolov11-LightHGNetV2-l-seg.yaml
+│          yolov11-MobileNetv4-seg.yaml
+│          yolov11-MobileViTv2-seg.yaml
 │          yolov11-seg.yaml
 │          yolov11-WTConvNeXt-seg.yaml
 │          
@@ -1051,7 +1371,9 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov12-ASF.yaml
 │  │      yolov12-CCFM.yaml
 │  │      yolov12-hyper.yaml
+│  │      yolov12-MAFPN.yaml
 │  │      yolov12-ShuffleAttention-CCFM.yaml
+│  │      yolov12-UniRepLKNet.yaml
 │  │      yolov12.yaml
 │  │      
 │  ├─OBB
@@ -1064,11 +1386,17 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov12-TransXNet-CCFM-pose.yaml
 │  │      
 │  └─Segment
+│          yolov12-ASF-seg.yaml
 │          yolov12-CCFM-seg.yaml
+│          yolov12-EfficientViT_MIT-CCFM-seg.yaml
+│          yolov12-hyper-seg.yaml
 │          yolov12-MobiloeNetv4-CCFM-seg.yaml
 │          yolov12-MobiloeNetv4-ShuffleAttention-seg.yaml
 │          yolov12-seg.yaml
 │          yolov12-ShuffleAttention-CCFM-seg.yaml
+│          yolov12-UNetv2-CCFM-seg.yaml
+│          yolov12-UNetv2-seg.yaml
+│          yolov12-UNetv2-ShuffleAttention-seg.yaml
 │          
 ├─v13
 │  ├─Detect
@@ -1080,7 +1408,6 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov13-pose.yaml
 │  │      
 │  └─Segment
-├─v14
 ├─v3
 │  ├─Classify
 │  │      yolov3-cls.yaml
@@ -1176,6 +1503,7 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov5-goldyolo.yaml
 │  │      yolov5-hornet-backbone.yaml
 │  │      yolov5-hornet-neck.yaml
+│  │      yolov5-ihp.yaml
 │  │      yolov5-l-mobilenetv3s.yaml
 │  │      yolov5-LeakyReLU.yaml
 │  │      yolov5-Lite-c.yaml
@@ -1205,6 +1533,7 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov5-Shufflenetv2.yaml
 │  │      yolov5-SimSPPF.yaml
 │  │      yolov5-SKAttention.yaml
+│  │      yolov5-sn2.yaml
 │  │      yolov5-SPPCSPC.yaml
 │  │      yolov5-transformer.yaml
 │  │      yolov5-TripletAttention.yaml
@@ -1497,6 +1826,7 @@ ultralytics_pro\ultralytics\cfg\models
 │  │  │  yolov7-tiny-rtdetr.yaml
 │  │  │  yolov7-tiny-SiLU.yaml
 │  │  │  yolov7-tiny-simple.yaml
+│  │  │  yolov7-tiny-sn2.yaml
 │  │  │  yolov7-tiny.yaml
 │  │  │  yolov7-w6.yaml
 │  │  │  yolov7-x-rtdetr.yaml
@@ -1720,6 +2050,7 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov8-C2f-StarNet.yaml
 │  │      yolov8-C2f-UniRepLKNetBlock.yaml
 │  │      yolov8-CAConv.yaml
+│  │      yolov8-ChannelAggregationFFN.yaml
 │  │      yolov8-CNeB-neck.yaml
 │  │      yolov8-CoordAtt.yaml
 │  │      yolov8-CPAarch.yaml
@@ -1732,8 +2063,10 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov8-DiT-C2f-UIB-FMDI.yaml
 │  │      yolov8-ECAAttention.yaml
 │  │      yolov8-EffectiveSE.yaml
+│  │      yolov8-Extend.yaml
 │  │      yolov8-Faster-Block-CGLU.yaml
 │  │      yolov8-Faster-EMA.yaml
+│  │      yolov8-FasterNet.yaml
 │  │      yolov8-GAMAttention.yaml
 │  │      yolov8-goldyolo.yaml
 │  │      yolov8-hornet-backbone.yaml
@@ -1746,11 +2079,14 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov8-Lite-g.yaml
 │  │      yolov8-Lite-s.yaml
 │  │      yolov8-MHSA.yaml
+│  │      yolov8-MLA.yaml
 │  │      yolov8-mobile3s.yaml
 │  │      yolov8-mobileone-backbone.yaml
 │  │      yolov8-MobileOne.yaml
 │  │      yolov8-mobilev3l.yaml
+│  │      yolov8-MogaNet.yaml
 │  │      yolov8-MSFM.yaml
+│  │      yolov8-MultiOrderGatedAggregation.yaml
 │  │      yolov8-ODConvNext.yaml
 │  │      yolov8-p2.yaml
 │  │      yolov8-p34.yaml
@@ -1769,6 +2105,7 @@ ultralytics_pro\ultralytics\cfg\models
 │  │      yolov8-SimAM.yaml
 │  │      yolov8-SimSPPF.yaml
 │  │      yolov8-SKAttention.yaml
+│  │      yolov8-sn2.yaml
 │  │      yolov8-SPDConv.yaml
 │  │      yolov8-SPPCSPC.yaml
 │  │      yolov8-StripNet-sn2.yaml
@@ -1873,6 +2210,7 @@ ultralytics_pro\ultralytics\cfg\models
 │          yolov8-AIFI-seg.yaml
 │          yolov8-AKConv-seg.yaml
 │          yolov8-BoT3-seg.yaml
+│          yolov8-C2f-UIB-seg.yaml
 │          yolov8-CAConv-seg.yaml
 │          yolov8-CNeB-neck-seg.yaml
 │          yolov8-CPCA-seg.yaml
@@ -1896,6 +2234,7 @@ ultralytics_pro\ultralytics\cfg\models
 │          yolov8-mobileone-backbone-seg.yaml
 │          yolov8-MobileOne-seg.yaml
 │          yolov8-mobilev3l-seg.yaml
+│          yolov8-MobileViT-seg.yaml
 │          yolov8-PPLCNet-seg.yaml
 │          yolov8-RepNCSPELAN.yaml
 │          yolov8-RepVGG-A1-backbone-seg.yaml
@@ -1931,6 +2270,7 @@ ultralytics_pro\ultralytics\cfg\models
 │  │  │  gelan-c.yaml
 │  │  │  gelan-e.yaml
 │  │  │  gelan-m.yaml
+│  │  │  gelan-dual-backbone.yaml
 │  │  │  gelan-s-DySnakeRepNCSPELAN.yaml
 │  │  │  gelan-s-FasterRepNCSPELAN.yaml
 │  │  │  gelan-s.yaml
@@ -2007,6 +2347,19 @@ ultralytics_pro\ultralytics\cfg\models
 │              yolov9-e-seg.yaml
 │              yolov9-seg.yaml
 │              
+├─Vajrav1
+│  ├─Detect
+│  │      Vajrav1-l.yaml
+│  │      Vajrav1-m.yaml
+│  │      Vajrav1-n.yaml
+│  │      Vajrav1-s.yaml
+│  │      
+│  └─Pose
+│          Vajrav1-l.yaml
+│          Vajrav1-m.yaml
+│          Vajrav1-n.yaml
+│          Vajrav1-s-pose.yaml
+│          
 ├─X
 │  ├─Detect
 │  │      yoloX-l-lite-c.yaml
@@ -2131,10 +2484,12 @@ ultralytics_pro\ultralytics\cfg\models
 │      
 └─yoloe
     ├─Detect
+    │      yoloe-26.yaml
     │      yoloe-v11.yaml
     │      yoloe-v8.yaml
     │      
     └─Segment
+            yoloe-26-seg.yaml
             yoloe-v11-seg.yaml
             yoloe-v8-seg.yaml
             

@@ -77,5 +77,5 @@ head:
    [-1, 1, RepNCSPELAN4, [256, 256, 128, 3]],  # 21 (P5/32-large)
 
    # detect
-   [[15, 18, 21], 1, Pose, [nc, kpt_shape]],  # DDetect(P3, P4, P5)
+   [[15, 18, 21], 1, Pose, [nc, kpt_shape]],  # Pose(P3, P4, P5)
   ]

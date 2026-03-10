@@ -18,6 +18,14 @@ Examples:
 """
 
 from .block import (
+    C3k2_Dynamic,
+    C3k2UltraPro,
+    C3k2MA,
+    C3k2MA_Lite,
+    C2f_LSKA,
+    WaveC2f,
+    DyC2f,
+    A3C2f,
     MP,
     SP,
     C1,
@@ -59,6 +67,7 @@ from .block import (
     SCDown,
     RepNCSPELAN4_low,
     RepNCSPELAN4_high,
+    SPPCSP,
     SPPCSPC,
     SPPFCSPC,
     DepthSepConv,
@@ -257,25 +266,25 @@ from .head import (
     OBB,
     MAFOBB,
     IOBB,
-    DOBB,
+    OBB26,
     Classify,
     Detect,
     MAFDetect,
     IDetect,
-    DDetect,
     LRPCHead,
     Pose,
     MAFPose,
     IPose,
-    DPose,
+    Pose26,
     RTDETRDecoder,
     Segment,
     MAFSegment,
     ISegment,
-    DSegment,
+    Segment26,
     WorldDetect,
     YOLOEDetect,
     YOLOESegment,
+    YOLOESegment26,
     v10Detect,
 )
 from .transformer import (
@@ -368,7 +377,7 @@ from .MobileViTv2 import mobile_vit2_xx_small
 from .EfficientNetV1_backbone import efficient
 from .EfficientNetV2 import efficientnet_v2
 from .GhostNetv1 import Ghostnetv1
-from .GhostNetv2 import GhostNetV2
+from .GhostNetv2 import GhostNetV2, Ghostnetv2
 from .GhostNetv3 import GhostNet_1_0
 from .ConvNeXtV2_backbone import convnextv2_atto, convnextv2_femto, convnext_pico, convnextv2_nano, convnextv2_tiny, convnextv2_base, convnextv2_large, convnextv2_huge
 from .ConvNeXtV1 import convnext_tiny, convnext_small, convnext_base, convnext_large, convnext_xlarge
@@ -377,6 +386,7 @@ from .EfficientViT_MIT import efficientvit_backbone_b0, efficientvit_backbone_b1
 from .RepViT_backbone import repvit_m0_6, repvit_m0_9, repvit_m1_0, repvit_m1_1, repvit_m1_5, repvit_m2_3, RepViT
 from .StarNet_backbone import starnet_s050, starnet_s100, starnet_s150, starnet_s1, starnet_s2, starnet_s3, starnet_s4
 from .FasterNet import fasternet_t0, fasternet_t1, fasternet_t2, fasternet_s, fasternet_m, fasternet_l
+from .GSPN import gspn_tiny, gspn_small, gspn_base
 from .RepLKNet import RepLKNet31B, RepLKNet31L, RepLKNetXL
 from .UniRepLknet import unireplknet_a, unireplknet_f, unireplknet_p, unireplknet_n, unireplknet_t, unireplknet_s, unireplknet_b, unireplknet_l, unireplknet_xl, UniRepLKNet
 from .LSKNet import LSKNET_T, LSKNET_S
@@ -427,11 +437,12 @@ from .SlabPVTv2 import slab_pvt_v2_b0, slab_pvt_v2_b1, slab_pvt_v2_b2, slab_pvt_
 from .Conv2Former import conv2former_n, conv2former_t, conv2former_s, conv2former_b, conv2former_b_22k, conv2former_l
 from .LWGANet import LWGANet_L0_1242_e32_k11_GELU, LWGANet_L1_1242_e64_k11_GELU, LWGANet_L2_1442_e96_k11_ReLU
 from .HorNet import hornet_tiny_7x7, hornet_tiny_gf, hornet_small_7x7, hornet_small_gf, hornet_base_7x7, hornet_base_gf, hornet_base_gf_img384, hornet_large_7x7, hornet_large_gf, hornet_large_gf_img384
-from .EfficientViM import EfficientViM_M1, EfficientViM_M2, EfficientViM_M3, EfficientViM_M4, EfficientViM_M5
+from .EfficientViM import EfficientViM_M1, EfficientViM_M2, EfficientViM_M3, EfficientViM_M4
 from .SHViT import SHViT_S1, SHViT_S2, SHViT_S3, SHViT_S4
 from .CAS_ViT import RCViT_XS, RCViT_S, RCViT_M, RCViT_T
 from .GCViT import gc_vit_xxtiny, gc_vit_xtiny, gc_vit_tiny, gc_vit_tiny2, gc_vit_small, gc_vit_small2, gc_vit_base, gc_vit_large, gc_vit_large_224_21k, gc_vit_large_384_21k, gc_vit_large_512_21k
 from .ConViT import convit_tiny_backbone, convit_small_backbone, convit_base_backbone
+from .DSAN import dsan_t, dsan_s, dsan_b
 from .RepVGG_backbone import RepVGG_A0, RepVGG_A1, RepVGG_A2, RepVGG_B0, RepVGG_B1, RepVGG_B1g2, RepVGG_B1g4, RepVGG_B2, RepVGG_B2g2, RepVGG_B2g4, RepVGG_B3, RepVGG_B3g2, RepVGG_B3g4, RepVGG_D2se, RepVGGBlock
 from .QARepVGG import QARepVGG_A0, QARepVGGV1_A0, QARepVGGV2_A0, QARepVGGV2_A0_d01, QARepVGGV2_A0_DW, QARepVGGV6_A0, QARepVGG_A0_ReLU6, QARepVGGV2_A0_PReLU, QARepVGGV2_A1, QARepVGGV2_A2, QARepVGGV2_B0, QARepVGGV2_B1, QARepVGGV2_B1g2, QARepVGGV2_B1g4, QARepVGGV2_D2se, QARepVGGBlock
 from .DecoupleNet import decouplenet_d0, decouplenet_d1, decouplenet_d2
@@ -453,9 +464,11 @@ from .MetaFormer import identityformer_s12, identityformer_s24, identityformer_s
 from .iFormer import iformer_small, iformer_base, iformer_large
 from .VAN import van_b0, van_b1, van_b2, van_b3, van_b4, van_b5, van_b6
 from .vHeat import vheat_tiny, vheat_small, vheat_base
+from .vHeat_MoE import vHeat_MoE_t, vHeat_MoE_s, vHeat_MoE_b
 from .LSNet import LSNet_T, LSNet_S, LSNet_B
 from .StripNet import StripNet_tiny, StripNet_small
 from .TransXNet import transxnet_tiny, transxnet_small, transxnet_base
+from .TransNeXt import transnext_micro, transnext_tiny, transnext_small, transnext_base
 from .ParCNetV2 import parcnetv2_xt, parcnetv2_tiny, parcnetv2_small, parcnetv2_base
 from .MALA import MALA_T, MALA_S, MALA_B, MALA_L
 from .MPViT import mpvit_tiny, mpvit_xsmall, mpvit_small, mpvit_base
@@ -467,6 +480,17 @@ from .MaxViT import maxvit_tiny, maxvit_small, maxvit_base, maxvit_large
 from .ScalableViT import scalable_vit_s, scalable_vit_b, scalable_vit_l
 from .ResTv1 import rest_lite, rest_small, rest_base, rest_large
 from .ResTv2 import restv2_tiny, restv2_small, restv2_base, restv2_large
+from .MedFormer import medformer_tiny, medformer_small, medformer_base
+from .TinyViT import tiny_vit_5m, tiny_vit_11m, tiny_vit_21m
+from .PartialNet import partialnet_s, partialnet_m, partialnet_l
+# Modular ------------------------------------------------------------
+from .FasterNet_modular import PatchEmbed_Faster, PatchMerging_Faster, FasterNetLayer
+from .PartialNet_modular import Partial_PatchEmbed, Partial_Block, Partial_Downsample 
+from .ParCNetV2_modular import ParCDown, ParCBlock
+from .StripNet_modular import StripDownsample, StripBlock
+from .MogaNet_modular import StackConvPatchEmbed, MogaStage, ConvPatchEmbed
+from .vHeat_modular import vHeatStem, vHeatStage, vHeatDownsample
+# Modular ------------------------------------------------------------
 from .HVI_CIDNet import C2PSA_HV_LCA, C2PSA_HV_LCA_DynamicTanh, LCA_Concat, LCA_DynamicTanh_Concat
 from .MogaNet import C2f_MultiOGA, ChannelAggregationFFN, MultiOrderGatedAggregation
 from .AgentAttention import C2PSA_Agent
@@ -475,8 +499,32 @@ from .FDConv import FDConv
 from .DySnakeConv import DySnakeConv, C3k2_DSConv, DySnakeRepNCSPELAN4
 from .SFSConv import SFS_Conv
 from .F2SoftHG import F2SoftHG, ShapeAlignConv, MergeConv
+from .upsample_anything import UPA 
+from .MambaNeXt import MambaNeXt, IRDCB
+from .moe import OptimizedMOE, OptimizedMOEImproved, MOE, ES_MOE, EfficientSpatialRouterMoE, ModularRouterExpertMoE
+from .vajra import VajraV1MerudandaX, VajraV1AttentionBhag6, VajraV1MerudandaBhag15
+from .FlashInternImage import flash_intern_image_t, flash_intern_image_s, flash_intern_image_b
 
 __all__ = (
+    "C3k2_Dynamic",
+    "C3k2UltraPro",
+    "C3k2MA",
+    "C3k2MA_Lite",
+    "C2f_LSKA",
+    "WaveC2f",
+    "DyC2f",
+    "A3C2f",
+    "OptimizedMOE",
+    "OptimizedMOEImproved",
+    "MOE",
+    "EfficientSpatialRouterMoE",
+    "ModularRouterExpertMoE",
+    "ES_MOE",
+    "OBB26",
+    "Pose26",
+    "Segment26",
+    "YOLOESegment26",
+    
     "MP",
     "SP",
     "Conv",
@@ -553,6 +601,7 @@ __all__ = (
     "PSA",
     "RepConv_v7",
     "ReOrg",
+    "SPPCSP",
     "SPPCSPC",
     "SPPFCSPC",
     "SEBlock", 
@@ -643,10 +692,6 @@ __all__ = (
     "CBLinear",
     "CBFuse", 
     "ADown",
-    "DDetect",
-    "DOBB",
-    "DSegment",
-    "DPose",
     "OREPANBottleneck",
     "OREPANCSP",
     "OREPANCSPELAN4",
@@ -900,6 +945,7 @@ __all__ = (
     "efficientnet_v2",
     "Ghostnetv1",
     "GhostNetV2",
+    "Ghostnetv2",
     "GhostNet_1_0",
     "convnext_tiny", 
     "convnext_small", 
@@ -937,12 +983,15 @@ __all__ = (
     "starnet_s2",
     "starnet_s3",
     "starnet_s4",
-    "fasternet_t0", 
-    "fasternet_t1", 
-    "fasternet_t2", 
-    "fasternet_s", 
-    "fasternet_m", 
+    "fasternet_t0",
+    "fasternet_t1",
+    "fasternet_t2",
+    "fasternet_s",
+    "fasternet_m",
     "fasternet_l",
+    "gspn_tiny",
+    "gspn_small",
+    "gspn_base",
     "RepLKNet31B", 
     "RepLKNet31L", 
     "RepLKNetXL",
@@ -1195,7 +1244,6 @@ __all__ = (
     "EfficientViM_M2", 
     "EfficientViM_M3", 
     "EfficientViM_M4",
-    "EfficientViM_M5",
     "SHViT_S1", 
     "SHViT_S2", 
     "SHViT_S3", 
@@ -1218,6 +1266,9 @@ __all__ = (
     "convit_tiny_backbone", 
     "convit_small_backbone", 
     "convit_base_backbone",
+    "dsan_t",
+    "dsan_s",
+    "dsan_b",
     "RepVGG_A0", 
     "RepVGG_A1",
     "RepVGG_A2", 
@@ -1338,6 +1389,9 @@ __all__ = (
     "vheat_tiny", 
     "vheat_small", 
     "vheat_base",
+    "vHeat_MoE_t", 
+    "vHeat_MoE_s", 
+    "vHeat_MoE_b",
     "LSNet_T", 
     "LSNet_S", 
     "LSNet_B",
@@ -1346,6 +1400,10 @@ __all__ = (
     "transxnet_tiny", 
     "transxnet_small", 
     "transxnet_base",
+    "transnext_micro", 
+    "transnext_tiny", 
+    "transnext_small", 
+    "transnext_base",
     "parcnetv2_xt", 
     "parcnetv2_tiny", 
     "parcnetv2_small", 
@@ -1386,6 +1444,15 @@ __all__ = (
     "restv2_small", 
     "restv2_base", 
     "restv2_large",
+    "medformer_tiny", 
+    "medformer_small", 
+    "medformer_base",
+    "tiny_vit_5m", 
+    "tiny_vit_11m", 
+    "tiny_vit_21m",
+    "partialnet_s", 
+    "partialnet_m", 
+    "partialnet_l",
     "VanillaNet",
     "UniRepLKNet",
     "OverLoCK",
@@ -1447,4 +1514,30 @@ __all__ = (
     "IEMA",
     "DASI",
     "PST",
+    "UPA",
+    "MambaNeXt", 
+    "IRDCB",
+    "VajraV1MerudandaX", 
+    "VajraV1AttentionBhag6", 
+    "VajraV1MerudandaBhag15",
+    
+    "PatchEmbed_Faster",
+    "PatchMerging_Faster", 
+    "FasterNetLayer",
+    "Partial_PatchEmbed",
+    "Partial_Block", 
+    "Partial_Downsample",
+    "ParCDown", 
+    "ParCBlock",
+    "StripDownsample", 
+    "StripBlock",
+    "StackConvPatchEmbed", 
+    "MogaStage", 
+    "ConvPatchEmbed",
+    "vHeatStem", 
+    "vHeatStage", 
+    "vHeatDownsample",
+    "flash_intern_image_t",
+    "flash_intern_image_s",
+    "flash_intern_image_b",
 )

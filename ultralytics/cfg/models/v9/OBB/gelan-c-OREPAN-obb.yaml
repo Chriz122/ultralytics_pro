@@ -76,5 +76,5 @@ head:
    [-1, 1, OREPANCSPELAN4, [512, 512, 256, 1]],  # 21 (P5/32-large)
 
    # detect
-   [[15, 18, 21], 1, OBB, [nc, 1]],  # DDetect(P3, P4, P5)
+   [[15, 18, 21], 1, OBB, [nc, 1]],  # OBB(P3, P4, P5)
   ]

@@ -90,5 +90,5 @@ head:
    [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]],  # 27 (P5/32-large)
 
    # detect
-   [[18, 21, 24, 27], 1, Segment, [nc, 32, 256]],  # DSegment(P2, P3, P4, P5)
+   [[18, 21, 24, 27], 1, Segment, [nc, 32, 256]],  # Segment(P2, P3, P4, P5)
   ]

@@ -1,3 +1,7 @@
+# YOLOv13 🚀, AGPL-3.0 license
+# YOLOv13 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
 nc: 80 # number of classes
 scales: # model compound scaling constants, i.e. 'model=yolov13n.yaml' will call yolov13.yaml with scale 'n'
   # [depth, width, max_channels]
@@ -21,7 +25,7 @@ backbone:
 head:
   - [[4, 6, 8], 2, HyperACE, [512, 8, True, True, 0.5, 1, "both"]]
   - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
-  - [ 9, 1, DownsampleConv, []]
+  - [9, 1, DownsampleConv, []]
   - [[6, 9], 1, FullPAD_Tunnel, []]  #12     
   - [[4, 10], 1, FullPAD_Tunnel, []]  #13    
   - [[8, 11], 1, FullPAD_Tunnel, []] #14 

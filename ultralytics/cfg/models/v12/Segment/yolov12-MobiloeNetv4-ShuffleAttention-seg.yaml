@@ -14,7 +14,7 @@ scales: # model compound scaling constants, i.e. 'model=yolov12n.yaml' will call
 # YOLO12n backbone
 backbone:
   # [from, repeats, module, args]
-  - [-1, 1, MobileNetV4ConvMedium, [0.75]]  # 4
+  - [-1, 1, MobileNetV4HybridMedium, [0.75]]  # 4
 
 # YOLO12n head
 head:

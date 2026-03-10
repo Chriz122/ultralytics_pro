@@ -667,6 +667,7 @@ class MambaVision(nn.Module):
                 self.to('cpu')
                 # 5. 返回在 CPU 上的輸出結果。
                 return output_on_cpu
+                # return output_on_cpu
 
         # 這是正常的執行路徑，此時模型和輸入應該已經在正確的設備上（通常是 CUDA）。
         return self.forward_features(x)

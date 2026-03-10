@@ -4,7 +4,7 @@
 # Parameters
 nc: 1000 # number of classes
 scales:
-  s: [0.50, 0.50, 1024]
+  s: [0.50, 0.50, 1024, 0]
 
 backbone:
   # [from, repeats, module, args]

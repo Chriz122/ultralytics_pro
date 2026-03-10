@@ -6,7 +6,7 @@
 
 ## 基礎框架
 
-### Ultralytics YOLOv8/v11
+### Ultralytics YOLOv8/v11/v13/26
 - **來源**: https://github.com/ultralytics/ultralytics
 - **授權**: AGPL-3.0
 - **版本**: 8.3.24
@@ -56,7 +56,7 @@ Copyright (C) 2023 Ultralytics Inc.
 - **授權**: AGPL-3.0
 - **論文**: YOLOv10: Real-Time End-to-End Object Detection (Tsinghua University, 2024)
 
-### YOLO11/YOLOv13
+### YOLOv8/v11/v13/26
 - **來源**: https://github.com/ultralytics/ultralytics
 - **授權**: AGPL-3.0
 - **作者**: Ultralytics
@@ -190,3 +190,17 @@ Copyright (C) 2023 Ultralytics Inc.
 - **授權**: GPL-3.0
 - **作者**: VincentYuuuuuu
 - **說明**: YOLO 模型變體,專注於目標檢測任務
+
+### YOLO-Master
+- **來源論文**: https://arxiv.org/abs/2512.23273
+- **來源**: https://github.com/Tencent/YOLO-Master
+- **授權**: CC BY 3.0 (Creative Commons Attribution 3.0)
+- **作者**: Xu Lin, Jinlong Peng, Zhenye Gan, Jiawen Zhu, Jun Liu
+- **論文**: YOLO-Master: MOE-Accelerated with Specialized Transformers for Enhanced Real-time Detection.
+- **說明**: 混合專家模型 (MoE)深度整合到 YOLO 架構中
+
+### Vajrav1
+- **授權**: AGPL-3.0
+- **作者**: Naman Makkar
+- **來源**: https://github.com/NamanMakkar/VayuAI
+- **授權**: AGPL-3.0

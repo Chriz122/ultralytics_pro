@@ -5,7 +5,7 @@
 # Parameters
 nc: 80 # number of classes
 scales:
-  n: [0.50, 0.25, 1024]
+  n: [0.50, 0.25, 1024, 0]
 
 backbone:
   - [-1, 1, ResNetLayer, [3, 64, 1, True, 1]] # 0-P1/2

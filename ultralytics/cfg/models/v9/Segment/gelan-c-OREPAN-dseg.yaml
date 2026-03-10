@@ -80,5 +80,5 @@ head:
    [-1, 1, Conv, [256, 3, 1]], # 24
 
    # segment
-   [[15, 18, 21, 24], 1, DSegment, [nc, 32, 256]],  # Segment(P3, P4, P5)
+   [[15, 18, 21, 24], 1, Segment, [nc, 32, 256]],  # Segment(P3, P4, P5)
   ]

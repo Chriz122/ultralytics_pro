@@ -15,9 +15,7 @@ scales: # model compound scaling constants, i.e. 'model=yolo11n.yaml' will call 
 # YOLO11n backbone
 backbone:
   # [from, repeats, module, args]
-  - [-1, 1, decouplenet_d2, []] # 0-4 P1/2 这里是四层大家不要被yaml文件限制住了思维，不会画图进群看视频.
-  # 上面的参数0.75支持大家自由根据v11的 0.25 0.50 0.75 1.00 1.5 进行放缩我只尝试过这几个如果你设置一些比较特殊的数字可能会报错.
-  # 所以本文有至少 5 x 5 = 25种组合方式.
+  - [-1, 1, decouplenet_d0, []] 
   - [-1, 1, SPPF, [1024, 5]] # 5
   - [-1, 2, C2PSA, [1024]] # 6
  

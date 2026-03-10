@@ -69,5 +69,5 @@ head:
    [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]],  # 18 (P4/16-medium)
 
    # detect
-   [[15, 18], 1, DDetect, [nc]],  # DDetect(P3, P4)
+   [[15, 18], 1, Detect, [nc]],  # Detect(P3, P4)
   ]

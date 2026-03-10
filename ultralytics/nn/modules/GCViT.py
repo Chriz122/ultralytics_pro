@@ -541,28 +541,34 @@ class GlobalQueryGen(nn.Module):
             _logger.warning(f"GlobalQueryGen: Unexpected input_resolution {input_resolution} for image_resolution {image_resolution}. Using single FeatExtract(keep_dim=True).")
             self.to_q_global = nn.Sequential(FeatExtract(dim, keep_dim=True))
 
+        # Add adaptive pooling to ensure output is always window_size x window_size
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((ws, ws))
 
         self.num_heads = num_heads
         self.N = ws * ws # Number of tokens in a window, should match global query tokens
         self.dim_head = torch.div(dim, self.num_heads, rounding_mode='floor')
+        self.window_size = ws
 
     def forward(self, x): # x is (B,C,H,W)
         # x should be channel_first for FeatExtract
         x_global = self.to_q_global(x) # (B, C, H_global, W_global)
-        x_global = _to_channel_last(x_global) # (B, H_global, W_global, C)
         
-        B = x_global.shape[0]
-        # H_global, W_global should be equal to self.window_size after FeatExtract
+        # Ensure output is exactly window_size x window_size
+        x_global = self.adaptive_pool(x_global) # (B, C, ws, ws)
+        
+        x_global = _to_channel_last(x_global) # (B, ws, ws, C)
+        
+        B, H_global, W_global, C = x_global.shape
+        
+        # Dynamically calculate dim_head based on actual channel size
+        dim_head_actual = torch.div(C, self.num_heads, rounding_mode='floor')
+        
+        # Now H_global * W_global should equal self.N (window_size * window_size)
         # Reshape to (B, 1, N_tokens_global, num_heads, dim_head) then permute
-        # N_tokens_global = H_global * W_global, should be self.N
         try:
-            q_global = x_global.reshape(B, 1, self.N, self.num_heads, self.dim_head).permute(0, 1, 3, 2, 4)
+            q_global = x_global.reshape(B, 1, self.N, self.num_heads, dim_head_actual).permute(0, 1, 3, 2, 4)
         except RuntimeError as e:
-            _logger.error(f"Error in GlobalQueryGen reshape: {e}. x_global shape: {x_global.shape}, target N: {self.N}, num_heads: {self.num_heads}, dim_head: {self.dim_head}")
-            # Fallback or raise: For now, let it raise to highlight the issue.
-            # This usually means H_global*W_global from to_q_global does not match self.N (window_size*window_size)
-            # Check FeatExtract logic based on input_resolution vs image_resolution.
-            # The target size for global query features should be window_size x window_size.
+            _logger.error(f"Error in GlobalQueryGen reshape: {e}. x_global shape: {x_global.shape}, N: {self.N}, num_heads: {self.num_heads}, dim_head_actual: {dim_head_actual}")
             raise e
         return q_global
 
@@ -748,10 +754,15 @@ class GCViT(nn.Module):
 
 
 def _create_gc_vit(variant, pretrained=False, **kwargs):
-    if kwargs.get('features_only', False): # timm convention
+    # If out_indices is already set in kwargs, respect it
+    # Otherwise, check features_only for timm compatibility
+    if 'out_indices' not in kwargs and kwargs.get('features_only', False):
         out_indices = kwargs.pop('out_indices', (0, 1, 2, 3))
         kwargs['out_indices'] = out_indices
         kwargs['num_classes'] = 0 # Ensure no classification head conflict
+    
+    # Remove features_only if present (it's a timm convention)
+    kwargs.pop('features_only', None)
 
     model = build_model_with_cfg(
         GCViT,
@@ -769,42 +780,48 @@ def _create_gc_vit(variant, pretrained=False, **kwargs):
 @register_model
 def gc_vit_xxtiny(pretrained=False, **kwargs) -> GCViT:
     model_args = dict(depths=[2, 2, 6, 2], num_heads=[2, 4, 8, 16], window_size=[7, 7, 14, 7],
-                      dim=64, mlp_ratio=3, drop_path_rate=kwargs.pop('drop_path_rate', 0.2))
+                      dim=64, mlp_ratio=3, drop_path_rate=kwargs.pop('drop_path_rate', 0.2),
+                      out_indices=(0, 1, 2, 3), num_classes=0)  # Default to feature extraction mode
     model_args.update(kwargs)
     return _create_gc_vit('gc_vit_xxtiny', pretrained=pretrained, **model_args)
 
 @register_model
 def gc_vit_xtiny(pretrained=False, **kwargs) -> GCViT:
     model_args = dict(depths=[3, 4, 6, 5], num_heads=[2, 4, 8, 16], window_size=[7, 7, 14, 7],
-                      dim=64, mlp_ratio=3, drop_path_rate=kwargs.pop('drop_path_rate', 0.2))
+                      dim=64, mlp_ratio=3, drop_path_rate=kwargs.pop('drop_path_rate', 0.2),
+                      out_indices=(0, 1, 2, 3), num_classes=0)  # Default to feature extraction mode
     model_args.update(kwargs)
     return _create_gc_vit('gc_vit_xtiny', pretrained=pretrained, **model_args)
 
 @register_model
 def gc_vit_tiny(pretrained=False, **kwargs) -> GCViT:
     model_args = dict(depths=[3, 4, 19, 5], num_heads=[2, 4, 8, 16], window_size=[7, 7, 14, 7],
-                      dim=64, mlp_ratio=3, drop_path_rate=kwargs.pop('drop_path_rate', 0.2))
+                      dim=64, mlp_ratio=3, drop_path_rate=kwargs.pop('drop_path_rate', 0.2),
+                      out_indices=(0, 1, 2, 3), num_classes=0)  # Default to feature extraction mode
     model_args.update(kwargs)
     return _create_gc_vit('gc_vit_tiny', pretrained=pretrained, **model_args)
 
 @register_model
 def gc_vit_tiny2(pretrained=False, **kwargs) -> GCViT: # Actual name from config seems to be gc_vit_tiny
     model_args = dict(depths=[3, 4, 29, 5], num_heads=[2, 4, 8, 16], window_size=[7, 7, 14, 7],
-                      dim=64, mlp_ratio=3, drop_path_rate=kwargs.pop('drop_path_rate', 0.25))
+                      dim=64, mlp_ratio=3, drop_path_rate=kwargs.pop('drop_path_rate', 0.25),
+                      out_indices=(0, 1, 2, 3), num_classes=0)  # Default to feature extraction mode
     model_args.update(kwargs)
     return _create_gc_vit('gc_vit_tiny2', pretrained=pretrained, **model_args)
 
 @register_model
 def gc_vit_small(pretrained=False, **kwargs) -> GCViT:
     model_args = dict(depths=[3, 4, 19, 5], num_heads=[3, 6, 12, 24], window_size=[7, 7, 14, 7],
-                      dim=96, mlp_ratio=2, drop_path_rate=kwargs.pop('drop_path_rate', 0.3), layer_scale=1e-5)
+                      dim=96, mlp_ratio=2, drop_path_rate=kwargs.pop('drop_path_rate', 0.3), layer_scale=1e-5,
+                      out_indices=(0, 1, 2, 3), num_classes=0)  # Default to feature extraction mode
     model_args.update(kwargs)
     return _create_gc_vit('gc_vit_small', pretrained=pretrained, **model_args)
 
 @register_model
 def gc_vit_small2(pretrained=False, **kwargs) -> GCViT:
     model_args = dict(depths=[3, 4, 23, 5], num_heads=[3, 6, 12, 24], window_size=[7, 7, 14, 7],
-                      dim=96, mlp_ratio=3, drop_path_rate=kwargs.pop('drop_path_rate', 0.35), layer_scale=1e-5)
+                      dim=96, mlp_ratio=3, drop_path_rate=kwargs.pop('drop_path_rate', 0.35), layer_scale=1e-5,
+                      out_indices=(0, 1, 2, 3), num_classes=0)  # Default to feature extraction mode
     model_args.update(kwargs)
     return _create_gc_vit('gc_vit_small2', pretrained=pretrained, **model_args)
 
@@ -812,45 +829,51 @@ def gc_vit_small2(pretrained=False, **kwargs) -> GCViT:
 @register_model
 def gc_vit_base(pretrained=False, **kwargs) -> GCViT:
     model_args = dict(depths=[3, 4, 19, 5], num_heads=[4, 8, 16, 32], window_size=[7, 7, 14, 7],
-                      dim=128, mlp_ratio=2, drop_path_rate=kwargs.pop('drop_path_rate', 0.5), layer_scale=1e-5)
+                      dim=128, mlp_ratio=2, drop_path_rate=kwargs.pop('drop_path_rate', 0.5), layer_scale=1e-5,
+                      out_indices=(0, 1, 2, 3), num_classes=0)  # Default to feature extraction mode
     model_args.update(kwargs)
     return _create_gc_vit('gc_vit_base', pretrained=pretrained, **model_args)
 
 @register_model
 def gc_vit_large(pretrained=False, **kwargs) -> GCViT:
     model_args = dict(depths=[3, 4, 19, 5], num_heads=[6, 12, 24, 48], window_size=[7, 7, 14, 7],
-                      dim=192, mlp_ratio=2, drop_path_rate=kwargs.pop('drop_path_rate', 0.5), layer_scale=1e-5)
+                      dim=192, mlp_ratio=2, drop_path_rate=kwargs.pop('drop_path_rate', 0.5), layer_scale=1e-5,
+                      out_indices=(0, 1, 2, 3), num_classes=0)  # Default to feature extraction mode
     model_args.update(kwargs)
     return _create_gc_vit('gc_vit_large', pretrained=pretrained, **model_args)
 
 @register_model
 def gc_vit_large_224_21k(pretrained=False, **kwargs) -> GCViT:
     model_args = dict(depths=[3, 4, 19, 5], num_heads=[6, 12, 24, 48], window_size=[7, 7, 14, 7],
-                      dim=192, mlp_ratio=2, drop_path_rate=kwargs.pop('drop_path_rate', 0.5), layer_scale=1e-5)
+                      dim=192, mlp_ratio=2, drop_path_rate=kwargs.pop('drop_path_rate', 0.5), layer_scale=1e-5,
+                      out_indices=(0, 1, 2, 3), num_classes=0)  # Default to feature extraction mode
     model_args.update(kwargs)
     # Ensure num_classes is correctly set for 21k pretrained weights if not overridden
-    if pretrained and 'num_classes' not in kwargs:
+    if pretrained and 'num_classes' not in kwargs and kwargs.get('out_indices') is None:
         model_args['num_classes'] = default_cfgs['gc_vit_large_224_21k']['num_classes']
+        model_args.pop('out_indices', None)
     return _create_gc_vit('gc_vit_large_224_21k', pretrained=pretrained, **model_args)
 
 @register_model
 def gc_vit_large_384_21k(pretrained=False, **kwargs) -> GCViT:
     model_args = dict(depths=[3, 4, 19, 5], num_heads=[6, 12, 24, 48], window_size=[12, 12, 24, 12], # Note window size change
                       dim=192, mlp_ratio=2, drop_path_rate=kwargs.pop('drop_path_rate', 0.1), layer_scale=1e-5,
-                      resolution=384) # Pass resolution
+                      resolution=384, out_indices=(0, 1, 2, 3), num_classes=0) # Pass resolution, default to feature extraction mode
     model_args.update(kwargs)
-    if pretrained and 'num_classes' not in kwargs:
+    if pretrained and 'num_classes' not in kwargs and kwargs.get('out_indices') is None:
         model_args['num_classes'] = default_cfgs['gc_vit_large_384_21k']['num_classes']
+        model_args.pop('out_indices', None)
     return _create_gc_vit('gc_vit_large_384_21k', pretrained=pretrained, **model_args)
 
 @register_model
 def gc_vit_large_512_21k(pretrained=False, **kwargs) -> GCViT:
     model_args = dict(depths=[3, 4, 19, 5], num_heads=[6, 12, 24, 48], window_size=[16, 16, 32, 16], # Note window size change
                       dim=192, mlp_ratio=2, drop_path_rate=kwargs.pop('drop_path_rate', 0.1), layer_scale=1e-5,
-                      resolution=512) # Pass resolution
+                      resolution=512, out_indices=(0, 1, 2, 3), num_classes=0) # Pass resolution, default to feature extraction mode
     model_args.update(kwargs)
-    if pretrained and 'num_classes' not in kwargs:
+    if pretrained and 'num_classes' not in kwargs and kwargs.get('out_indices') is None:
         model_args['num_classes'] = default_cfgs['gc_vit_large_512_21k']['num_classes']
+        model_args.pop('out_indices', None)
     return _create_gc_vit('gc_vit_large_512_21k', pretrained=pretrained, **model_args)
 
 if __name__ == '__main__':

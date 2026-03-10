@@ -354,8 +354,9 @@ class VisionTransformer(nn.Module):
                 is_training = self.training
                 self.eval()
                 with torch.no_grad():
-                    # Use configured img_size for dummy forward
-                    dummy_h, dummy_w = self.img_size_tuple
+                    # Use 640x640 for YOLO compatibility (standard detection resolution)
+                    test_res = 640 if img_size < 640 else img_size
+                    dummy_h, dummy_w = test_res, test_res
                     # Ensure dummy input dimensions are divisible by patch_size for PatchEmbed proj
                     if dummy_h % self.patch_size[0] != 0:
                         dummy_h = (dummy_h // self.patch_size[0] + 1) * self.patch_size[0]
@@ -544,8 +545,10 @@ def convit_base(pretrained=False, img_size=224, **kwargs): # Added img_size
 
 @register_model
 def convit_tiny_backbone(pretrained=False, img_size=224, in_chans=3, **kwargs):
+    """ConViT-Tiny backbone adapted for YOLO multi-scale feature extraction."""
     depth = 12
-    out_indices = kwargs.pop('out_indices', [i for i in [depth-3, depth-2, depth-1] if i >=0] if depth >=3 else [depth-1])
+    # Only use the last layer for feature extraction
+    out_indices = kwargs.pop('out_indices', [depth-1])
     model_kwargs = dict(
         img_size=img_size, patch_size=16, in_chans=in_chans,
         embed_dim=(48 * 4), depth=depth, num_heads=4,
@@ -553,10 +556,41 @@ def convit_tiny_backbone(pretrained=False, img_size=224, in_chans=3, **kwargs):
         qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6),
         num_classes=0, out_indices=out_indices, **kwargs
     )
-    model = VisionTransformer(**model_kwargs)
+    base_model = VisionTransformer(**model_kwargs)
     url = "https://dl.fbaipublicfiles.com/convit/convit_tiny.pth"
-    if pretrained: _load_pretrained(model, url, filter_keys=['head.'], strict=False)
-    return model
+    if pretrained: _load_pretrained(base_model, url, filter_keys=['head.'], strict=False)
+    
+    # Wrap with multi-scale adapter
+    class MultiScaleConViT(nn.Module):
+        def __init__(self, base_model):
+            super().__init__()
+            self.base_model = base_model
+            embed_dim = base_model.embed_dim
+            # Create multi-scale features with 5 outputs (indices 0-4)
+            # 0: None, 1: None, 2: P3 (1/8), 3: P4 (1/16), 4: P5 (1/32)
+            self.width_list = [0, 0, embed_dim, embed_dim, embed_dim]  # First two are None
+            
+        def forward(self, x):
+            # Get base features from ViT (single scale, typically 1/16 of input)
+            feats = self.base_model(x)  # List with one element or single tensor
+            if isinstance(feats, list):
+                base_feat = feats[0]  # B, C, H, W (e.g., B, 192, 40, 40 for 640 input)
+            else:
+                base_feat = feats
+            
+            # Generate multi-scale features through interpolation
+            # P3: upsample 2x (1/8 scale, e.g., 80x80)
+            p3 = torch.nn.functional.interpolate(base_feat, scale_factor=2, mode='bilinear', align_corners=False)
+            # P4: keep original (1/16 scale, e.g., 40x40)
+            p4 = base_feat
+            # P5: downsample 2x (1/32 scale, e.g., 20x20)
+            p5 = torch.nn.functional.interpolate(base_feat, scale_factor=0.5, mode='bilinear', align_corners=False)
+            
+            # Return 5 features: [None, None, P3, P4, P5] to match YOLO backbone convention
+            return [None, None, p3, p4, p5]
+    
+    wrapped_model = MultiScaleConViT(base_model)
+    return wrapped_model
 
 @register_model
 def convit_small_backbone(pretrained=False, img_size=224, in_chans=3, **kwargs):

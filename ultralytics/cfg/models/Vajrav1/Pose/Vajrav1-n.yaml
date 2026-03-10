@@ -1,0 +1,41 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Vajrav1 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80  # number of classes
+depth_multiple: 1.0  # model depth multiple
+width_multiple: 1.0  # layer channel multiple
+
+# Vajrav1-n backbone
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [16, 3, 2]] # 0-P1/2
+  - [-1, 1, Conv, [32, 3, 2]] # 1-P2/4
+  - [-1, 2, VajraV1MerudandaX, [64, 32, 1, True]]
+  - [-1, 1, Conv, [64, 3, 2]] # 3-P3/8
+  - [-1, 2, VajraV1MerudandaX, [128, 64, 1, True]]
+  - [-1, 1, Conv, [128, 3, 2]] # 5-P4/16
+  - [-1, 2, VajraV1MerudandaX, [128, 64, 1, True]]
+  - [-1, 1, Conv, [256, 3, 2]] # 7-P5/32
+  - [-1, 2, VajraV1MerudandaX, [256, 128, 1, True]]
+  - [-1, 1, VajraV1AttentionBhag6, [256, 1, 2.0]] # 9
+
+# Vajrav1-n head
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 6], 1, Concat, [1]] # cat backbone P4
+  - [-1, 2, VajraV1MerudandaX, [128, 64, 1, True]] # 12
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 4], 1, Concat, [1]] # cat backbone P3
+  - [-1, 2, VajraV1MerudandaX, [64, 32, 1, True]] # 15 (P3/8-small)
+
+  - [-1, 1, Conv, [64, 3, 2]]
+  - [[-1, 12], 1, Concat, [1]] # cat head P4
+  - [-1, 2, VajraV1MerudandaX, [128, 64, 1, True]] # 18 (P4/16-medium)
+
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [[-1, 9], 1, Concat, [1]] # cat head P5
+  - [-1, 2, VajraV1MerudandaBhag15, [1, True, 0.5, False, 7, True]] # 21 (P5/32-large)
+
+  - [[15, 18, 21], 1, Detect, [nc]] # Detect(P3, P4, P5)

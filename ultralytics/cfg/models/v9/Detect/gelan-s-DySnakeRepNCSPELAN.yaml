@@ -76,5 +76,5 @@ head:
    [-1, 1, DySnakeRepNCSPELAN4, [256, 256, 128, 3]],  # 21 (P5/32-large)
 
    # detect
-   [[15, 18, 21], 1, DDetect, [nc]],  # DDetect(P3, P4, P5)
+   [[15, 18, 21], 1, Detect, [nc]],  # Detect(P3, P4, P5)
   ]

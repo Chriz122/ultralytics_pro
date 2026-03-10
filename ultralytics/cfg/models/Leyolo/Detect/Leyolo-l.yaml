@@ -1,6 +1,6 @@
 nc: 80  # number of classes
 scales: 
-  # [depth, width, max_channels]
+  # [depth, width, max_channels, threshold]
   n: [1.0, 1.33, 576, 0]  
 
 # LeYOLO Large backbone

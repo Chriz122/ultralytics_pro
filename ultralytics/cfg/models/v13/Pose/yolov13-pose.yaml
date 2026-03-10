@@ -1,5 +1,9 @@
+# YOLOv13 🚀, AGPL-3.0 license
+# YOLOv13 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
 nc: 80 # number of classes
-kpt_shape: [17, 3]
+kpt_shape: [17, 3] # keypoint shape (kpt, xy, conf) for 17 keypoints
 scales: # model compound scaling constants, i.e. 'model=yolov13n.yaml' will call yolov13.yaml with scale 'n'
   # [depth, width, max_channels]
   n: [0.50, 0.25, 1024, 0]   # Nano

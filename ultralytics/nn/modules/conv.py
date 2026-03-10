@@ -901,8 +901,8 @@ class Index(nn.Module):
             (torch.Tensor): Selected tensor.
         """
         return x[self.index]
-    
-    
+
+
 class RepConv_v7(nn.Module):
     # Represented convolution
     # https://arxiv.org/abs/2101.03697

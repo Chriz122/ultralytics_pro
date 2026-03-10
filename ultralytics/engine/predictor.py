@@ -3,7 +3,7 @@
 Run prediction on images, videos, directories, globs, YouTube, webcam, streams, etc.
 
 Usage - sources:
-    $ yolo mode=predict model=yolo11n.pt source=0                               # webcam
+    $ yolo mode=predict model=yolo26n.pt source=0                               # webcam
                                                 img.jpg                         # image
                                                 vid.mp4                         # video
                                                 screen                          # screenshot
@@ -15,22 +15,22 @@ Usage - sources:
                                                 'rtsp://example.com/media.mp4'  # RTSP, RTMP, HTTP, TCP stream
 
 Usage - formats:
-    $ yolo mode=predict model=yolo11n.pt                 # PyTorch
-                              yolo11n.torchscript        # TorchScript
-                              yolo11n.onnx               # ONNX Runtime or OpenCV DNN with dnn=True
-                              yolo11n_openvino_model     # OpenVINO
-                              yolo11n.engine             # TensorRT
-                              yolo11n.mlpackage          # CoreML (macOS-only)
-                              yolo11n_saved_model        # TensorFlow SavedModel
-                              yolo11n.pb                 # TensorFlow GraphDef
-                              yolo11n.tflite             # TensorFlow Lite
-                              yolo11n_edgetpu.tflite     # TensorFlow Edge TPU
-                              yolo11n_paddle_model       # PaddlePaddle
-                              yolo11n.mnn                # MNN
-                              yolo11n_ncnn_model         # NCNN
-                              yolo11n_imx_model          # Sony IMX
-                              yolo11n_rknn_model         # Rockchip RKNN
-                              yolo11n.pte                # PyTorch Executorch
+    $ yolo mode=predict model=yolo26n.pt                 # PyTorch
+                              yolo26n.torchscript        # TorchScript
+                              yolo26n.onnx               # ONNX Runtime or OpenCV DNN with dnn=True
+                              yolo26n_openvino_model     # OpenVINO
+                              yolo26n.engine             # TensorRT
+                              yolo26n.mlpackage          # CoreML (macOS-only)
+                              yolo26n_saved_model        # TensorFlow SavedModel
+                              yolo26n.pb                 # TensorFlow GraphDef
+                              yolo26n.tflite             # TensorFlow Lite
+                              yolo26n_edgetpu.tflite     # TensorFlow Edge TPU
+                              yolo26n_paddle_model       # PaddlePaddle
+                              yolo26n.mnn                # MNN
+                              yolo26n_ncnn_model         # NCNN
+                              yolo26n_imx_model          # Sony IMX
+                              yolo26n_rknn_model         # Rockchip RKNN
+                              yolo26n.pte                # PyTorch Executorch
 """
 
 from __future__ import annotations
@@ -55,8 +55,8 @@ from ultralytics.utils.files import increment_path
 from ultralytics.utils.torch_utils import attempt_compile, select_device, smart_inference_mode
 
 STREAM_WARNING = """
-inference results will accumulate in RAM unless `stream=True` is passed, causing potential out-of-memory
-errors for large sources or long-running streams and videos. See https://docs.ultralytics.com/modes/predict/ for help.
+Inference results will accumulate in RAM unless `stream=True` is passed, which can cause out-of-memory errors for large
+sources or long-running streams and videos. See https://docs.ultralytics.com/modes/predict/ for help.
 
 Example:
     results = model(source=..., stream=True)  # generator of Results objects
@@ -222,7 +222,7 @@ class BasePredictor:
         if stream:
             return self.stream_inference(source, model, *args, **kwargs)
         else:
-            return list(self.stream_inference(source, model, *args, **kwargs))  # merge list of Result into one
+            return list(self.stream_inference(source, model, *args, **kwargs))  # merge list of Results into one
 
     def predict_cli(self, source=None, model=None):
         """Method used for Command Line Interface (CLI) prediction.
@@ -244,14 +244,15 @@ class BasePredictor:
         for _ in gen:  # sourcery skip: remove-empty-nested-block, noqa
             pass
 
-    def setup_source(self, source):
+    def setup_source(self, source, stride: int | None = None):
         """Set up source and inference mode.
 
         Args:
             source (str | Path | list[str] | list[Path] | list[np.ndarray] | np.ndarray | torch.Tensor): Source for
                 inference.
+            stride (int, optional): Model stride for image size checking.
         """
-        self.imgsz = check_imgsz(self.args.imgsz, stride=self.model.stride, min_dim=2)  # check image size
+        self.imgsz = check_imgsz(self.args.imgsz, stride=stride or self.model.stride, min_dim=2)  # check image size
         self.dataset = load_inference_source(
             source=source,
             batch=self.args.batch,
@@ -260,13 +261,12 @@ class BasePredictor:
             channels=getattr(self.model, "ch", 3),
         )
         self.source_type = self.dataset.source_type
-        long_sequence = (
+        if (
             self.source_type.stream
             or self.source_type.screenshot
             or len(self.dataset) > 1000  # many images
             or any(getattr(self.dataset, "video_flag", [False]))
-        )
-        if long_sequence:
+        ):  # long sequence
             import torchvision  # noqa (import here triggers torchvision NMS use in nms.py)
 
             if not getattr(self, "stream", True):  # videos
@@ -316,7 +316,8 @@ class BasePredictor:
                 ops.Profile(device=self.device),
             )
             self.run_callbacks("on_predict_start")
-            for self.batch in self.dataset:
+            for batch in self.dataset:
+                self.batch = batch
                 self.run_callbacks("on_predict_batch_start")
                 paths, im0s, s = self.batch
 
@@ -333,7 +334,15 @@ class BasePredictor:
 
                 # Postprocess
                 with profilers[2]:
-                    self.results = self.postprocess(preds, im, im0s)
+                    if getattr(self.args, "sparse_sahi", False):
+                        global_results = self.postprocess(preds, im, im0s)
+                        final_results = []
+                        for i, res in enumerate(global_results):
+                            final_res = self._run_sparse_sahi_single(im0s[i], res, *args, **kwargs)
+                            final_results.append(final_res)
+                        self.results = final_results
+                    else:
+                        self.results = self.postprocess(preds, im, im0s)
                 self.run_callbacks("on_predict_postprocess_end")
 
                 # Visualize, save, write results
@@ -505,3 +514,150 @@ class BasePredictor:
     def add_callback(self, event: str, func: callable):
         """Add a callback function for a specific event."""
         self.callbacks[event].append(func)
+
+    def _pad_slice(self, slice_img, slice_h, slice_w):
+        """Pad slice to match slice_h and slice_w."""
+        h, w = slice_img.shape[:2]
+        if h == slice_h and w == slice_w:
+            return slice_img
+        pad_img = np.full((slice_h, slice_w, 3), 114, dtype=np.uint8)
+        pad_img[:h, :w] = slice_img
+        return pad_img
+
+    def _perform_batched_nms(self, boxes, scores, cls, iou_thres):
+        """Perform batched NMS using torchvision."""
+        from torchvision.ops import nms
+        if boxes.numel() == 0:
+            return torch.empty(0, dtype=torch.long, device=self.device)
+        max_coordinate = boxes.max()
+        offsets = cls.to(boxes) * (max_coordinate + 1)
+        boxes_for_nms = boxes + offsets[:, None]
+        return nms(boxes_for_nms, scores, iou_thres)
+
+    def _run_sparse_sahi_single(self, img, global_result, *args, **kwargs):
+        """Run Sparse SAHI on a single image."""
+        from ultralytics.engine.results import Boxes
+
+        slice_size = getattr(self.args, 'slice_size', 640)
+        overlap_ratio = getattr(self.args, 'overlap_ratio', 0.2)
+        slice_h = slice_w = slice_size
+        overlap = int(min(slice_h, slice_w) * overlap_ratio)
+        
+        img_h, img_w = img.shape[:2]
+        
+        # --- Step 1: Objectness Mask ---
+        mask_scale = 8
+        m_h, m_w = (img_h // mask_scale) + 1, (img_w // mask_scale) + 1
+        objectness_mask = np.zeros((m_h, m_w), dtype=np.float32)
+        
+        if len(global_result.boxes) > 0:
+            g_boxes = (global_result.boxes.xyxy.cpu().numpy() / mask_scale).astype(int)
+            g_scores = global_result.boxes.conf.cpu().numpy()
+            
+            for box, score in zip(g_boxes, g_scores):
+                x1, y1, x2, y2 = box
+                y1_i, y2_i = max(0, y1), min(m_h, y2)
+                x1_i, x2_i = max(0, x1), min(m_w, x2)
+                objectness_mask[y1_i:y2_i, x1_i:x2_i] = np.maximum(objectness_mask[y1_i:y2_i, x1_i:x2_i], score)
+        
+        # --- Step 2: Adaptive Sparse Slicing ---
+        active_slice_coords = []
+        step_y, step_x = slice_h - overlap, slice_w - overlap
+        
+        for y_min in range(0, img_h, step_y):
+            for x_min in range(0, img_w, step_x):
+                y_max, x_max = min(y_min + slice_h, img_h), min(x_min + slice_w, img_w)
+                
+                m_y1, m_x1 = y_min // mask_scale, x_min // mask_scale
+                m_y2, m_x2 = y_max // mask_scale, x_max // mask_scale
+                
+                # Activation threshold 0.15
+                if m_y2 > m_y1 and m_x2 > m_x1:
+                    if objectness_mask[m_y1:m_y2, m_x1:m_x2].max() > 0.15:
+                        active_slice_coords.append((x_min, y_min, x_max, y_max))
+
+        # Collect all boxes (Global + Slices)
+        all_boxes = []
+        all_scores = []
+        all_cls = []
+        all_sources = [] # Track sources: 0 for global, 1 for slice
+        
+        # Keep global boxes
+        if len(global_result.boxes) > 0:
+            all_boxes.append(global_result.boxes.xyxy)
+            all_scores.append(global_result.boxes.conf)
+            all_cls.append(global_result.boxes.cls)
+            all_sources.extend([0] * len(global_result.boxes))
+            
+        # --- Step 3: Batch Inference on Slices ---
+        if active_slice_coords:
+            batch_imgs = []
+            for (x1, y1, x2, y2) in active_slice_coords:
+                crop = img[y1:y2, x1:x2]
+                batch_imgs.append(self._pad_slice(crop, slice_h, slice_w))
+            
+            # Preprocess batch
+            # Note: preprocess handles tensor conversion, normalization, etc.
+            slice_tensor = self.preprocess(batch_imgs)
+            
+            # Inference
+            # We must use self.inference
+            slice_preds = self.inference(slice_tensor, *args, **kwargs)
+            
+            # Postprocess slices
+            # We pass batch_imgs as 'im0s' so postprocess scales boxes back to slice size (slice_size)
+            # This is crucial.
+            slice_results = self.postprocess(slice_preds, slice_tensor, batch_imgs)
+            
+            for res, (off_x, off_y, _, _) in zip(slice_results, active_slice_coords):
+                if len(res.boxes) > 0:
+                    boxes = res.boxes.xyxy.clone()
+                    boxes[:, [0, 2]] += off_x
+                    boxes[:, [1, 3]] += off_y
+                    all_boxes.append(boxes)
+                    all_scores.append(res.boxes.conf)
+                    all_cls.append(res.boxes.cls)
+                    all_sources.extend([1] * len(boxes))
+
+        # --- Step 4: Merge & NMS ---
+        if not all_boxes:
+             # No detections
+             global_result.sparse_sahi_metadata = {
+                 'objectness_map': objectness_mask,
+                 'slices': active_slice_coords,
+                 'final_sources': []
+             }
+             return global_result
+        
+        cat_boxes = torch.cat(all_boxes).to(self.device)
+        cat_scores = torch.cat(all_scores).to(self.device)
+        cat_cls = torch.cat(all_cls).to(self.device)
+        
+        # Batched NMS
+        keep = self._perform_batched_nms(cat_boxes, cat_scores, cat_cls, self.args.iou)
+        
+        final_boxes = cat_boxes[keep]
+        final_scores = cat_scores[keep]
+        final_cls = cat_cls[keep]
+        
+        # Filter sources
+        keep_indices = keep.cpu().numpy()
+        current_sources = np.array(all_sources)
+        final_sources = current_sources[keep_indices].tolist() if len(current_sources) > 0 else []
+
+        # Construct new Boxes object
+        if len(final_boxes) > 0:
+            det = torch.cat([final_boxes, final_scores.unsqueeze(1), final_cls.unsqueeze(1)], dim=1)
+        else:
+            det = torch.empty((0, 6), device=self.device)
+            
+        global_result.boxes = Boxes(det, global_result.orig_shape)
+        
+        # Attach Metadata
+        global_result.sparse_sahi_metadata = {
+            'objectness_map': objectness_mask,
+            'slices': active_slice_coords,
+            'final_sources': final_sources
+        }
+        
+        return global_result

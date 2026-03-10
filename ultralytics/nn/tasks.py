@@ -12,6 +12,29 @@ import torch.nn as nn
 
 from ultralytics.nn.autobackend import check_class_names
 from ultralytics.nn.modules import (
+    C3k2UltraPro,
+    OptimizedMOE,
+    OptimizedMOEImproved,
+    EfficientSpatialRouterMoE,
+    ModularRouterExpertMoE,
+    C3k2_Dynamic,
+    C2f_LSKA,
+    MOE,
+    ES_MOE,
+    WaveC2f,
+    DyC2f,
+    A3C2f,
+    C3k2UltraPro,
+    C3k2MA,
+    C3k2MA_Lite,
+    OBB26,
+    Pose26,
+    Segment26,
+    YOLOESegment26,
+    flash_intern_image_t,
+    flash_intern_image_s,
+    flash_intern_image_b,
+    
     MP,
     SP,
     AIFI,
@@ -73,6 +96,7 @@ from ultralytics.nn.modules import (
     Segment,
     WorldDetect,
     v10Detect,
+    SPPCSP,
     SPPCSPC,
     SPPFCSPC,
     DepthSepConv,
@@ -162,10 +186,6 @@ from ultralytics.nn.modules import (
     OREPANBottleneck,
     OREPANCSP,
     OREPANCSPELAN4,
-    DDetect,
-    DOBB,
-    DSegment,
-    DPose,
     ResSPP,
     CSPResNet,
     CSPResNet_CBS,
@@ -412,6 +432,7 @@ from ultralytics.nn.modules import (
     efficientnet_v2,
     Ghostnetv1,
     GhostNetV2,
+    Ghostnetv2,
     GhostNet_1_0,
     convnextv2_atto, 
     convnextv2_femto, 
@@ -455,6 +476,9 @@ from ultralytics.nn.modules import (
     fasternet_s, 
     fasternet_m, 
     fasternet_l,
+    gspn_tiny,
+    gspn_small,
+    gspn_base,
     RepLKNet31B, 
     RepLKNet31L, 
     RepLKNetXL,
@@ -707,7 +731,6 @@ from ultralytics.nn.modules import (
     EfficientViM_M2, 
     EfficientViM_M3, 
     EfficientViM_M4,
-    EfficientViM_M5,
     SHViT_S1, 
     SHViT_S2, 
     SHViT_S3, 
@@ -730,6 +753,9 @@ from ultralytics.nn.modules import (
     convit_tiny_backbone, 
     convit_small_backbone, 
     convit_base_backbone,
+    dsan_t,
+    dsan_s,
+    dsan_b,
     RepVGG_A0, 
     RepVGG_A1, 
     RepVGG_A2, 
@@ -850,6 +876,9 @@ from ultralytics.nn.modules import (
     vheat_tiny, 
     vheat_small, 
     vheat_base,
+    vHeat_MoE_t, 
+    vHeat_MoE_s, 
+    vHeat_MoE_b,
     LSNet_T,
     LSNet_S,
     LSNet_B,
@@ -858,6 +887,10 @@ from ultralytics.nn.modules import (
     transxnet_tiny, 
     transxnet_small, 
     transxnet_base,
+    transnext_micro, 
+    transnext_tiny, 
+    transnext_small, 
+    transnext_base,
     parcnetv2_xt, 
     parcnetv2_tiny, 
     parcnetv2_small, 
@@ -898,6 +931,15 @@ from ultralytics.nn.modules import (
     restv2_small, 
     restv2_base, 
     restv2_large,
+    medformer_tiny, 
+    medformer_small, 
+    medformer_base,
+    tiny_vit_5m, 
+    tiny_vit_11m, 
+    tiny_vit_21m,
+    partialnet_s, 
+    partialnet_m, 
+    partialnet_l,
     VanillaNet,
     UniRepLKNet,
     OverLoCK,
@@ -958,11 +1000,35 @@ from ultralytics.nn.modules import (
     IEMA,
     DASI,
     PST,
+    UPA,
+    MambaNeXt, 
+    IRDCB,
+    VajraV1MerudandaX, 
+    VajraV1AttentionBhag6, 
+    VajraV1MerudandaBhag15,
+    
+    PatchEmbed_Faster, 
+    PatchMerging_Faster,
+    FasterNetLayer,
+    Partial_PatchEmbed, 
+    Partial_Block, 
+    Partial_Downsample, 
+    ParCDown, 
+    ParCBlock,
+    StripDownsample, 
+    StripBlock,
+    StackConvPatchEmbed, 
+    MogaStage, 
+    ConvPatchEmbed,
+    vHeatStem, 
+    vHeatStage, 
+    vHeatDownsample,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
 from ultralytics.utils.loss import (
-    E2EDetectLoss,
+    E2ELoss,
+    PoseLoss26,
     v8ClassificationLoss,
     v8DetectionLoss,
     v8OBBLoss,
@@ -982,7 +1048,6 @@ from ultralytics.utils.torch_utils import (
     smart_inference_mode,
     time_sync,
 )
-
 
 class BaseModel(torch.nn.Module):
     """Base class for all YOLO models in the Ultralytics family.
@@ -1065,14 +1130,20 @@ class BaseModel(torch.nn.Module):
                 self._profile_one_layer(m, x, dt)
             if hasattr(m, 'backbone'):
                 x = m(x)
-                if len(x) != 5:  # 0 - 5
-                    x.insert(0, None)
-                for index, i in enumerate(x):
-                    if index in self.save:
-                        y.append(i)
-                    else:
-                        y.append(None)
-                x = x[-1]  # 最后一个输出传给下一层
+                if isinstance(x, list):
+                    if len(x) != 5:  # 0 - 5
+                        x.insert(0, None)
+                    for index, i in enumerate(x):
+                        # Calculate the actual layer index for this output
+                        layer_idx = m.i - 4 + index  # m.i is base_i + 4, so this gives base_i + index
+                        if layer_idx in self.save:
+                            y.append(i)
+                        else:
+                            y.append(None)
+                    x = x[-1]  # 最后一个输出传给下一层
+                else:
+                    # If backbone returns a single tensor, treat it like a normal layer
+                    y.append(x if m.i in self.save else None)
             else:
                 x = m(x)  # run
                 y.append(x if m.i in self.save else None)  # save output
@@ -1162,7 +1233,7 @@ class BaseModel(torch.nn.Module):
                 if isinstance(m, RepVGGDW):
                     m.fuse()
                     m.forward = m.forward_fuse
-                if isinstance(m, v10Detect):
+                if isinstance(m, Detect) and getattr(m, "end2end", False):
                     m.fuse()  # remove one2many head
             self.info(verbose=verbose)
 
@@ -1202,7 +1273,7 @@ class BaseModel(torch.nn.Module):
         self = super()._apply(fn)
         m = self.model[-1]  # Detect()
         if isinstance(
-            m, (Detect, MAFDetect, IDetect, DDetect)
+            m, (Detect, MAFDetect, IDetect)
         ):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect, YOLOEDetect, YOLOESegment
             m.stride = fn(m.stride)
             m.anchors = fn(m.anchors)
@@ -1277,11 +1348,11 @@ class DetectionModel(BaseModel):
 
     Examples:
         Initialize a detection model
-        >>> model = DetectionModel("yolo11n.yaml", ch=3, nc=80)
+        >>> model = DetectionModel("yolo26n.yaml", ch=3, nc=80)
         >>> results = model.predict(image_tensor)
     """
 
-    def __init__(self, cfg="yolo11n.yaml", ch=3, nc=None, verbose=True):
+    def __init__(self, cfg="yolo26n.yaml", ch=3, nc=None, verbose=True):
         """Initialize the YOLO detection model with the given config and parameters.
 
         Args:
@@ -1307,22 +1378,19 @@ class DetectionModel(BaseModel):
         self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch, verbose=verbose)  # model, savelist
         self.names = {i: f"{i}" for i in range(self.yaml["nc"])}  # default names dict
         self.inplace = self.yaml.get("inplace", True)
-        self.end2end = getattr(self.model[-1], "end2end", False)
 
         # Build strides
         m = self.model[-1]  # Detect()
-        if isinstance(m, (Detect, MAFDetect, IDetect, DDetect)):  # includes all Detect subclasses like Segment, Pose, OBB, YOLOEDetect, YOLOESegment
+        if isinstance(m, (Detect, MAFDetect, IDetect)):  # includes all Detect subclasses like Segment, Pose, OBB, YOLOEDetect, YOLOESegment
             s = 256  # 2x min stride
             m.inplace = self.inplace
 
             def _forward(x):
                 """Perform a forward pass through the model, handling different Detect subclass types accordingly."""
+                output = self.forward(x)
                 if self.end2end:
-                    return self.forward(x)["one2many"]
-                return self.forward(x)[0] if isinstance(m, (Segment, YOLOESegment, Pose, OBB,
-                                                            ISegment, IPose, IOBB,
-                                                            MAFSegment, MAFPose, MAFOBB,
-                                                            DOBB, DSegment, DPose)) else self.forward(x)
+                    output = output["one2many"]
+                return output["feats"]
 
             self.model.eval()  # Avoid changing batch statistics until training begins
             m.training = True  # Setting it to True to properly return strides
@@ -1331,13 +1399,18 @@ class DetectionModel(BaseModel):
             self.model.train()  # Set model back to training(default) mode
             m.bias_init()  # only run once
         else:
-            self.stride = torch.Tensor([32])  # default stride for i.e. RTDETR
+            self.stride = torch.Tensor([32])  # default stride, e.g., RTDETR
 
         # Init weights, biases
         initialize_weights(self)
         if verbose:
             self.info()
             LOGGER.info("")
+
+    @property
+    def end2end(self):
+        """Return whether the model uses end-to-end NMS-free detection."""
+        return getattr(self.model[-1], "end2end", False)
 
     def _predict_augment(self, x):
         """Perform augmentations on input image x and return augmented inference and train outputs.
@@ -1405,7 +1478,7 @@ class DetectionModel(BaseModel):
 
     def init_criterion(self):
         """Initialize the loss criterion for the DetectionModel."""
-        return E2EDetectLoss(self) if getattr(self, "end2end", False) else v8DetectionLoss(self)
+        return E2ELoss(self) if getattr(self, "end2end", False) else v8DetectionLoss(self)
 
 
 class OBBModel(DetectionModel):
@@ -1420,11 +1493,11 @@ class OBBModel(DetectionModel):
 
     Examples:
         Initialize an OBB model
-        >>> model = OBBModel("yolo11n-obb.yaml", ch=3, nc=80)
+        >>> model = OBBModel("yolo26n-obb.yaml", ch=3, nc=80)
         >>> results = model.predict(image_tensor)
     """
 
-    def __init__(self, cfg="yolo11n-obb.yaml", ch=3, nc=None, verbose=True):
+    def __init__(self, cfg="yolo26n-obb.yaml", ch=3, nc=None, verbose=True):
         """Initialize YOLO OBB model with given config and parameters.
 
         Args:
@@ -1437,7 +1510,7 @@ class OBBModel(DetectionModel):
 
     def init_criterion(self):
         """Initialize the loss criterion for the model."""
-        return v8OBBLoss(self)
+        return E2ELoss(self, v8OBBLoss) if getattr(self, "end2end", False) else v8OBBLoss(self)
 
 
 class SegmentationModel(DetectionModel):
@@ -1452,11 +1525,11 @@ class SegmentationModel(DetectionModel):
 
     Examples:
         Initialize a segmentation model
-        >>> model = SegmentationModel("yolo11n-seg.yaml", ch=3, nc=80)
+        >>> model = SegmentationModel("yolo26n-seg.yaml", ch=3, nc=80)
         >>> results = model.predict(image_tensor)
     """
 
-    def __init__(self, cfg="yolo11n-seg.yaml", ch=3, nc=None, verbose=True):
+    def __init__(self, cfg="yolo26n-seg.yaml", ch=3, nc=None, verbose=True):
         """Initialize Ultralytics YOLO segmentation model with given config and parameters.
 
         Args:
@@ -1469,7 +1542,7 @@ class SegmentationModel(DetectionModel):
 
     def init_criterion(self):
         """Initialize the loss criterion for the SegmentationModel."""
-        return v8SegmentationLoss(self)
+        return E2ELoss(self, v8SegmentationLoss) if getattr(self, "end2end", False) else v8SegmentationLoss(self)
 
 
 class PoseModel(DetectionModel):
@@ -1487,11 +1560,11 @@ class PoseModel(DetectionModel):
 
     Examples:
         Initialize a pose model
-        >>> model = PoseModel("yolo11n-pose.yaml", ch=3, nc=1, data_kpt_shape=(17, 3))
+        >>> model = PoseModel("yolo26n-pose.yaml", ch=3, nc=1, data_kpt_shape=(17, 3))
         >>> results = model.predict(image_tensor)
     """
 
-    def __init__(self, cfg="yolo11n-pose.yaml", ch=3, nc=None, data_kpt_shape=(None, None), verbose=True):
+    def __init__(self, cfg="yolo26n-pose.yaml", ch=3, nc=None, data_kpt_shape=(None, None), verbose=True):
         """Initialize Ultralytics YOLO Pose model.
 
         Args:
@@ -1510,7 +1583,7 @@ class PoseModel(DetectionModel):
 
     def init_criterion(self):
         """Initialize the loss criterion for the PoseModel."""
-        return v8PoseLoss(self)
+        return E2ELoss(self, PoseLoss26) if getattr(self, "end2end", False) else v8PoseLoss(self)
 
 
 class ClassificationModel(BaseModel):
@@ -1533,11 +1606,11 @@ class ClassificationModel(BaseModel):
 
     Examples:
         Initialize a classification model
-        >>> model = ClassificationModel("yolo11n-cls.yaml", ch=3, nc=1000)
+        >>> model = ClassificationModel("yolo26n-cls.yaml", ch=3, nc=1000)
         >>> results = model.predict(image_tensor)
     """
 
-    def __init__(self, cfg="yolo11n-cls.yaml", ch=3, nc=None, verbose=True):
+    def __init__(self, cfg="yolo26n-cls.yaml", ch=3, nc=None, verbose=True):
         """Initialize ClassificationModel with YAML, channels, number of classes, verbose flag.
 
         Args:
@@ -1790,7 +1863,7 @@ class WorldModel(DetectionModel):
         self.model[-1].nc = len(text)
 
     def get_text_pe(self, text, batch=80, cache_clip_model=True):
-        """Set classes in advance so that model could do offline-inference without clip model.
+        """Get text positional embeddings for offline inference without CLIP model.
 
         Args:
             text (list[str]): List of class names.
@@ -1908,16 +1981,17 @@ class YOLOEModel(DetectionModel):
             verbose (bool): Whether to display model information.
         """
         super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+        self.text_model = self.yaml.get("text_model", "mobileclip:blt")
 
     @smart_inference_mode()
     def get_text_pe(self, text, batch=80, cache_clip_model=False, without_reprta=False):
-        """Set classes in advance so that model could do offline-inference without clip model.
+        """Get text positional embeddings for offline inference without CLIP model.
 
         Args:
             text (list[str]): List of class names.
             batch (int): Batch size for processing text tokens.
             cache_clip_model (bool): Whether to cache the CLIP model.
-            without_reprta (bool): Whether to return text embeddings cooperated with reprta module.
+            without_reprta (bool): Whether to return text embeddings without reprta module processing.
 
         Returns:
             (torch.Tensor): Text positional embeddings.
@@ -1927,9 +2001,13 @@ class YOLOEModel(DetectionModel):
         device = next(self.model.parameters()).device
         if not getattr(self, "clip_model", None) and cache_clip_model:
             # For backwards compatibility of models lacking clip_model attribute
-            self.clip_model = build_text_model("mobileclip:blt", device=device)
+            self.clip_model = build_text_model(getattr(self, "text_model", "mobileclip:blt"), device=device)
 
-        model = self.clip_model if cache_clip_model else build_text_model("mobileclip:blt", device=device)
+        model = (
+            self.clip_model
+            if cache_clip_model
+            else build_text_model(getattr(self, "text_model", "mobileclip:blt"), device=device)
+        )
         text_token = model.tokenize(text)
         txt_feats = [model.encode_text(token).detach() for token in text_token.split(batch)]
         txt_feats = txt_feats[0] if len(txt_feats) == 1 else torch.cat(txt_feats, dim=0)
@@ -1969,10 +2047,12 @@ class YOLOEModel(DetectionModel):
         device = next(self.parameters()).device
         self(torch.empty(1, 3, self.args["imgsz"], self.args["imgsz"]).to(device))  # warmup
 
+        cv3 = getattr(head, "one2one_cv3", head.cv3)
+        cv2 = getattr(head, "one2one_cv2", head.cv2)
+
         # re-parameterization for prompt-free model
         self.model[-1].lrpc = nn.ModuleList(
-            LRPCHead(cls, pf[-1], loc[-1], enabled=i != 2)
-            for i, (cls, pf, loc) in enumerate(zip(vocab, head.cv3, head.cv2))
+            LRPCHead(cls, pf[-1], loc[-1], enabled=i != 2) for i, (cls, pf, loc) in enumerate(zip(vocab, cv3, cv2))
         )
         for loc_head, cls_head in zip(head.cv2, head.cv3):
             assert isinstance(loc_head, nn.Sequential)
@@ -2001,8 +2081,9 @@ class YOLOEModel(DetectionModel):
         device = next(self.model.parameters()).device
         head.fuse(self.pe.to(device))  # fuse prompt embeddings to classify head
 
+        cv3 = getattr(head, "one2one_cv3", head.cv3)
         vocab = nn.ModuleList()
-        for cls_head in head.cv3:
+        for cls_head in cv3:
             assert isinstance(cls_head, nn.Sequential)
             vocab.append(cls_head[-1])
         return vocab
@@ -2079,9 +2160,8 @@ class YOLOEModel(DetectionModel):
                 cls_pe = self.get_cls_pe(m.get_tpe(tpe), vpe).to(device=x[0].device, dtype=x[0].dtype)
                 if cls_pe.shape[0] != b or m.export:
                     cls_pe = cls_pe.expand(b, -1, -1)
-                x = m(x, cls_pe)
-            else:
-                x = m(x)  # run
+                x.append(cls_pe)  # adding cls embedding
+            x = m(x)  # run
 
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
@@ -2103,10 +2183,17 @@ class YOLOEModel(DetectionModel):
             from ultralytics.utils.loss import TVPDetectLoss
 
             visual_prompt = batch.get("visuals", None) is not None  # TODO
-            self.criterion = TVPDetectLoss(self) if visual_prompt else self.init_criterion()
-
+            self.criterion = (
+                (E2ELoss(self, TVPDetectLoss) if getattr(self, "end2end", False) else TVPDetectLoss(self))
+                if visual_prompt
+                else self.init_criterion()
+            )
         if preds is None:
-            preds = self.forward(batch["img"], tpe=batch.get("txt_feats", None), vpe=batch.get("visuals", None))
+            preds = self.forward(
+                batch["img"],
+                tpe=None if "visuals" in batch else batch.get("txt_feats", None),
+                vpe=batch.get("visuals", None),
+            )
         return self.criterion(preds, batch)
 
 
@@ -2148,7 +2235,11 @@ class YOLOESegModel(YOLOEModel, SegmentationModel):
             from ultralytics.utils.loss import TVPSegmentLoss
 
             visual_prompt = batch.get("visuals", None) is not None  # TODO
-            self.criterion = TVPSegmentLoss(self) if visual_prompt else self.init_criterion()
+            self.criterion = (
+                (E2ELoss(self, TVPSegmentLoss) if getattr(self, "end2end", False) else TVPSegmentLoss(self))
+                if visual_prompt
+                else self.init_criterion()
+            )
 
         if preds is None:
             preds = self.forward(batch["img"], tpe=batch.get("txt_feats", None), vpe=batch.get("visuals", None))
@@ -2193,7 +2284,7 @@ class Ensemble(torch.nn.ModuleList):
         y = [module(x, augment, profile, visualize)[0] for module in self]
         # y = torch.stack(y).max(0)[0]  # max ensemble
         # y = torch.stack(y).mean(0)  # mean ensemble
-        y = torch.cat(y, 2)  # nms ensemble, y shape(B, HW, C)
+        y = torch.cat(y, 2)  # nms ensemble, y shape(B, HW, C*num_models)
         return y, None  # inference, train output
 
 
@@ -2340,7 +2431,7 @@ def torch_safe_load(weight, safe_only=False):
                     f"with https://github.com/ultralytics/yolov5.\nThis model is NOT forwards compatible with "
                     f"YOLOv8 at https://github.com/ultralytics/ultralytics."
                     f"\nRecommend fixes are to train a new model using the latest 'ultralytics' package or to "
-                    f"run a command with an official Ultralytics model, i.e. 'yolo predict model=yolo11n.pt'"
+                    f"run a command with an official Ultralytics model, i.e. 'yolo predict model=yolo26n.pt'"
                 )
             ) from e
         elif e.name == "numpy._core":
@@ -2353,7 +2444,7 @@ def torch_safe_load(weight, safe_only=False):
             f"{weight} appears to require '{e.name}', which is not in Ultralytics requirements."
             f"\nAutoInstall will run now for '{e.name}' but this feature will be removed in the future."
             f"\nRecommend fixes are to train a new model using the latest 'ultralytics' package or to "
-            f"run a command with an official Ultralytics model, i.e. 'yolo predict model=yolo11n.pt'"
+            f"run a command with an official Ultralytics model, i.e. 'yolo predict model=yolo26n.pt'"
         )
         check_requirements(e.name)  # install missing module
         ckpt = torch_load(file, map_location="cpu")
@@ -2423,14 +2514,24 @@ def parse_model(d, ch, verbose=True):
     # Args
     legacy = True  # backward compatibility for v3/v5/v8/v9 models
     max_channels = float("inf")
-    nc, act, scales = (d.get(x) for x in ("nc", "activation", "scales"))
+    nc, act, scales, end2end = (d.get(x) for x in ("nc", "activation", "scales", "end2end"))
+    reg_max = d.get("reg_max", 16)
     depth, width, kpt_shape = (d.get(x, 1.0) for x in ("depth_multiple", "width_multiple", "kpt_shape"))
     scale = d.get("scale")
+    threshold = 0  # Default threshold value
     if scales:
         if not scale:
             scale = next(iter(scales.keys()))
             LOGGER.warning(f"no model scale passed. Assuming scale='{scale}'.")
-        depth, width, max_channels, threshold = scales[scale]
+        scale_values = scales[scale]
+        # Support both old format [depth, width, max_channels] and new format [depth, width, max_channels, threshold]
+        if len(scale_values) == 4:
+            depth, width, max_channels, threshold = scale_values
+        elif len(scale_values) == 3:
+            depth, width, max_channels = scale_values
+            threshold = 0
+        else:
+            raise ValueError(f"Invalid scales format. Expected 3 or 4 values, got {len(scale_values)}")
 
     if act:
         Conv.default_act = eval(act)  # redefine default activation, i.e. Conv.default_act = torch.nn.SiLU()
@@ -2445,6 +2546,19 @@ def parse_model(d, ch, verbose=True):
     
     base_modules = frozenset(
         {
+            OptimizedMOE,
+            OptimizedMOEImproved,
+            C3k2_Dynamic,
+            C2f_LSKA,
+            MOE,
+            WaveC2f,
+            DyC2f,
+            A3C2f,
+            C3k2UltraPro,
+            C3k2MA,
+            C3k2MA_Lite,
+            ES_MOE,
+            
             Classify,
             Conv,
             Conv_BCN,
@@ -2483,10 +2597,12 @@ def parse_model(d, ch, verbose=True):
             DWConvTranspose2d,
             C3x,
             RepC3,
+            RepConv,
             PSA,
             SCDown,
             C2fCIB,
-            RepConv_v7, 
+            RepConv_v7,
+            SPPCSP, 
             SPPCSPC,
             SPPFCSPC,
             DepthSepConv,
@@ -2673,6 +2789,7 @@ def parse_model(d, ch, verbose=True):
             C3k2_UIB,
             RepHDW,
             RepHMS,
+            ConvMS,
             MANet,
             HyperComputeModule_11,
             ALSS,
@@ -2706,10 +2823,42 @@ def parse_model(d, ch, verbose=True):
             DSConv,
             torch.nn.ConvTranspose2d,
             MFAM,
+            UPA,
+            MambaNeXt, 
+            IRDCB,
+            VajraV1MerudandaX, 
+            VajraV1AttentionBhag6, 
+            VajraV1MerudandaBhag15,
+            
+            PatchEmbed_Faster, 
+            PatchMerging_Faster,
+            FasterNetLayer,
+            Partial_PatchEmbed, 
+            Partial_Block, 
+            Partial_Downsample,
+            ParCDown, 
+            ParCBlock,
+            StripDownsample, 
+            StripBlock,
+            StackConvPatchEmbed, 
+            MogaStage, 
+            ConvPatchEmbed,
+            vHeatStem, 
+            vHeatStage, 
+            vHeatDownsample,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
         {
+            C3k2_Dynamic,
+            C2f_LSKA,
+            WaveC2f,
+            DyC2f,
+            A3C2f,
+            C3k2UltraPro,
+            C3k2MA,
+            C3k2MA_Lite,
+            
             BottleneckCSP, 
             BottleneckCSP2, 
             BottleneckCSPA, 
@@ -2736,6 +2885,7 @@ def parse_model(d, ch, verbose=True):
             ResXCSPB, 
             ResXCSPC, 
             HorBlock,
+            SPPCSP,
             SPPCSPC, 
             CSPStage, 
             C2f_DCNV3, 
@@ -2829,6 +2979,13 @@ def parse_model(d, ch, verbose=True):
             C3k2_DSConv, 
             DSC3k2,
             PST,
+            RepBlock,
+            VajraV1MerudandaX,
+            VajraV1AttentionBhag6, 
+            VajraV1MerudandaBhag15,
+            
+            ParCBlock,
+            vHeatStage,
         }
     )
     for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
@@ -2847,7 +3004,7 @@ def parse_model(d, ch, verbose=True):
         n = n_ = max(round(n * depth), 1) if n > 1 else n  # depth gain
         if m in base_modules:
             c1, c2 = ch[f], args[0]
-            if c2 != nc:  # if c2 not equal to number of classes (i.e. for Classify() output)
+            if c2 != nc:  # if c2 != nc (e.g., Classify() output)
                 c2 = make_divisible(min(c2, max_channels) * width, 8)
             if m is C2fAttn:  # set 1) embed channels and 2) num heads
                 args[1] = make_divisible(min(args[1], max_channels // 2) * width, 8)
@@ -2926,6 +3083,7 @@ def parse_model(d, ch, verbose=True):
         elif m is IFM:
             c1 = ch[f]
             c2 = sum(args[0])
+            args = [c1, args[0]]
         elif m is InjectionMultiSum_Auto_pool:
             c1 = ch[f[0]]
             c2 = args[0]
@@ -2977,38 +3135,59 @@ def parse_model(d, ch, verbose=True):
         elif m is SNI:
             c1, c2, up_f = ch[f], make_divisible(args[0] * width, 8), args[1]
             args = [c1, c2, up_f]
-        elif m in frozenset(
-            {Detect, MAFDetect, IDetect, DDetect, WorldDetect, YOLOEDetect, 
-             Segment, MAFSegment, ISegment, DSegment, YOLOESegment, 
-             Pose, MAFPose, IPose, DPose,
-             OBB, MAFOBB, IOBB, DOBB, 
-             ImagePoolingAttn, v10Detect}
-        ):
-            args.append([ch[x] for x in f])
-            if m in {Segment, MAFSegment, ISegment, DSegment, YOLOESegment}:
-                args[2] = make_divisible(min(args[2], max_channels) * width, 8)
-            if m in {Detect, MAFDetect, IDetect, DDetect, YOLOEDetect, 
-                     Segment, MAFSegment, ISegment, DSegment, YOLOESegment, 
-                     Pose, MAFPose, IPose, DPose, 
-                     OBB, MAFOBB, IOBB, DOBB}:
-                m.legacy = legacy
-        elif m is RTDETRDecoder:  # special case, channels arg must be passed in index 1
-            args.insert(1, [ch[x] for x in f])
         elif m is PST:
             c1, c_up, c2 = ch[f[0]], ch[f[1]], args[0]
             c2 = make_divisible(min(c2, max_channels) * width, 8)
             args = [c1, c_up, c2, *args[1:]]
             args.insert(3, n)  # number of repeats
             n = 1
-            legacy = False
-            if scale in "lx":  # for L/X sizes
-                args.extend((True, 1.2))
+        elif m in frozenset(
+            {
+                Detect,
+                MAFDetect, 
+                IDetect,
+                WorldDetect,
+                YOLOEDetect,
+                Segment,
+                MAFSegment, 
+                ISegment,
+                Segment26,
+                YOLOESegment,
+                YOLOESegment26,
+                Pose,
+                MAFPose, 
+                IPose,
+                Pose26,
+                OBB,
+                MAFOBB, 
+                IOBB,
+                OBB26,
+            }
+        ):
+            args.extend([reg_max, end2end, [ch[x] for x in f]])
+            if m in {Segment, MAFSegment, ISegment, Segment26, YOLOESegment, YOLOESegment26}:
+                args[2] = make_divisible(min(args[2], max_channels) * width, 8)
+            if m in {Detect, MAFDetect, IDetect, YOLOEDetect, 
+                     Segment, MAFSegment, ISegment, Segment26, YOLOESegment, YOLOESegment26, 
+                     Pose, MAFPose, IPose, Pose26, 
+                     OBB, MAFOBB, IOBB, OBB26}:
+                m.legacy = legacy
+        elif m is v10Detect:
+            args.append([ch[x] for x in f])
+        elif m is ImagePoolingAttn:
+            args.insert(1, [ch[x] for x in f])  # channels as second arg
+        elif m is RTDETRDecoder:  # special case, channels arg must be passed in index 1
+            args.insert(1, [ch[x] for x in f])
         elif m is CBLinear:
             c2 = args[0]
             c1 = ch[f]
             args = [c1, c2, *args[1:]]
         elif m is CBFuse:
             c2 = ch[f[-1]]
+        elif m in frozenset({TorchVision, Index}):
+            c2 = args[0]
+            c1 = ch[f]
+            args = [*args[1:]]
         elif m is HyperACE:
             legacy = False
             c1 = ch[f[1]]
@@ -3062,12 +3241,12 @@ def parse_model(d, ch, verbose=True):
                    MobileNetV1, MobileNetV2_n, MobileNetV2_s, MobileNetV2_m, MobileNetV3_large_n, MobileNetV3_large_s, 
                    MobileNetV3_large_m, MobileNetV3_small_n, MobileNetV3_small_s, MobileNetV3_small_m, mobile_vit_xx_small, mobile_vit_x_small, mobile_vit_small,
                    MobileNetV4ConvLarge, MobileNetV4ConvSmall, MobileNetV4ConvMedium, MobileNetV4HybridMedium, MobileNetV4HybridLarge,
-                   mobile_vit2_xx_small, efficient, efficientnet_v2, Ghostnetv1, GhostNetV2, convnext_tiny, convnext_small, convnext_base, convnext_large, convnext_xlarge, 
+                   mobile_vit2_xx_small, efficient, efficientnet_v2, Ghostnetv1, GhostNetV2, Ghostnetv2, convnext_tiny, convnext_small, convnext_base, convnext_large, convnext_xlarge, 
                    convnextv2_atto, convnextv2_femto, convnext_pico, convnextv2_nano, convnextv2_tiny, convnextv2_base, convnextv2_large, convnextv2_huge, 
                    EfficientViT_M0, EfficientViT_M1, EfficientViT_M2, EfficientViT_M3, EfficientViT_M4, EfficientViT_M5, efficientvit_backbone_b0, 
                    efficientvit_backbone_b1, efficientvit_backbone_b2, efficientvit_backbone_b3, repvit_m0_6, repvit_m0_9, repvit_m1_0, 
                    repvit_m1_1, repvit_m1_5, repvit_m2_3, starnet_s050, starnet_s100, starnet_s150, starnet_s1, starnet_s2, starnet_s3, starnet_s4,
-                   fasternet_t0, fasternet_t1, fasternet_t2, fasternet_s, fasternet_m, fasternet_l, unireplknet_a, unireplknet_f, unireplknet_p, unireplknet_n, unireplknet_t, 
+                   fasternet_t0, fasternet_t1, fasternet_t2, fasternet_s, fasternet_m, fasternet_l, gspn_tiny, gspn_small, gspn_base, unireplknet_a, unireplknet_f, unireplknet_p, unireplknet_n, unireplknet_t, 
                    unireplknet_s, unireplknet_b, unireplknet_l, unireplknet_xl, LSKNET_T, LSKNET_S, moganet_xtiny, moganet_tiny, moganet_small, moganet_base, moganet_large, moganet_xlarge,
                    mspanet50, mspanet101, vanillanet_5, vanillanet_6, vanillanet_7, vanillanet_8, vanillanet_9, vanillanet_10, vanillanet_11, vanillanet_12, 
                    vanillanet_13, vanillanet_13_x1_5, vanillanet_13_x1_5_ada_pool, mambaout_femto, mambaout_kobe, mambaout_tiny, mambaout_small, mambaout_base,
@@ -3090,9 +3269,9 @@ def parse_model(d, ch, verbose=True):
                    slab_pvt_v2_b2, slab_pvt_v2_b2_li, slab_pvt_v2_b3, slab_pvt_v2_b4, slab_pvt_v2_b5, conv2former_n, conv2former_t, conv2former_s, conv2former_b, conv2former_b_22k, 
                    conv2former_l, LWGANet_L0_1242_e32_k11_GELU, LWGANet_L1_1242_e64_k11_GELU, LWGANet_L2_1442_e96_k11_ReLU, hornet_tiny_7x7, hornet_tiny_gf, hornet_small_7x7, hornet_small_gf, 
                    hornet_base_7x7, hornet_base_gf, hornet_base_gf_img384, hornet_large_7x7, hornet_large_gf, hornet_large_gf_img384, EfficientViM_M1, EfficientViM_M2, 
-                   EfficientViM_M3, EfficientViM_M4, EfficientViM_M5, SHViT_S1, SHViT_S2, SHViT_S3, SHViT_S4, RCViT_XS, RCViT_S, RCViT_M, RCViT_T, gc_vit_xxtiny, gc_vit_xtiny, 
+                   EfficientViM_M3, EfficientViM_M4, SHViT_S1, SHViT_S2, SHViT_S3, SHViT_S4, RCViT_XS, RCViT_S, RCViT_M, RCViT_T, gc_vit_xxtiny, gc_vit_xtiny, 
                    gc_vit_tiny, gc_vit_tiny2, gc_vit_small, gc_vit_small2, gc_vit_base, gc_vit_large, gc_vit_large_224_21k, gc_vit_large_384_21k, gc_vit_large_512_21k, 
-                   convit_tiny_backbone, convit_small_backbone, convit_base_backbone, RepVGG_A0, RepVGG_A1, RepVGG_A2, RepVGG_B0, RepVGG_B1, RepVGG_B1g2, RepVGG_B1g4, RepVGG_B2, RepVGG_B2g2, 
+                   convit_tiny_backbone, convit_small_backbone, convit_base_backbone, dsan_t, dsan_s, dsan_b, RepVGG_A0, RepVGG_A1, RepVGG_A2, RepVGG_B0, RepVGG_B1, RepVGG_B1g2, RepVGG_B1g4, RepVGG_B2, RepVGG_B2g2, 
                    RepVGG_B2g4, RepVGG_B3, RepVGG_B3g2, RepVGG_B3g4, RepVGG_D2se, orthonet34, orthonet50, orthonet101, orthonet152, decouplenet_d0, decouplenet_d1, decouplenet_d2, 
                    sbcformer_xs, sbcformer_s, sbcformer_b, sbcformer_l, fanet_tiny, fanet_small, cosnet_tiny, cosnet_small, cosnet_base, wtconvnext_tiny, wtconvnext_small, wtconvnext_base, 
                    wtconvnext_large, wtconvnext_xlarge, MLLA_Tiny, MLLA_Small, MLLA_Base, pkinet_t, pkinet_s, pkinet_b, glnet_stl, glnet_stl_paramslot, glnet_4g, glnet_9g, glnet_16g,
@@ -3102,16 +3281,17 @@ def parse_model(d, ch, verbose=True):
                    QARepVGGV2_A1, QARepVGGV2_A2, QARepVGGV2_B0, QARepVGGV2_B1, QARepVGGV2_B1g2, QARepVGGV2_B1g4, QARepVGGV2_D2se, identityformer_s12, identityformer_s24, identityformer_s36, 
                    identityformer_m36, identityformer_m48, randformer_s12, randformer_s24, randformer_s36, randformer_m36, randformer_m48, poolformerv2_s12, poolformerv2_s24, poolformerv2_s36, 
                    poolformerv2_m36, poolformerv2_m48, convformer_s18, convformer_s36, convformer_m36, convformer_b36, caformer_s18, caformer_s36, caformer_m36, caformer_b36, iformer_small, 
-                   iformer_base, iformer_large, van_b0, van_b1, van_b2, van_b3, van_b4, van_b5, van_b6, vheat_tiny, vheat_small, vheat_base, RepLKNet31B, RepLKNet31L, RepLKNetXL, 
-                   LSNet_T, LSNet_S, LSNet_B, StripNet_tiny, StripNet_small, transxnet_tiny, transxnet_small, transxnet_base, parcnetv2_xt, parcnetv2_tiny, parcnetv2_small, parcnetv2_base, 
-                   MALA_T, MALA_S, MALA_B, MALA_L, mpvit_tiny, mpvit_xsmall, mpvit_small, mpvit_base, uninext_t, uninext_s, uninext_b, stvit_small, stvit_base, stvit_large, fat_b0, fat_b1, 
-                   fat_b2, fat_b3, debi_tiny, debi_small, debi_base, maxvit_tiny, maxvit_small, maxvit_base, maxvit_large, scalable_vit_s, scalable_vit_b, scalable_vit_l, rest_lite, rest_small, 
-                   rest_base, rest_large, restv2_tiny, restv2_small, restv2_base, restv2_large}:
+                   iformer_base, iformer_large, van_b0, van_b1, van_b2, van_b3, van_b4, van_b5, van_b6, vheat_tiny, vheat_small, vheat_base,  vHeat_MoE_t, vHeat_MoE_s, vHeat_MoE_b, 
+                   RepLKNet31B, RepLKNet31L, RepLKNetXL, LSNet_T, LSNet_S, LSNet_B, StripNet_tiny, StripNet_small, transxnet_tiny, transxnet_small, transxnet_base, parcnetv2_xt, parcnetv2_tiny, 
+                   parcnetv2_small, parcnetv2_base, MALA_T, MALA_S, MALA_B, MALA_L, mpvit_tiny, mpvit_xsmall, mpvit_small, mpvit_base, uninext_t, uninext_s, uninext_b, stvit_small, stvit_base, 
+                   stvit_large, fat_b0, fat_b1, fat_b2, fat_b3, debi_tiny, debi_small, debi_base, maxvit_tiny, maxvit_small, maxvit_base, maxvit_large, scalable_vit_s, scalable_vit_b, scalable_vit_l, 
+                   rest_lite, rest_small, rest_base, rest_large, restv2_tiny, restv2_small, restv2_base, restv2_large, medformer_tiny, medformer_small, medformer_base, transnext_micro, transnext_tiny, 
+                   transnext_small, transnext_base, partialnet_s, partialnet_m, partialnet_l, flash_intern_image_t, flash_intern_image_s, flash_intern_image_b}:
             m = m(*args)
             c2 = m.width_list 
             backbone = True
         else:
-            c2 = ch[f]
+            c2 = ch[f] if isinstance(f, int) else sum(ch[x] for x in f)
             
         if isinstance(c2, list) and m not in {CBLinear, }:
             backbone = True
@@ -3127,13 +3307,15 @@ def parse_model(d, ch, verbose=True):
         # t = str(m)[8:-2].replace("__main__.", "")  # module type
         # m_.np = sum(x.numel() for x in m_.parameters())  # number params
         # m_.i, m_.f, m_.type = i, f, t  # attach index, 'from' index, type
+        if not hasattr(m_, 'np'):
+                m_.np = sum(x.numel() for x in m_.parameters())
         if verbose:
             LOGGER.info(f"{i:>3}{f!s:>20}{n_:>3}{m_.np:10.0f}  {t:<45}{args!s:<30}")  # print
-        # save.extend(x % i for x in ([f] if isinstance(f, int) else f) if x != -1)  # append to savelist
         save.extend(x % (i + 4 if backbone else i) for x in ([f] if isinstance(f, int) else f) if x != -1)  # append to savelist
         layers.append(m_)
         if i == 0:
             ch = []
+            
         if isinstance(c2, list) and m not in {CBLinear, }:
             ch.extend(c2)
             for _ in range(5 - len(ch)):
@@ -3197,13 +3379,13 @@ def guess_model_task(model):
         m = cfg["head"][-1][-2].lower()  # output module name
         if m in {"classify", "classifier", "cls", "fc"}:
             return "classify"
-        if "detect" in m:
+        if "detect" in m or "decoder" in m:  # RTDETRDecoder, etc.
             return "detect"
         if "segment" in m:
             return "segment"
-        if m == "pose":
+        if "pose" in m:
             return "pose"
-        if m == "obb":
+        if "obb" in m:
             return "obb"
 
     # Guess from model cfg
@@ -3214,20 +3396,20 @@ def guess_model_task(model):
     if isinstance(model, torch.nn.Module):  # PyTorch model
         for x in "model.args", "model.model.args", "model.model.model.args":
             with contextlib.suppress(Exception):
-                return eval(x)["task"]
+                return eval(x)["task"]  # nosec B307: safe eval of known attribute paths
         for x in "model.yaml", "model.model.yaml", "model.model.model.yaml":
             with contextlib.suppress(Exception):
-                return cfg2task(eval(x))
+                return cfg2task(eval(x))  # nosec B307: safe eval of known attribute paths
         for m in model.modules():
-            if isinstance(m, (Segment, MAFSegment, ISegment, DSegment, YOLOESegment)):
+            if isinstance(m, (Segment, MAFSegment, ISegment, YOLOESegment)):
                 return "segment"
             elif isinstance(m, Classify):
                 return "classify"
-            elif isinstance(m, (Pose, MAFPose, IPose, DPose)):
+            elif isinstance(m, (Pose, MAFPose, IPose)):
                 return "pose"
-            elif isinstance(m, (OBB, MAFOBB, IOBB, DOBB)):
+            elif isinstance(m, (OBB, MAFOBB, IOBB)):
                 return "obb"
-            elif isinstance(m, (Detect, MAFDetect, IDetect, DDetect, WorldDetect, YOLOEDetect, v10Detect)):
+            elif isinstance(m, (Detect, MAFDetect, IDetect, WorldDetect, YOLOEDetect, v10Detect)):
                 return "detect"
 
     # Guess from model filename
@@ -3250,3 +3432,4 @@ def guess_model_task(model):
         "Explicitly define task for your model, i.e. 'task=detect', 'segment', 'classify','pose' or 'obb'."
     )
     return "detect"  # assume detect
+

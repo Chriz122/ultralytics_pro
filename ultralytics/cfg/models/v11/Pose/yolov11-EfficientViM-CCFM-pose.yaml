@@ -3,7 +3,7 @@
  
 # Parameters
 nc: 80 # number of classes
-kpt_shape: [17, 3] # number of keypoints, number of dims (2 for x,y or 3 for x,y,visible)
+kpt_shape: [17, 3]
 scales: # model compound scaling constants, i.e. 'model=yolo11n.yaml' will call yolo11.yaml with scale 'n'
   # [depth, width, max_channels]
   n: [0.50, 0.25, 1024, 0] # summary: 319 layers, 2624080 parameters, 2624064 gradients, 6.6 GFLOPs
@@ -16,7 +16,7 @@ scales: # model compound scaling constants, i.e. 'model=yolo11n.yaml' will call 
 # YOLO11n backbone
 backbone:
   # [from, repeats, module, args]
-  - [-1, 1, EfficientViM_M5, []] 
+  - [-1, 1, EfficientViM_M1, []] 
   - [-1, 1, SPPF, [1024, 5]] # 5
   - [-1, 2, C2PSA, [1024]] # 6
  
@@ -33,14 +33,14 @@ head:
   - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
   - [2, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 14 input_proj.0
   - [[-2, -1], 1, Concat, [1]]  # cat backbone P4
-  - [-1, 2, C3k2, [256, False]] # 16 (P3/8-small)
+  - [-1, 2, C3k2, [256, False]] # 16 (P3/8-small) 12
  
   - [-1, 1, Conv, [256, 3, 2]]
-  - [[-1, 10], 1, Concat, [1]] # cat head P4
-  - [-1, 2, C3k2, [256, False]] # 19 (P4/16-medium)
+  - [[-1, 12], 1, Concat, [1]] # cat head P4
+  - [-1, 2, C3k2, [256, False]] # 19 (P4/16-medium) 15
  
   - [-1, 1, Conv, [256, 3, 2]]
-  - [[-1, 5], 1, Concat, [1]] # cat head P5
-  - [-1, 2, C3k2, [256, True]] # 22 (P5/32-large)
+  - [[-1, 7], 1, Concat, [1]] # cat head P5
+  - [-1, 2, C3k2, [256, True]] # 22 (P5/32-large) 18
  
   - [[16, 19, 22], 1, Pose, [nc, kpt_shape]] # Detect(P3, P4, P5)

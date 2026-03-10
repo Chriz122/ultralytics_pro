@@ -1,0 +1,64 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv8 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80  # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolov8n.yaml' will call yolov8.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.33, 0.25, 1024, 0]
+  t: [0.33, 0.375, 1024, 0]
+  s: [0.33, 0.50, 1024, 0]
+  m: [0.67, 0.75, 768, 0]
+  l: [1.00, 1.00, 512, 0]
+  x: [1.00, 1.25, 512, 0]
+
+# YOLOv8.0n backbone
+backbone:
+  # Stage 0: PatchEmbed
+  # args: [out_channels, kernel_size, stride]
+  - [-1, 1, PatchEmbed_Faster, [96, 4, 4]]  # 0-P2/4 (96 ch)
+
+  # Stage 1: BasicStage
+  # args: [out_channels, number_of_blocks]
+  # FasterNet-T2 Stage 1 has depth 1
+  - [-1, 1, FasterNetLayer, [96, 1]]        # 1 (96 ch)
+
+  # Stage 2: Downsample + BasicStage
+  # PatchMerging: 96 -> 192
+  - [-1, 1, PatchMerging_Faster, [192]]     # 2-P3/8 (192 ch)
+  # FasterNet-T2 Stage 2 has depth 2
+  - [-1, 1, FasterNetLayer, [192, 2]]       # 3 (192 ch)
+
+  # Stage 3: Downsample + BasicStage
+  # PatchMerging: 192 -> 384
+  - [-1, 1, PatchMerging_Faster, [384]]     # 4-P4/16 (384 ch)
+  # FasterNet-T2 Stage 3 has depth 8
+  - [-1, 1, FasterNetLayer, [384, 8]]       # 5 (384 ch)
+
+  # Stage 4: Downsample + BasicStage
+  # PatchMerging: 384 -> 768
+  - [-1, 1, PatchMerging_Faster, [768]]     # 6-P5/32 (768 ch)
+  # FasterNet-T2 Stage 4 has depth 2
+  - [-1, 1, FasterNetLayer, [768, 2]]       # 7 (768 ch)
+
+  - [-1, 1, SPPF, [768, 5]] # 8
+
+# YOLOv8.0n head
+head:
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+  - [[-1, 5], 1, Concat, [1]]  # cat backbone P4
+  - [-1, 3, C2f, [512]]  # 11
+
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+  - [[-1, 3], 1, Concat, [1]]  # cat backbone P3
+  - [-1, 3, C2f, [256]]  # 14 (P3/8-small)
+
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 11], 1, Concat, [1]]  # cat head P4
+  - [-1, 3, C2f, [512]]  # 17 (P4/16-medium)
+
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 8], 1, Concat, [1]]  # cat head P5
+  - [-1, 3, C2f, [1024]]  # 20 (P5/32-large)
+
+  - [[14, 17, 20], 1, Detect, [nc]]  # Detect(P3, P4, P5)

@@ -1,0 +1,74 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv8 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80  # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolov8n.yaml' will call yolov8.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.33, 0.25, 1024, 0]
+  t: [0.33, 0.375, 1024, 0]
+  s: [0.33, 0.50, 1024, 0]
+  m: [0.67, 0.75, 768, 0]
+  l: [1.00, 1.00, 512, 0]
+  x: [1.00, 1.25, 512, 0]
+
+# PartialNet-S Config:
+# Embed: 96
+# Stages: [2, 2, 9, 4]
+# Channels increase: 96 -> 192 -> 384 -> 768
+# Attention types: Stage 0-2='se', Stage 3='self'
+
+backbone:
+  # [from, repeats, module, args]
+  
+  # Layer 0: Patch Embed (Input 3 -> 96). H/4
+  # Args: [c2, kernel, stride]
+  - [-1, 1, Partial_PatchEmbed, [160, 4, 4]] 
+  
+  # Layer 1: Stage 1 (96 channels, depth 2)
+  # Args: [c2, depth, n_div, mlp_ratio, drop_path, channel_type]
+  # Note: c2 must match input (96)
+  - [-1, 1, Partial_Block, [160, 2, 4, 2.0, 0.0, 'se']]  # 1
+  
+  # Layer 2: Downsample (96 -> 192). H/8. (P3 start)
+  # Args: [c2, kernel, stride]
+  - [-1, 1, Partial_Downsample, [320, 2, 2]]
+  
+  # Layer 3: Stage 2 (192 channels, depth 2)
+  - [-1, 1, Partial_Block, [320, 3, 4, 2.0, 0.1, 'se']]  # 3
+  
+  # Layer 4: Downsample (192 -> 384). H/16. (P4 start)
+  - [-1, 1, Partial_Downsample, [640, 2, 2]]
+  
+  # Layer 5: Stage 3 (384 channels, depth 9)
+  # drop_path increased slightly
+  - [-1, 1, Partial_Block, [640, 20, 4, 2.0, 0.2, 'self']]  # 5
+  
+  # Layer 6: Downsample (384 -> 768). H/32. (P5 start)
+  - [-1, 1, Partial_Downsample, [1280, 2, 2]]
+  
+  # Layer 7: Stage 4 (768 channels, depth 4)
+  - [-1, 1, Partial_Block, [1280, 4, 4, 2.0, 0.3, 'self']]  # 7
+
+  # 8. SPPF (YOLO standard head enhancement)
+  - [-1, 1, SPPF, [1280, 5]] # 8
+
+# YOLOv8.0n head
+head:
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+  - [[-1, 5], 1, Concat, [1]]  # cat backbone P4
+  - [-1, 3, C2f, [512]]  # 11
+
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+  - [[-1, 3], 1, Concat, [1]]  # cat backbone P3
+  - [-1, 3, C2f, [256]]  # 14 (P3/8-small)
+
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 11], 1, Concat, [1]]  # cat head P4
+  - [-1, 3, C2f, [512]]  # 17 (P4/16-medium)
+
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 8], 1, Concat, [1]]  # cat head P5
+  - [-1, 3, C2f, [1024]]  # 20 (P5/32-large)
+
+  - [[14, 17, 20], 1, Detect, [nc]]  # Detect(P3, P4, P5)

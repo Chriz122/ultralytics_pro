@@ -1,0 +1,62 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv8 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+# Parameters
+nc: 80  # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolov8n.yaml' will call yolov8.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.33, 0.25, 1024, 0]
+  t: [0.33, 0.375, 1024, 0]
+  s: [0.33, 0.50, 1024, 0]
+  m: [0.67, 0.75, 768, 0]
+  l: [1.00, 1.00, 512, 0]
+  x: [1.00, 1.25, 512, 0]
+
+# StripNet-Tiny backbone
+# Parameters based on: embed_dims=[64, 128, 320, 512], depths=[2, 2, 4, 2]
+backbone:
+  # [from, repeats, module, args]
+  # args for StripDownsample: [c2, patch_size, stride]
+  # args for StripBlock: [c2, k1, k2, mlp_ratio]
+  
+  # Stage 1 (H/4)
+  # input: 3 ch, output: 32 ch
+  - [-1, 1, StripDownsample, [64, 7, 4]]  # 0
+  - [-1, 2, StripBlock, [64, 1, 19, 8]]   # 1
+
+  # Stage 2 (H/8)
+  # input: 32 ch, output: 64 ch
+  - [-1, 1, StripDownsample, [128, 3, 2]]  # 2
+  - [-1, 2, StripBlock, [128, 1, 19, 8]]   # 3
+
+  # Stage 3 (H/16)
+  # input: 64 ch, output: 160 ch
+  - [-1, 1, StripDownsample, [320, 3, 2]] # 4
+  - [-1, 4, StripBlock, [320, 1, 19, 4]]  # 5
+
+  # Stage 4 (H/32)
+  # input: 160 ch, output: 256 ch
+  - [-1, 1, StripDownsample, [512, 3, 2]] # 6
+  - [-1, 2, StripBlock, [512, 1, 19, 4]]  # 7
+
+  - [-1, 1, SPPF, [512, 5]] # 8
+
+# YOLOv8.0n head
+head:
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+  - [[-1, 5], 1, Concat, [1]]  # cat backbone P4
+  - [-1, 3, C2f, [512]]  # 11
+
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+  - [[-1, 3], 1, Concat, [1]]  # cat backbone P3
+  - [-1, 3, C2f, [256]]  # 14 (P3/8-small)
+
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 11], 1, Concat, [1]]  # cat head P4
+  - [-1, 3, C2f, [512]]  # 17 (P4/16-medium)
+
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 8], 1, Concat, [1]]  # cat head P5
+  - [-1, 3, C2f, [1024]]  # 20 (P5/32-large)
+
+  - [[14, 17, 20], 1, Detect, [nc]]  # Detect(P3, P4, P5)

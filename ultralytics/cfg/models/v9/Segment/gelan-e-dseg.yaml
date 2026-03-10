@@ -121,5 +121,5 @@ head:
    [-1, 1, Conv, [256, 3, 2]], # 44
 
    # detect
-   [[35, 38, 41, 44], 1, DSegment, [nc, 32, 256]],  # DSegment(P3, P4, P5)
+   [[35, 38, 41, 44], 1, Segment, [nc, 32, 256]],  # Segment(P3, P4, P5)
   ]

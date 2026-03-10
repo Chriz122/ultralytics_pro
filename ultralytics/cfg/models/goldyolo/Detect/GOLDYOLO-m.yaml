@@ -38,7 +38,7 @@ head:
   - [[19, 15, 9], 1, PyramidPoolAgg, [352, 2]]
   - [-1, 1, TopBasicLayer, [352, [64, 128]]] # 21
 
-  - [[19, 16], 1, AdvPoolFusion, []],
+  - [[19, 16], 1, AdvPoolFusion, []]
   - [[-1, 21], 1, InjectionMultiSum_Auto_pool, [256, [64, 128], 0]]  # cat head P4
   - [-1, 12, RepBlock, [256]] # 24
 

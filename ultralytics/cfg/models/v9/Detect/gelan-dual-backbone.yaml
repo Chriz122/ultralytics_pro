@@ -1,0 +1,68 @@
+# YOLOv9
+
+# parameters
+nc: 80  # number of classes
+depth_multiple: 1.0  # model depth multiple
+width_multiple: 1.0  # layer channel multiple
+#activation: nn.LeakyReLU(0.1)
+#activation: nn.ReLU()
+
+# anchors
+anchors: 3
+
+# GELAN backbone
+backbone:
+  - [-1, 1, nn.Identity, []]
+  - [-1, 1, Conv, [16, 3, 2]] # 1-P1/2
+  - [-1, 1, Conv, [32, 3, 2]] # 2-P2/4
+  - [-1, 1, ELAN1, [32, 32, 16]] # 3
+  - [-1, 1, AConv, [64]] # 4-P3/8
+  - [-1, 1, FasterRepNCSPELAN4, [64, 64, 32, 3]] # 5
+  - [-1, 1, AConv, [96]] # 6-P4/16
+  - [-1, 1, FasterRepNCSPELAN4, [96, 96, 48, 3]] # 7
+  - [-1, 1, AConv, [128]] # 8-P5/32
+  - [-1, 1, FasterRepNCSPELAN4, [128, 128, 64, 3]] # 9
+
+  - [1, 1, CBLinear, [[16]]] # 10
+  - [3, 1, CBLinear, [[16, 32]]] # 11
+  - [5, 1, CBLinear, [[16, 32, 64]]] # 12
+  - [7, 1, CBLinear, [[16, 32, 64, 96]]] # 13
+  - [9, 1, CBLinear, [[16, 32, 64, 96, 128]]] # 14
+
+  - [0, 1, Conv, [16, 3, 2]] # 15-P1/2
+  - [[10, 11, 12, 13, 14, -1], 1, CBFuse, [[0, 0, 0, 0, 0]]] # 16
+  - [-1, 1, Conv, [32, 3, 2]] # 17-P2/4
+  - [[11, 12, 13, 14, -1], 1, CBFuse, [[1, 1, 1, 1]]] # 18
+  - [-1, 1, ELAN1, [32, 32, 16]] # 19
+  - [-1, 1, AConv, [64]] # 20-P3/8
+  - [[12, 13, 14, -1], 1, CBFuse, [[2, 2, 2]]] # 21
+  - [-1, 1, FasterRepNCSPELAN4, [64, 64, 32, 3]] # 22
+  - [-1, 1, AConv, [96]] # 23-P4/16
+  - [[13, 14, -1], 1, CBFuse, [[3, 3]]] # 24
+  - [-1, 1, FasterRepNCSPELAN4, [96, 96, 48, 3]] # 25
+  - [-1, 1, AConv, [128]] # 26-P5/32
+  - [[14, -1], 1, CBFuse, [[4]]] # 27
+  - [-1, 1, FasterRepNCSPELAN4, [128, 128, 64, 3]] # 28
+  - [-1, 1, SPPELAN, [128, 64]] # 29
+  - [-1, 1, MultiOrderGatedAggregation, [128]] # 30
+
+# GELAN head
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 25], 1, Concat, [1]] # cat backbone P4
+  - [-1, 1, FasterRepNCSPELAN4, [96, 96, 48, 3]] # 33
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 22], 1, Concat, [1]] # cat backbone P3
+  - [-1, 1, FasterRepNCSPELAN4, [64, 64, 32, 3]] # 36 (P3/8-small)
+
+  - [-1, 1, AConv, [48]]
+  - [[-1, 33], 1, Concat, [1]] # cat head P4
+  - [-1, 1, FasterRepNCSPELAN4, [96, 96, 48, 3]] # 39 (P4/16-medium)
+
+  - [-1, 1, AConv, [64]]
+  - [[-1, 30], 1, Concat, [1]] # cat head P5
+  - [-1, 1, FasterRepNCSPELAN4, [128, 128, 64, 3]] # 42 (P5/32-large)
+
+  - [[36, 39, 42], 1, Detect, [nc]] # Detect(P3, P4, P5)
+
