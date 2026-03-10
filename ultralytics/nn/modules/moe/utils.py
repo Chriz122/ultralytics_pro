@@ -65,13 +65,61 @@ class BatchedExpertComputation:
         3) Aggregate using efficient scatter/index_add
         """
         B, C, H, W = x.shape
-        out_channels = experts[0].conv[-2].out_channels if hasattr(experts[0], 'conv') else experts[0].primary_conv[
-            0].out_channels
+        
+        # --- 修正開始: 通用的 out_channels 獲取邏輯 (兼容 GBCExpert) ---
+        expert_example = experts[0]
+        out_channels = None
+
+        # 1. 優先：檢查是否顯式定義了 out_channels 屬性
+        if hasattr(expert_example, 'out_channels'):
+            out_channels = expert_example.out_channels
+        
+        # 2. 次優先：檢查常見的 YOLO 結構 (如 Bottleneck, C2f)
+        elif hasattr(expert_example, 'conv'):
+            c = expert_example.conv
+            if isinstance(c, nn.Conv2d):
+                out_channels = c.out_channels
+            elif isinstance(c, (nn.Sequential, list, nn.ModuleList)):
+                # 嘗試取最後一個 Conv 層的通道數
+                if hasattr(c[-1], 'out_channels'):
+                    out_channels = c[-1].out_channels
+                elif hasattr(c[-2], 'out_channels'): # 針對某些 Bottleneck 結構
+                    out_channels = c[-2].out_channels
+
+        # 3. 舊版兼容：檢查 primary_conv
+        elif hasattr(expert_example, 'primary_conv'):
+            if isinstance(expert_example.primary_conv, (list, nn.Sequential)):
+                 out_channels = expert_example.primary_conv[0].out_channels
+            else:
+                 out_channels = expert_example.primary_conv.out_channels
+
+        # 4. 萬能回退方案 (Fallback)：
+        # 如果以上屬性都不存在 (如 GBCExpert)，則執行一次虛擬前向傳播 (Dummy Forward)
+        # 這是最穩健的方法，適用於任何 nn.Module
+        if out_channels is None:
+            try:
+                with torch.no_grad():
+                    # 構造一個微小的 dummy input (4x4 避免 1x1 輸入在某些 padding/stride 下出錯)
+                    dummy_in = torch.zeros(1, C, 4, 4, device=x.device, dtype=x.dtype)
+                    dummy_out = expert_example(dummy_in)
+                    out_channels = dummy_out.shape[1]
+            except Exception as e:
+                raise AttributeError(f"無法確定 Expert {type(expert_example).__name__} 的輸出通道數。請確保 Expert 類別定義了 'out_channels' 屬性，或能接受 dummy input。錯誤訊息: {e}")
+        # --- 修正結束 ---
 
         # Flatten indices and weights
-        indices_flat = routing_indices.view(B, top_k).squeeze(-1).squeeze(-1)  # [B, top_k]
-        weights_flat = routing_weights.view(B, top_k).squeeze(-1).squeeze(-1)  # [B, top_k]
-
+        # Handle cases where top_k might have changed dynamically
+        current_top_k = routing_indices.shape[1]
+        indices_flat = routing_indices.view(B, current_top_k)  # [B, top_k]
+        weights_flat = routing_weights.view(B, current_top_k)  # [B, top_k]
+        
+        # Squeeze logic handled by view if shapes align, otherwise explicit squeeze if needed
+        # But indices from router are usually [B, k], sometimes [B, k, 1, 1] if spatial
+        if routing_indices.dim() > 2:
+             indices_flat = indices_flat.squeeze(-1).squeeze(-1)
+        if routing_weights.dim() > 2:
+             weights_flat = weights_flat.squeeze(-1).squeeze(-1)
+             
         # Plan A: conditional computation (skip low-weight experts)
         # Threshold is tunable (accuracy vs speed)
         weight_threshold = 0.01
@@ -90,14 +138,29 @@ class BatchedExpertComputation:
                 continue
 
             # Get batch indices and corresponding weights
-            batch_indices, k_indices = torch.where(expert_mask)
+            where_res = torch.where(expert_mask)
+            if len(where_res) == 1:
+                batch_indices = where_res[0]
+                k_indices = torch.zeros_like(batch_indices)
+            else:
+                batch_indices, k_indices = where_res
 
             # Batched forward pass
             expert_input = x[batch_indices]
             expert_out = experts[expert_idx](expert_input)
 
             # Apply weights
-            weights = weights_flat[batch_indices, k_indices].view(-1, 1, 1, 1)
+            if weights_flat.dim() == 1:
+                 # Flattened weights [B*top_k] or just [B] if k=1
+                 # If batch_indices is used to index, we assume weights_flat aligns with flattened indices
+                 # But wait, weights_flat is [B, top_k] flattened.
+                 # If expert_mask is 1D [B], then weights_flat should be 1D [B] too.
+                 weights = weights_flat[batch_indices].view(-1, 1, 1, 1)
+            elif weights_flat.dim() == 0:
+                 # Scalar tensor, maybe from some reduction? Should not happen in normal flow.
+                 weights = weights_flat.view(-1, 1, 1, 1)
+            else:
+                 weights = weights_flat[batch_indices, k_indices].view(-1, 1, 1, 1) 
             weighted_out = expert_out * weights
 
             # Accumulate outputs (efficient index_add_)

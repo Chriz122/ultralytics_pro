@@ -427,7 +427,7 @@ class ConvMS(nn.Module):
             ])
             self.RepElanMSBlock.append(DepthBlock)
 
-        self.conv2 = Conv(int(c_ * 1 + c_ * (width - 1) * depth), out_channels, 1, 1)
+        self.conv2 = Conv(c_ * 1 + c_ * (width - 1) * depth, out_channels, 1, 1)
 
     def forward(self, x):
         x = self.conv1(x)

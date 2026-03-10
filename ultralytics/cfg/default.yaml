@@ -23,7 +23,7 @@ project: # (str, optional) project name for results root
 name: # (str, optional) experiment name; results in 'project/name'
 exist_ok: False # (bool) overwrite existing 'project/name' if True
 pretrained: True # (bool | str) use pretrained weights (bool) or load weights from path (str)
-optimizer: auto # (str) optimizer: SGD, Adam, Adamax, AdamW, NAdam, RAdam, RMSProp, or auto
+optimizer: auto # (str) optimizer: MuSGD, SGD, Adam, Adamax, AdamW, NAdam, RAdam, RMSProp, or auto
 verbose: True # (bool) print verbose logs during training/val
 seed: 0 # (int) random seed for reproducibility
 deterministic: True # (bool) enable deterministic ops; reproducible but may be slower
@@ -105,7 +105,7 @@ warmup_bias_lr: 0.1 # (float) bias learning rate during warmup
 box: 7.5 # (float) box loss gain
 cls: 0.5 # (float) classification loss gain
 dfl: 1.5 # (float) distribution focal loss gain
-moe: 1.5 # (float) moe loss gain
+moe: 0.15 # (float) moe loss gain
 pose: 12.0 # (float) pose loss gain (pose tasks)
 kobj: 1.0 # (float) keypoint objectness loss gain (pose tasks)
 rle: 1.0 # (float) rle loss gain (pose tasks)
@@ -135,3 +135,35 @@ cfg: # (str, optional) path to a config.yaml that overrides defaults
 
 # Tracker settings ------------------------------------------------------------------------------------------------------
 tracker: botsort.yaml # (str) tracker config file: botsort.yaml or bytetrack.yaml
+
+# LoRA settings ---------------------------------------------------------------------------------------------------------
+lora_r: 0 # (int) LoRA rank (0 to disable)
+lora_alpha: 16 # (int) LoRA alpha
+lora_dropout: 0.05 # (float) LoRA dropout
+lora_bias: "none" # (str) LoRA bias type: "none", "all", "lora_only"
+lora_target_modules: # (list[str], optional) LoRA target modules
+lora_save_adapters: True # (bool) Save LoRA adapters
+lora_adapter_dir: "lora_adapter" # (str) Directory name for adapters
+lora_auto_r_ratio: 0.0 # (float) Auto calculate LoRA rank based on params ratio
+lora_use_dora: False # (bool) Enable DoRA (Weight-Decomposed Low-Rank Adaptation)
+lora_type: "lora" # (str) PEFT type: "lora", "loha", "lokr"
+lora_quantization: "none" # (str) Quantization type: "none", "4bit", "8bit" (Requires bitsandbytes)
+lora_include_moe: False # (bool) Include MoE layers in auto-detection
+lora_include_attention: False # (bool) Include Attention layers in auto-detection
+lora_only_backbone: False # (bool) Only apply LoRA to backbone
+lora_exclude_modules: # (list[str], optional) Modules to exclude
+lora_last_n: # (int, optional) Only apply to last N layers
+lora_from_layer: # (int, optional) Start applying from layer index
+lora_to_layer: # (int, optional) Stop applying at layer index
+lora_allow_depthwise: False # (bool) Allow depthwise convolution
+lora_kernels: # (list[int], optional) Filter by kernel size
+lora_gradient_checkpointing: True # (bool) Enable gradient checkpointing for LoRA memory optimization
+
+# MoE (Mixture-of-Experts) settings -----------------------------------------------------------------------------------------
+moe_num_experts: 4 # (int) Number of experts in MoE layers (0 to use model config)
+moe_top_k: 2 # (int) Number of experts to activate per token
+moe_balance_loss: 0.01 # (float) Load balancing loss coefficient for MoE
+moe_noise_std: 1.0 # (float) Noise standard deviation for MoE routing
+moe_temperature: 1.0 # (float) Temperature for MoE routing logits
+moe_router_z_loss: 0.001 # (float) Router z-loss coefficient for MoE
+moe_weight_threshold: 0.01 # (float) Weight threshold for conditional computation in MoE

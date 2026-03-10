@@ -54,16 +54,10 @@ class InvertedBottleneck(nn.Module):
         c_mid = e if e != None else c1
         self.residual = c1 == c2 and stride == 1
 
-        if pw:
-            features = [mn_conv(c1, c_mid, act=act)]
-            dw_input_c = c_mid  # depthwise input is c_mid
-        else:
-            features = []
-            dw_input_c = c1  # depthwise input is c1
-            
-        features.extend([mn_conv(dw_input_c, dw_input_c, k, stride, g=dw_input_c, act=act),
+        features = [mn_conv(c1, c_mid, act=act)] if pw else [] #if c_mid != c1 else []
+        features.extend([mn_conv(c_mid, c_mid, k, stride, g=c_mid, act=act),
                          #attn,
-                         nn.Conv2d(dw_input_c, c2, 1),
+                         nn.Conv2d(c_mid, c2, 1),
                          nn.BatchNorm2d(c2),
                          #nn.SiLU(),
                          ])
@@ -84,16 +78,10 @@ class MobileNetV3_BLOCK(nn.Module):
         c_mid = e if e != None else c1
         self.residual = c1 == c2 and stride == 1
 
-        if pw:
-            features = [mn_conv(c1, c_mid, act=act)]
-            dw_input_c = c_mid  # depthwise input is c_mid
-        else:
-            features = []
-            dw_input_c = c1  # depthwise input is c1
-            
-        features.extend([mn_conv(dw_input_c, dw_input_c, k, stride, g=dw_input_c, act=act),
+        features = [mn_conv(c1, c_mid, act=act)] if pw else [] #if c_mid != c1 else []
+        features.extend([mn_conv(c_mid, c_mid, k, stride, g=c_mid, act=act),
                          #attn,
-                         nn.Conv2d(dw_input_c, c2, 1),
+                         nn.Conv2d(c_mid, c2, 1),
                          nn.BatchNorm2d(c2),
                          #nn.SiLU(),
                          ])

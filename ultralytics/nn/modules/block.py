@@ -9254,9 +9254,7 @@ class PST(nn.Module):
         # Initial convolutions to reduce input and upper feature channels
         self.cv1 = Conv(c1, c_, 1, 1)  # Convolution for input feature
         self.cvup = Conv(c_up, c_, 1, 1)  # Convolution for upper-level feature
-        # Ensure the intermediate channels are compatible
-        intermediate_c = (1 + n) * c_
-        self.cv2 = Conv(intermediate_c, c2, 1, 1, g=1)  # Explicitly set groups=1
+        self.cv2 = Conv((1 + n) * c_, c2, 1)  # Final convolution to output channels
 
         self.num_layers = n
         for i in range(n):

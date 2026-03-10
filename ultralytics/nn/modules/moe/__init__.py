@@ -15,6 +15,15 @@ from .modules import (
     MOE,
     EfficientSpatialRouterMoE,
     ModularRouterExpertMoE,
+    HyperSplitMoE,
+    HyperFusedMoE,
+    HyperUltimateMoE,
+    UltimateOptimizedMoE,
+<<<<<<< HEAD
+    A2C2fMoE,
+    ABlockMoE,
+=======
+>>>>>>> f3b60df89063cfd289acbd08200abe9d9a125dd4
 )
 
 from .experts import (
@@ -24,7 +33,10 @@ from .experts import (
     GhostExpert,
     InvertedResidualExpert,
     EfficientExpertGroup,
-    DepthwiseSeparableConv
+    DepthwiseSeparableConv,
+    UniversalInvertedResidualExpert,
+    ShuffleExpert, 
+    FasterExpert
 )
 
 from .routers import (
@@ -55,11 +67,23 @@ __all__ = [
     "MOE",
     "EfficientSpatialRouterMoE",
     "ModularRouterExpertMoE",
+    "HyperSplitMoE",
+    "HyperFusedMoE",
+    "HyperUltimateMoE",
+    "UltimateOptimizedMoE",
+<<<<<<< HEAD
+    "A2C2fMoE",
+    "ABlockMoE",
+=======
+>>>>>>> f3b60df89063cfd289acbd08200abe9d9a125dd4
     "OptimizedSimpleExpert",
     "FusedGhostExpert",
     "SimpleExpert",
     "GhostExpert",
     "InvertedResidualExpert",
+    "UniversalInvertedResidualExpert",
+    "ShuffleExpert", 
+    "FasterExpert",
     "EfficientExpertGroup",
     "DepthwiseSeparableConv",
     "UltraEfficientRouter",
@@ -76,4 +100,5 @@ __all__ = [
     "diagnose_model",
     "prune_moe_model"
 ]
+
 

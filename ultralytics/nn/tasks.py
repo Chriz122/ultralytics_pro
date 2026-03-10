@@ -17,6 +17,14 @@ from ultralytics.nn.modules import (
     OptimizedMOEImproved,
     EfficientSpatialRouterMoE,
     ModularRouterExpertMoE,
+    UltraOptimizedMoE,
+    AdaptiveCapacityMoE,
+    HyperSplitMoE,
+    HyperFusedMoE,
+    HyperUltimateMoE,
+    UltimateOptimizedMoE,
+    A2C2fMoE,
+    ABlockMoE,
     C3k2_Dynamic,
     C2f_LSKA,
     MOE,
@@ -31,9 +39,6 @@ from ultralytics.nn.modules import (
     Pose26,
     Segment26,
     YOLOESegment26,
-    flash_intern_image_t,
-    flash_intern_image_s,
-    flash_intern_image_b,
     
     MP,
     SP,
@@ -432,7 +437,6 @@ from ultralytics.nn.modules import (
     efficientnet_v2,
     Ghostnetv1,
     GhostNetV2,
-    Ghostnetv2,
     GhostNet_1_0,
     convnextv2_atto, 
     convnextv2_femto, 
@@ -476,9 +480,6 @@ from ultralytics.nn.modules import (
     fasternet_s, 
     fasternet_m, 
     fasternet_l,
-    gspn_tiny,
-    gspn_small,
-    gspn_base,
     RepLKNet31B, 
     RepLKNet31L, 
     RepLKNetXL,
@@ -753,9 +754,6 @@ from ultralytics.nn.modules import (
     convit_tiny_backbone, 
     convit_small_backbone, 
     convit_base_backbone,
-    dsan_t,
-    dsan_s,
-    dsan_b,
     RepVGG_A0, 
     RepVGG_A1, 
     RepVGG_A2, 
@@ -940,6 +938,46 @@ from ultralytics.nn.modules import (
     partialnet_s, 
     partialnet_m, 
     partialnet_l,
+    waveformer_tiny, 
+    waveformer_small, 
+    waveformer_base,
+    tinyvim_s, 
+    tinyvim_b, 
+    tinyvim_l,
+    mamba_vision_T, 
+    mamba_vision_T2, 
+    mamba_vision_S, 
+    mamba_vision_B, 
+    mamba_vision_L, 
+    mamba_vision_L2,
+    flash_intern_image_t, 
+    flash_intern_image_s, 
+    flash_intern_image_b,
+    dsan_t,
+    dsan_s, 
+    dsan_b,
+    vssd_micro_e300, 
+    vssd_tiny_e300, 
+    vssd_small_e300, 
+    vssd_base_e300,
+    sparx_mamba_t, 
+    sparx_mamba_s, 
+    sparx_mamba_b,
+    groupmamba_tiny,
+    groupmamba_small,
+    groupmamba_base,
+    MobileMamba_T2,
+    MobileMamba_T4, 
+    MobileMamba_S6, 
+    MobileMamba_B1, 
+    MobileMamba_B2, 
+    MobileMamba_B4,
+    vcmamba_efficientformer_s, 
+    vcmamba_efficientformer_m, 
+    vcmamba_efficientformer_b,
+    defm_tiny, 
+    defm_small, 
+    defm_base,
     VanillaNet,
     UniRepLKNet,
     OverLoCK,
@@ -1000,6 +1038,10 @@ from ultralytics.nn.modules import (
     IEMA,
     DASI,
     PST,
+    VSSBlock, 
+    SimpleStem, 
+    VisionClueMerge, 
+    XSSBlock,
     UPA,
     MambaNeXt, 
     IRDCB,
@@ -1023,6 +1065,24 @@ from ultralytics.nn.modules import (
     vHeatStem, 
     vHeatStage, 
     vHeatDownsample,
+    TinyViM_Stem, 
+    TinyViM_Stage, 
+    TinyViM_Downsample,
+    MV_Stem, 
+    MV_Downsample, 
+    MV_Stage,
+    Stem_VSSD, 
+    VSSLayer, 
+    PatchMerging_VSSD,
+    SparXStem, 
+    SparXStage, 
+    SparXDownsample,
+    GMStem, 
+    GMBlock, 
+    GMDown,
+    MobileMamba_Stem, 
+    MobileMamba_Block, 
+    MobileMamba_Downsample,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -1048,6 +1108,7 @@ from ultralytics.utils.torch_utils import (
     smart_inference_mode,
     time_sync,
 )
+
 
 class BaseModel(torch.nn.Module):
     """Base class for all YOLO models in the Ultralytics family.
@@ -1123,6 +1184,11 @@ class BaseModel(torch.nn.Module):
         y, dt, embeddings = [], [], []  # outputs
         embed = frozenset(embed) if embed is not None else {-1}
         max_idx = max(embed)
+        
+        # Check if gradient checkpointing is enabled
+        # If you want to train like MambaVision, SHViT or ConvNeXt. Please comment the "use_gc"  
+        use_gc = getattr(self, 'use_gradient_checkpointing', False) and self.training
+        
         for m in self.model:
             if m.f != -1:  # if not from previous layer
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
@@ -1130,23 +1196,24 @@ class BaseModel(torch.nn.Module):
                 self._profile_one_layer(m, x, dt)
             if hasattr(m, 'backbone'):
                 x = m(x)
-                if isinstance(x, list):
-                    if len(x) != 5:  # 0 - 5
-                        x.insert(0, None)
-                    for index, i in enumerate(x):
-                        # Calculate the actual layer index for this output
-                        layer_idx = m.i - 4 + index  # m.i is base_i + 4, so this gives base_i + index
-                        if layer_idx in self.save:
-                            y.append(i)
-                        else:
-                            y.append(None)
-                    x = x[-1]  # 最后一个输出传给下一层
-                else:
-                    # If backbone returns a single tensor, treat it like a normal layer
-                    y.append(x if m.i in self.save else None)
+                if len(x) != 5:  # 0 - 5
+                    x.insert(0, None)
+                for index, i in enumerate(x):
+                    if index in self.save:
+                        y.append(i)
+                    else:
+                        y.append(None)
+                x = x[-1]  # 最后一个输出传给下一层
+
+            # Gradient Checkpointing Logic
+            # If you want to train like MambaVision, SHViT or ConvNeXt. Please comment the "use_gc"  
+            if use_gc:
+                x = self._apply_checkpointing(m, x)
+
             else:
-                x = m(x)  # run
-                y.append(x if m.i in self.save else None)  # save output
+                x = m(x)  # run    
+                y.append(x if m.i in self.save else None)  # save output   
+
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
             if m.i in embed:
@@ -1154,6 +1221,53 @@ class BaseModel(torch.nn.Module):
                 if m.i == max_idx:
                     return torch.unbind(torch.cat(embeddings, 1), dim=0)
         return x
+    
+    def _apply_checkpointing(self, m, x):
+        """
+        Applies gradient checkpointing to a module if conditions are met.
+        
+        Args:
+            m (nn.Module): The module to run.
+            x (torch.Tensor or list): The input tensor(s).
+            
+        Returns:
+            torch.Tensor: The output of the module.
+        """
+        # 1. Check if input requires grad (only check first tensor if input is list)
+        if isinstance(x, list):
+            requires_grad = any(t.requires_grad for t in x if isinstance(t, torch.Tensor))
+        elif isinstance(x, torch.Tensor):
+            requires_grad = x.requires_grad
+        else:
+            requires_grad = False
+            
+        if not requires_grad:
+            return m(x)
+
+        # 2. Check if module supports checkpointing (has state to save)
+        is_heavy = len(list(m.parameters())) > 0 
+        
+        # 3. Apply Checkpoint
+        if is_heavy:
+            # Note: use_reentrant=False is preferred for modern PyTorch
+            if isinstance(x, list):
+                # Handle list input (e.g. Detect layer) by unpacking/repacking
+                # This prevents in-place modification issues and ensures tensors are tracked
+                def wrapper(*args):
+                    x_list = list(args)
+                    out = m(x_list)
+                    if isinstance(out, list):
+                        return tuple(out) # Checkpoint expects tuple of tensors
+                    return out
+                
+                out = torch.utils.checkpoint.checkpoint(wrapper, *x, use_reentrant=False)
+                if isinstance(out, tuple):
+                    return list(out)
+                return out
+            else:
+                return torch.utils.checkpoint.checkpoint(m, x, use_reentrant=False)
+        else:
+            return m(x)
 
     def _predict_augment(self, x):
         """Perform augmentations on input image x and return augmented inference."""
@@ -1796,12 +1910,24 @@ class RTDETRDetectionModel(DetectionModel):
         y, dt, embeddings = [], [], []  # outputs
         embed = frozenset(embed) if embed is not None else {-1}
         max_idx = max(embed)
+        
+        # Check if gradient checkpointing is enabled
+        use_gc = getattr(self, 'use_gradient_checkpointing', False) and self.training
+        
+        
         for m in self.model[:-1]:  # except the head part
             if m.f != -1:  # if not from previous layer
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             if profile:
                 self._profile_one_layer(m, x, dt)
-            x = m(x)  # run
+            # x = m(x)  # run
+            
+            # Gradient Checkpointing Logic
+            if use_gc:
+                x = self._apply_checkpointing(m, x)
+            else:
+                x = m(x)  # run
+                
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
@@ -2518,20 +2644,12 @@ def parse_model(d, ch, verbose=True):
     reg_max = d.get("reg_max", 16)
     depth, width, kpt_shape = (d.get(x, 1.0) for x in ("depth_multiple", "width_multiple", "kpt_shape"))
     scale = d.get("scale")
-    threshold = 0  # Default threshold value
     if scales:
         if not scale:
             scale = next(iter(scales.keys()))
             LOGGER.warning(f"no model scale passed. Assuming scale='{scale}'.")
-        scale_values = scales[scale]
-        # Support both old format [depth, width, max_channels] and new format [depth, width, max_channels, threshold]
-        if len(scale_values) == 4:
-            depth, width, max_channels, threshold = scale_values
-        elif len(scale_values) == 3:
-            depth, width, max_channels = scale_values
-            threshold = 0
-        else:
-            raise ValueError(f"Invalid scales format. Expected 3 or 4 values, got {len(scale_values)}")
+        depth, width, max_channels, threshold = scales[scale]
+        # depth, width, max_channels = scales[scale]
 
     if act:
         Conv.default_act = eval(act)  # redefine default activation, i.e. Conv.default_act = torch.nn.SiLU()
@@ -2558,6 +2676,17 @@ def parse_model(d, ch, verbose=True):
             C3k2MA,
             C3k2MA_Lite,
             ES_MOE,
+            UltraOptimizedMoE,
+            AdaptiveCapacityMoE,
+            HyperSplitMoE,
+            HyperFusedMoE,
+            HyperUltimateMoE,
+            UltimateOptimizedMoE,
+<<<<<<< HEAD
+            A2C2fMoE,
+            ABlockMoE,
+=======
+>>>>>>> f3b60df89063cfd289acbd08200abe9d9a125dd4
             
             Classify,
             Conv,
@@ -2597,7 +2726,6 @@ def parse_model(d, ch, verbose=True):
             DWConvTranspose2d,
             C3x,
             RepC3,
-            RepConv,
             PSA,
             SCDown,
             C2fCIB,
@@ -2789,7 +2917,6 @@ def parse_model(d, ch, verbose=True):
             C3k2_UIB,
             RepHDW,
             RepHMS,
-            ConvMS,
             MANet,
             HyperComputeModule_11,
             ALSS,
@@ -2823,6 +2950,10 @@ def parse_model(d, ch, verbose=True):
             DSConv,
             torch.nn.ConvTranspose2d,
             MFAM,
+            VSSBlock, 
+            SimpleStem, 
+            VisionClueMerge, 
+            XSSBlock,
             UPA,
             MambaNeXt, 
             IRDCB,
@@ -2846,6 +2977,24 @@ def parse_model(d, ch, verbose=True):
             vHeatStem, 
             vHeatStage, 
             vHeatDownsample,
+            TinyViM_Stem, 
+            TinyViM_Stage, 
+            TinyViM_Downsample,
+            SparXStem, 
+            SparXStage, 
+            SparXDownsample,
+            MV_Stem, 
+            MV_Downsample, 
+            MV_Stage,
+            Stem_VSSD, 
+            VSSLayer, 
+            PatchMerging_VSSD,
+            GMStem, 
+            GMBlock, 
+            GMDown,
+            MobileMamba_Stem, 
+            MobileMamba_Block, 
+            MobileMamba_Downsample,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
@@ -2969,6 +3118,7 @@ def parse_model(d, ch, verbose=True):
             MANet, 
             ALSS, 
             A2C2f, 
+            A2C2fMoE,
             C2PSA_HV_LCA, 
             C2PSA_HV_LCA_DynamicTanh,
             C2f_MultiOGA, 
@@ -2979,13 +3129,16 @@ def parse_model(d, ch, verbose=True):
             C3k2_DSConv, 
             DSC3k2,
             PST,
-            RepBlock,
+            XSSBlock,
             VajraV1MerudandaX,
             VajraV1AttentionBhag6, 
             VajraV1MerudandaBhag15,
             
             ParCBlock,
             vHeatStage,
+            VSSLayer,
+            SparXStage, 
+            GMBlock,
         }
     )
     for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
@@ -3023,6 +3176,8 @@ def parse_model(d, ch, verbose=True):
                 legacy = False
                 if scale in "lx":  # for L/X sizes
                     args.extend((True, 1.2))
+            if m is A2C2fMoE:
+                legacy = False
             if m is C2fCIB:
                 legacy = False
         elif m in {SegNext_Attention, DAttention, DAttentionBaseline, TripletAttention, deformable_LKA_Attention, 
@@ -3083,7 +3238,6 @@ def parse_model(d, ch, verbose=True):
         elif m is IFM:
             c1 = ch[f]
             c2 = sum(args[0])
-            args = [c1, args[0]]
         elif m is InjectionMultiSum_Auto_pool:
             c1 = ch[f[0]]
             c2 = args[0]
@@ -3135,12 +3289,6 @@ def parse_model(d, ch, verbose=True):
         elif m is SNI:
             c1, c2, up_f = ch[f], make_divisible(args[0] * width, 8), args[1]
             args = [c1, c2, up_f]
-        elif m is PST:
-            c1, c_up, c2 = ch[f[0]], ch[f[1]], args[0]
-            c2 = make_divisible(min(c2, max_channels) * width, 8)
-            args = [c1, c_up, c2, *args[1:]]
-            args.insert(3, n)  # number of repeats
-            n = 1
         elif m in frozenset(
             {
                 Detect,
@@ -3241,12 +3389,12 @@ def parse_model(d, ch, verbose=True):
                    MobileNetV1, MobileNetV2_n, MobileNetV2_s, MobileNetV2_m, MobileNetV3_large_n, MobileNetV3_large_s, 
                    MobileNetV3_large_m, MobileNetV3_small_n, MobileNetV3_small_s, MobileNetV3_small_m, mobile_vit_xx_small, mobile_vit_x_small, mobile_vit_small,
                    MobileNetV4ConvLarge, MobileNetV4ConvSmall, MobileNetV4ConvMedium, MobileNetV4HybridMedium, MobileNetV4HybridLarge,
-                   mobile_vit2_xx_small, efficient, efficientnet_v2, Ghostnetv1, GhostNetV2, Ghostnetv2, convnext_tiny, convnext_small, convnext_base, convnext_large, convnext_xlarge, 
+                   mobile_vit2_xx_small, efficient, efficientnet_v2, Ghostnetv1, GhostNetV2, convnext_tiny, convnext_small, convnext_base, convnext_large, convnext_xlarge, 
                    convnextv2_atto, convnextv2_femto, convnext_pico, convnextv2_nano, convnextv2_tiny, convnextv2_base, convnextv2_large, convnextv2_huge, 
                    EfficientViT_M0, EfficientViT_M1, EfficientViT_M2, EfficientViT_M3, EfficientViT_M4, EfficientViT_M5, efficientvit_backbone_b0, 
                    efficientvit_backbone_b1, efficientvit_backbone_b2, efficientvit_backbone_b3, repvit_m0_6, repvit_m0_9, repvit_m1_0, 
                    repvit_m1_1, repvit_m1_5, repvit_m2_3, starnet_s050, starnet_s100, starnet_s150, starnet_s1, starnet_s2, starnet_s3, starnet_s4,
-                   fasternet_t0, fasternet_t1, fasternet_t2, fasternet_s, fasternet_m, fasternet_l, gspn_tiny, gspn_small, gspn_base, unireplknet_a, unireplknet_f, unireplknet_p, unireplknet_n, unireplknet_t, 
+                   fasternet_t0, fasternet_t1, fasternet_t2, fasternet_s, fasternet_m, fasternet_l, unireplknet_a, unireplknet_f, unireplknet_p, unireplknet_n, unireplknet_t, 
                    unireplknet_s, unireplknet_b, unireplknet_l, unireplknet_xl, LSKNET_T, LSKNET_S, moganet_xtiny, moganet_tiny, moganet_small, moganet_base, moganet_large, moganet_xlarge,
                    mspanet50, mspanet101, vanillanet_5, vanillanet_6, vanillanet_7, vanillanet_8, vanillanet_9, vanillanet_10, vanillanet_11, vanillanet_12, 
                    vanillanet_13, vanillanet_13_x1_5, vanillanet_13_x1_5_ada_pool, mambaout_femto, mambaout_kobe, mambaout_tiny, mambaout_small, mambaout_base,
@@ -3271,7 +3419,7 @@ def parse_model(d, ch, verbose=True):
                    hornet_base_7x7, hornet_base_gf, hornet_base_gf_img384, hornet_large_7x7, hornet_large_gf, hornet_large_gf_img384, EfficientViM_M1, EfficientViM_M2, 
                    EfficientViM_M3, EfficientViM_M4, SHViT_S1, SHViT_S2, SHViT_S3, SHViT_S4, RCViT_XS, RCViT_S, RCViT_M, RCViT_T, gc_vit_xxtiny, gc_vit_xtiny, 
                    gc_vit_tiny, gc_vit_tiny2, gc_vit_small, gc_vit_small2, gc_vit_base, gc_vit_large, gc_vit_large_224_21k, gc_vit_large_384_21k, gc_vit_large_512_21k, 
-                   convit_tiny_backbone, convit_small_backbone, convit_base_backbone, dsan_t, dsan_s, dsan_b, RepVGG_A0, RepVGG_A1, RepVGG_A2, RepVGG_B0, RepVGG_B1, RepVGG_B1g2, RepVGG_B1g4, RepVGG_B2, RepVGG_B2g2, 
+                   convit_tiny_backbone, convit_small_backbone, convit_base_backbone, RepVGG_A0, RepVGG_A1, RepVGG_A2, RepVGG_B0, RepVGG_B1, RepVGG_B1g2, RepVGG_B1g4, RepVGG_B2, RepVGG_B2g2, 
                    RepVGG_B2g4, RepVGG_B3, RepVGG_B3g2, RepVGG_B3g4, RepVGG_D2se, orthonet34, orthonet50, orthonet101, orthonet152, decouplenet_d0, decouplenet_d1, decouplenet_d2, 
                    sbcformer_xs, sbcformer_s, sbcformer_b, sbcformer_l, fanet_tiny, fanet_small, cosnet_tiny, cosnet_small, cosnet_base, wtconvnext_tiny, wtconvnext_small, wtconvnext_base, 
                    wtconvnext_large, wtconvnext_xlarge, MLLA_Tiny, MLLA_Small, MLLA_Base, pkinet_t, pkinet_s, pkinet_b, glnet_stl, glnet_stl_paramslot, glnet_4g, glnet_9g, glnet_16g,
@@ -3285,13 +3433,17 @@ def parse_model(d, ch, verbose=True):
                    RepLKNet31B, RepLKNet31L, RepLKNetXL, LSNet_T, LSNet_S, LSNet_B, StripNet_tiny, StripNet_small, transxnet_tiny, transxnet_small, transxnet_base, parcnetv2_xt, parcnetv2_tiny, 
                    parcnetv2_small, parcnetv2_base, MALA_T, MALA_S, MALA_B, MALA_L, mpvit_tiny, mpvit_xsmall, mpvit_small, mpvit_base, uninext_t, uninext_s, uninext_b, stvit_small, stvit_base, 
                    stvit_large, fat_b0, fat_b1, fat_b2, fat_b3, debi_tiny, debi_small, debi_base, maxvit_tiny, maxvit_small, maxvit_base, maxvit_large, scalable_vit_s, scalable_vit_b, scalable_vit_l, 
-                   rest_lite, rest_small, rest_base, rest_large, restv2_tiny, restv2_small, restv2_base, restv2_large, medformer_tiny, medformer_small, medformer_base, transnext_micro, transnext_tiny, 
-                   transnext_small, transnext_base, partialnet_s, partialnet_m, partialnet_l, flash_intern_image_t, flash_intern_image_s, flash_intern_image_b}:
+                   rest_lite, rest_small, rest_base, rest_large, restv2_tiny, restv2_small, restv2_base, restv2_large, medformer_tiny, medformer_small, medformer_base, tinyvim_s, tinyvim_b, tinyvim_l, 
+                   mamba_vision_T, mamba_vision_T2, mamba_vision_S, mamba_vision_B, mamba_vision_L, mamba_vision_L2, flash_intern_image_t, flash_intern_image_s, flash_intern_image_b, dsan_t, dsan_s, dsan_b,
+                   tiny_vit_5m, tiny_vit_11m, tiny_vit_21m, vssd_micro_e300, vssd_tiny_e300, vssd_small_e300, vssd_base_e300, transnext_micro, transnext_tiny, transnext_small, transnext_base,
+                   sparx_mamba_t, sparx_mamba_s, sparx_mamba_b, groupmamba_tiny, groupmamba_small, groupmamba_base, partialnet_s, partialnet_m, partialnet_l, MobileMamba_T2, MobileMamba_T4, MobileMamba_S6, 
+                   MobileMamba_B1, MobileMamba_B2, MobileMamba_B4, vcmamba_efficientformer_s, vcmamba_efficientformer_m, vcmamba_efficientformer_b, defm_tiny, defm_small, defm_base, waveformer_tiny, 
+                   waveformer_small, waveformer_base}:
             m = m(*args)
             c2 = m.width_list 
             backbone = True
         else:
-            c2 = ch[f] if isinstance(f, int) else sum(ch[x] for x in f)
+            c2 = ch[f]
             
         if isinstance(c2, list) and m not in {CBLinear, }:
             backbone = True
@@ -3379,7 +3531,7 @@ def guess_model_task(model):
         m = cfg["head"][-1][-2].lower()  # output module name
         if m in {"classify", "classifier", "cls", "fc"}:
             return "classify"
-        if "detect" in m or "decoder" in m:  # RTDETRDecoder, etc.
+        if "detect" in m:
             return "detect"
         if "segment" in m:
             return "segment"
@@ -3432,4 +3584,3 @@ def guess_model_task(model):
         "Explicitly define task for your model, i.e. 'task=detect', 'segment', 'classify','pose' or 'obb'."
     )
     return "detect"  # assume detect
-

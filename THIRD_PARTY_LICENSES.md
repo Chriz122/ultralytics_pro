@@ -9,7 +9,7 @@
 ### Ultralytics YOLOv8/v11/v13/26
 - **來源**: https://github.com/ultralytics/ultralytics
 - **授權**: AGPL-3.0
-- **版本**: 8.3.24
+- **版本**: 8.4.6
 - **用途**: 核心框架與 YOLOv8/v11 模型
 
 ```

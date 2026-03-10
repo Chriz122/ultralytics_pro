@@ -225,9 +225,8 @@ class DCNv3_cuda(nn.Module):
         :param norm_layer
         """
         super().__init__()
-        self.use_dcnv3 = DCNv3 is not None
-        if not self.use_dcnv3:
-            warnings.warn("DCNv3 package is not installed. Using fallback implementation with standard convolution.")
+        if DCNv3 is None:
+            raise ImportError("DCNv3 package is not installed, which is required for DCNv3_cuda.")
         if channels % group != 0:
             raise ValueError(
                 f'channels must be divisible by group, but got {channels} and {group}')
@@ -295,18 +294,17 @@ class DCNv3_cuda(nn.Module):
         :param query                       (N, H, W, C)
         :return output                     (N, H, W, C)
         """
-        # 檢查是否為CPU或DCNv3不可用
-        if input.device.type == 'cpu' or not self.use_dcnv3:
-            # DCNv3 的核心操作並未在CPU上實現，或者DCNv3包未安裝
+        # 檢查輸入張量是否在CPU上
+        if input.device.type == 'cpu':
+            # DCNv3 的核心操作並未在CPU上實現。
             # 為了允許在CPU上進行的啞元前向傳播（例如計算步長）能夠成功，
             # 我們繞過CUDA核心，直接返回一個形狀正確的張量。
             # 這對於形狀推斷是足夠的，但計算結果本身是不正確的。
             # 在實際的訓練和推論中，模型和數據必須位於GPU上。
-            if input.device.type == 'cpu':
-                warnings.warn(
-                    "DCNv3_cuda received a CPU tensor. Bypassing the CUDA kernel for initialization. "
-                    "Make sure to move the model and data to a CUDA device for actual training or inference."
-                )
+            warnings.warn(
+                "DCNv3_cuda received a CPU tensor. Bypassing the CUDA kernel for initialization. "
+                "Make sure to move the model and data to a CUDA device for actual training or inference."
+            )
             # 經過輸入和輸出投影層以確保輸出的形狀和類型正確
             return self.output_proj(self.input_proj(input))
 

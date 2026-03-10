@@ -290,7 +290,8 @@ class BaseTrainer:
             if any(x in k for x in freeze_layer_names):
                 LOGGER.info(f"Freezing layer '{k}'")
                 v.requires_grad = False
-            elif not v.requires_grad and v.dtype.is_floating_point:  # only floating point Tensor can require gradients
+            # elif not v.requires_grad and v.dtype.is_floating_point:  # only floating point Tensor can require gradients
+            elif not v.requires_grad and v.dtype.is_floating_point and not (getattr(self.args, "lora_r", 0) > 0):  # only floating point Tensor can require gradients
                 LOGGER.warning(
                     f"setting 'requires_grad=True' for frozen layer '{k}'. "
                     "See ultralytics.engine.trainer for customization of frozen layers."
@@ -345,6 +346,7 @@ class BaseTrainer:
         self.accumulate = max(round(self.args.nbs / self.batch_size), 1)  # accumulate loss before optimizing
         weight_decay = self.args.weight_decay * self.batch_size * self.accumulate / self.args.nbs  # scale weight_decay
         iterations = math.ceil(len(self.train_loader.dataset) / max(self.batch_size, self.args.nbs)) * self.epochs
+        # print(f"DEBUG: self.model type before build_optimizer: {type(self.model)}")
         self.optimizer = self.build_optimizer(
             model=self.model,
             name=self.args.optimizer,
@@ -390,6 +392,29 @@ class BaseTrainer:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")  # suppress 'Detected lr_scheduler.step() before optimizer.step()'
                 self.scheduler.step()
+
+            # MoE Strategy: Freeze experts for first 5 epochs
+            moe_warmup_epochs = 5
+            expert_params = [p for n, p in self.model.named_parameters() if "experts" in n]
+            if epoch < moe_warmup_epochs:
+                for p in expert_params:
+                    p.requires_grad = False
+            elif epoch == moe_warmup_epochs:
+                LOGGER.info("Unfreezing MoE experts...")
+                for p in expert_params:
+                    p.requires_grad = True
+
+            # MoE Coeff Decay
+            if hasattr(self.args, 'moe'):
+                # Cosine decay: 0.3 -> 0.05
+                progress = epoch / self.epochs
+                moe_gain = 0.05 + 0.5 * (0.3 - 0.05) * (1 + math.cos(math.pi * progress))
+                self.args.moe = moe_gain
+                # Also update model args/hyp if needed (propagate to loss)
+                if hasattr(self.model, 'args') and isinstance(self.model.args, dict):
+                    self.model.args['moe'] = moe_gain
+                elif hasattr(self.model, 'args') and hasattr(self.model.args, 'moe'):
+                    self.model.args.moe = moe_gain               
 
             self._model_train()
             if RANK != -1:
@@ -951,7 +976,7 @@ class BaseTrainer:
         Returns:
             (torch.optim.Optimizer): The constructed optimizer.
         """
-        g = [{}, {}, {}, {}]  # optimizer parameter groups
+        g = [{}, {}, {}, {}, {}]  # optimizer parameter groups
         bn = tuple(v for k, v in nn.__dict__.items() if "Norm" in k)  # normalization layers, i.e. BatchNorm2d()
         if name == "auto":
             LOGGER.info(
@@ -970,6 +995,8 @@ class BaseTrainer:
                 fullname = f"{module_name}.{param_name}" if module_name else param_name
                 if param.ndim >= 2 and use_muon:
                     g[3][fullname] = param  # muon params
+                elif "routing" in fullname or "router" in fullname:  # MoE Router parameters
+                    g[4][fullname] = param
                 elif "bias" in fullname:  # bias (no decay)
                     g[2][fullname] = param
                 elif isinstance(module, bn) or "logit_scale" in fullname:  # weight (no decay)
@@ -997,6 +1024,8 @@ class BaseTrainer:
         g[2] = {"params": g[2], **optim_args, "param_group": "bias"}
         g[0] = {"params": g[0], **optim_args, "weight_decay": decay, "param_group": "weight"}
         g[1] = {"params": g[1], **optim_args, "weight_decay": 0.0, "param_group": "bn"}
+        g[4] = {"params": g[4], **optim_args, "weight_decay": decay, "lr": lr * 0.1, "param_group": "weight"}
+
         muon, sgd = (0.1, 1.0) if iterations > 10000 else (0.5, 0.5)  # scale factor for MuSGD
         if use_muon:
             g[3] = {"params": g[3], **optim_args, "weight_decay": decay, "use_muon": True, "param_group": "muon"}
@@ -1015,6 +1044,6 @@ class BaseTrainer:
 
         LOGGER.info(
             f"{colorstr('optimizer:')} {type(optimizer).__name__}(lr={lr}, momentum={momentum}) with parameter groups "
-            f"{len(g[1]['params'])} weight(decay=0.0), {len(g[0]['params']) if len(g[0]) else len(g[3]['params'])} weight(decay={decay}), {len(g[2]['params'])} bias(decay=0.0)"
+            f"{len(g[1]['params'])} weight(decay=0.0), {len(g[0]['params']) if len(g[0]) else len(g[3]['params'])} weight(decay={decay}), {len(g[2]['params'])} bias(decay=0.0), {len(g[4]['params'])} router(lr=0.1x)"
         )
         return optimizer

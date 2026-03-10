@@ -2064,20 +2064,9 @@ class Format:
                 masks = torch.from_numpy(masks)
                 cls_tensor = torch.from_numpy(cls.squeeze(1))
                 if self.mask_overlap:
-                    if len(cls_tensor) > 0:
-                        # masks[0] contains instance indices (0=background, 1..N=instances)
-                        # Clamp to valid range [0, len(cls_tensor)-1] to handle background (0) and any out-of-bounds
-                        mask_indices = (masks[0].long() - 1).clamp(0, len(cls_tensor) - 1)
-                        sem_masks = cls_tensor[mask_indices]  # (H, W) from (1, H, W) instance indices
-                        # Set background (where original masks[0] == 0) to class 0
-                        sem_masks = torch.where(masks[0] == 0, torch.zeros_like(sem_masks), sem_masks)
-                    else:
-                        # No valid classes, create empty semantic mask
-                        sem_masks = torch.zeros_like(masks[0])
+                    sem_masks = cls_tensor[masks[0].long() - 1]  # (H, W) from (1, H, W) instance indices
                 else:
                     sem_masks = (masks * cls_tensor[:, None, None]).max(0).values  # (H, W) from (N, H, W) binary
-                # Update nl after _format_segments as it may filter instances
-                nl = len(instances)
             else:
                 masks = torch.zeros(
                     1 if self.mask_overlap else nl, img.shape[0] // self.mask_ratio, img.shape[1] // self.mask_ratio
