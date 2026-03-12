@@ -84,13 +84,20 @@ def muon_update(grad: torch.Tensor, momentum: torch.Tensor, beta: float = 0.95, 
         - Momentum buffer is updated in-place: momentum = beta * momentum + (1-beta) * grad.
         - With Nesterov: update = beta * momentum + (1-beta) * grad.
         - Without Nesterov: update = momentum.
-        - 4D tensors (conv filters) are reshaped to 2D as (channels, height*width*depth) for orthogonalization.
+        - >2D tensors (conv filters) are reshaped to 2D as (channels, rest) for orthogonalization.
+        - 1D tensors (biases/norms) skip orthogonalization and just use standard momentum updates.
         - Final update is scaled by sqrt(max(dim[-2], dim[-1])) to account for parameter dimensions.
     """
     momentum.lerp_(grad, 1 - beta)
     update = grad.lerp(momentum, beta) if nesterov else momentum
-    if update.ndim == 4:  # for the case of conv filters
+    
+    # 對於1D張量(Bias/Norm)跳過正交化直接返回，因為牛頓-舒爾茨迭代只適用於矩陣
+    if update.ndim < 2:
+        return update
+        
+    if update.ndim > 2:  # for the case of conv filters
         update = update.view(len(update), -1)
+        
     update = zeropower_via_newtonschulz5(update)
     update *= max(1, grad.size(-2) / grad.size(-1)) ** 0.5
     return update
@@ -113,7 +120,7 @@ class MuSGD(optim.Optimizer):
         sgd (float): Scaling factor applied to SGD learning rate in hybrid mode.
 
     Examples:
-        >>> param_groups = [
+        >>> param_groups =[
         ...     {
         ...         "params": model.conv_params,
         ...         "lr": 0.02,

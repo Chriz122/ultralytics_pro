@@ -19,11 +19,8 @@ from .modules import (
     HyperFusedMoE,
     HyperUltimateMoE,
     UltimateOptimizedMoE,
-<<<<<<< HEAD
     A2C2fMoE,
     ABlockMoE,
-=======
->>>>>>> f3b60df89063cfd289acbd08200abe9d9a125dd4
 )
 
 from .experts import (
@@ -71,11 +68,8 @@ __all__ = [
     "HyperFusedMoE",
     "HyperUltimateMoE",
     "UltimateOptimizedMoE",
-<<<<<<< HEAD
     "A2C2fMoE",
     "ABlockMoE",
-=======
->>>>>>> f3b60df89063cfd289acbd08200abe9d9a125dd4
     "OptimizedSimpleExpert",
     "FusedGhostExpert",
     "SimpleExpert",

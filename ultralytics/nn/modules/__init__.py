@@ -526,7 +526,6 @@ from .SFSConv import SFS_Conv
 from .F2SoftHG import F2SoftHG, ShapeAlignConv, MergeConv
 from .upsample_anything import UPA 
 from .MambaNeXt import MambaNeXt, IRDCB
-<<<<<<< HEAD
 # from .moe import OptimizedMOE, OptimizedMOEImproved, MOE, ES_MOE, EfficientSpatialRouterMoE, ModularRouterExpertMoE, UltraOptimizedMoE, AdaptiveCapacityMoE, HyperSplitMoE, HyperFusedMoE, HyperUltimateMoE, UltimateOptimizedMoE
 from .vajra import VajraV1MerudandaX, VajraV1AttentionBhag6, VajraV1MerudandaBhag15
 
@@ -546,10 +545,6 @@ from .moe import (
     A2C2fMoE,
     ABlockMoE,
 )
-=======
-from .moe import OptimizedMOE, OptimizedMOEImproved, MOE, ES_MOE, EfficientSpatialRouterMoE, ModularRouterExpertMoE, UltraOptimizedMoE, AdaptiveCapacityMoE, HyperSplitMoE, HyperFusedMoE, HyperUltimateMoE, UltimateOptimizedMoE
-from .vajra import VajraV1MerudandaX, VajraV1AttentionBhag6, VajraV1MerudandaBhag15
->>>>>>> f3b60df89063cfd289acbd08200abe9d9a125dd4
 
 __all__ = (
     "C3k2_Dynamic",
@@ -572,11 +567,8 @@ __all__ = (
     "HyperFusedMoE",
     "HyperUltimateMoE",
     "UltimateOptimizedMoE",
-<<<<<<< HEAD
     "A2C2fMoE",
     "ABlockMoE",
-=======
->>>>>>> f3b60df89063cfd289acbd08200abe9d9a125dd4
     "OBB26",
     "Pose26",
     "Segment26",

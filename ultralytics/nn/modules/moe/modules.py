@@ -14,22 +14,14 @@ from typing import Tuple, Dict, Optional, Union
 from .utils import FlopsUtils, get_safe_groups, BatchedExpertComputation
 from .experts import (
     OptimizedSimpleExpert, FusedGhostExpert, SimpleExpert, GhostExpert,
-<<<<<<< HEAD
     InvertedResidualExpert, EfficientExpertGroup, SpatialExpert,
     UniversalInvertedResidualExpert, ShuffleExpert, FasterExpert, GBCExpert
-=======
-    InvertedResidualExpert, EfficientExpertGroup, UniversalInvertedResidualExpert,
-    ShuffleExpert, FasterExpert, GBCExpert
->>>>>>> f3b60df89063cfd289acbd08200abe9d9a125dd4
 )
 from .routers import (
     UltraEfficientRouter, EfficientSpatialRouter, LocalRoutingLayer,
     AdaptiveRoutingLayer, DynamicRoutingLayer, AdvancedRoutingLayer
 )
-<<<<<<< HEAD
 from ultralytics.nn.modules.block import ABlock, A2C2f, C3k
-=======
->>>>>>> f3b60df89063cfd289acbd08200abe9d9a125dd4
 from torch.cuda.amp import autocast
 from .loss import MoELoss
 
@@ -707,7 +699,6 @@ class OptimizedMOEImproved(nn.Module):
             kwargs['ratio'] = int(expert_expand_ratio)
         elif expert_type == 'inverted':
             expert_cls = InvertedResidualExpert
-<<<<<<< HEAD
             kwargs['ratio'] = int(expert_expand_ratio)
         elif expert_type == 'spatial':
             expert_cls = SpatialExpert
@@ -724,16 +715,6 @@ class OptimizedMOEImproved(nn.Module):
         elif expert_type == 'gbc':
             expert_cls = GBCExpert     
             kwargs['expand_ratio'] = expert_expand_ratio
-=======
-        elif expert_type == 'universalinverted':
-            expert_cls = UniversalInvertedResidualExpert
-        elif expert_type == 'shuffle':
-            expert_cls = ShuffleExpert
-        elif expert_type == 'faster':
-            expert_cls = FasterExpert
-        elif expert_type == 'gbc':
-            expert_cls = GBCExpert     
->>>>>>> f3b60df89063cfd289acbd08200abe9d9a125dd4
         else:
             expert_cls = SimpleExpert
             kwargs['expand_ratio'] = expert_expand_ratio
@@ -846,7 +827,6 @@ class OptimizedMOEImproved(nn.Module):
 
         return final_output
 
-<<<<<<< HEAD
     # @property
     # def aux_loss(self):
     #     """Retrieve the auxiliary loss from the registry."""
@@ -942,12 +922,6 @@ class A2C2fMoE(A2C2f):
         """Retrieve the auxiliary loss from the registry."""
         default = torch.tensor(0.0, device=next(self.parameters()).device)
         return MOE_LOSS_REGISTRY.get(self, default)
-=======
-    @property
-    def aux_loss(self):
-        """Retrieve the auxiliary loss from the registry."""
-        return MOE_LOSS_REGISTRY.get(self, torch.tensor(0.0))
->>>>>>> f3b60df89063cfd289acbd08200abe9d9a125dd4
 
     def get_gflops(self, input_shape: Tuple[int, int, int, int]) -> Dict[str, float]:
         """Accurate GFLOPs calculation"""

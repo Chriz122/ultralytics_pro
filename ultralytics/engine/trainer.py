@@ -1005,7 +1005,7 @@ class BaseTrainer:
                 else:  # weight (with decay)
                     g[0][fullname] = param
         if not use_muon:
-            g = [x.values() for x in g[:3]]  # convert to list of params
+            g = [list(x.values()) for x in g]  # convert to list of params
 
         optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto"}
         name = {x.lower(): x for x in optimizers}.get(name.lower())
@@ -1033,13 +1033,16 @@ class BaseTrainer:
 
             # higher lr for certain parameters in MuSGD when funetuning
             pattern = re.compile(r"(?=.*23)(?=.*cv3)|proto\.semseg|flow_model")
-            g_ = []  # new param groups
+            g_ =[]  # new param groups
             for x in g:
                 p = x.pop("params")
                 p1 = [v for k, v in p.items() if pattern.search(k)]
                 p2 = [v for k, v in p.items() if not pattern.search(k)]
                 g_.extend([{"params": p1, **x, "lr": lr * 3}, {"params": p2, **x}])
             g = g_
+        else:
+            g[3] = {"params": g[3], **optim_args, "weight_decay": 0.0, "param_group": "muon"}
+
         optimizer = getattr(optim, name, partial(MuSGD, muon=muon, sgd=sgd))(params=g)
 
         LOGGER.info(

@@ -1186,7 +1186,6 @@ class BaseModel(torch.nn.Module):
         max_idx = max(embed)
         
         # Check if gradient checkpointing is enabled
-        # If you want to train like MambaVision, SHViT or ConvNeXt. Please comment the "use_gc"  
         use_gc = getattr(self, 'use_gradient_checkpointing', False) and self.training
         
         for m in self.model:
@@ -1194,6 +1193,8 @@ class BaseModel(torch.nn.Module):
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             if profile:
                 self._profile_one_layer(m, x, dt)
+            
+            # 1. 處理自定義主幹網絡 (如 MambaVision)
             if hasattr(m, 'backbone'):
                 x = m(x)
                 if len(x) != 5:  # 0 - 5
@@ -1203,15 +1204,17 @@ class BaseModel(torch.nn.Module):
                         y.append(i)
                     else:
                         y.append(None)
-                x = x[-1]  # 最后一个输出传给下一层
+                x = x[-1]  # 最後一個輸出傳給下一層
 
-            # Gradient Checkpointing Logic
-            # If you want to train like MambaVision, SHViT or ConvNeXt. Please comment the "use_gc"  
-            if use_gc:
-                x = self._apply_checkpointing(m, x)
-
+            # 2. 處理普通 YOLO 網絡層
             else:
-                x = m(x)  # run    
+                # Gradient Checkpointing Logic
+                if use_gc:
+                    x = self._apply_checkpointing(m, x)
+                else:
+                    x = m(x)  # run    
+                
+                # 修復點：確保無論是否啟用 use_gc，普通層的輸出都會被正確保存至 y 中
                 y.append(x if m.i in self.save else None)  # save output   
 
             if visualize:
@@ -2682,11 +2685,8 @@ def parse_model(d, ch, verbose=True):
             HyperFusedMoE,
             HyperUltimateMoE,
             UltimateOptimizedMoE,
-<<<<<<< HEAD
             A2C2fMoE,
             ABlockMoE,
-=======
->>>>>>> f3b60df89063cfd289acbd08200abe9d9a125dd4
             
             Classify,
             Conv,
