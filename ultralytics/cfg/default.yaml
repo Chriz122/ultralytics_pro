@@ -23,7 +23,7 @@ project: # (str, optional) project name for results root
 name: # (str, optional) experiment name; results in 'project/name'
 exist_ok: False # (bool) overwrite existing 'project/name' if True
 pretrained: True # (bool | str) use pretrained weights (bool) or load weights from path (str)
-optimizer: AdamW # (str) optimizer: MuSGD, SGD, Adam, Adamax, AdamW, NAdam, RAdam, RMSProp, or auto
+optimizer: MuSGD # (str) optimizer: MuSGD, SGD, Adam, Adamax, AdamW, NAdam, RAdam, RMSProp, or auto
 verbose: True # (bool) print verbose logs during training/val
 seed: 0 # (int) random seed for reproducibility
 deterministic: True # (bool) enable deterministic ops; reproducible but may be slower
@@ -99,7 +99,7 @@ lr0: 0.01 # (float) initial learning rate (SGD=1e-2, Adam/AdamW=1e-3)
 lrf: 0.01 # (float) final LR fraction; final LR = lr0 * lrf
 momentum: 0.937 # (float) SGD momentum or Adam beta1
 weight_decay: 0.0005 # (float) weight decay (L2 regularization)
-warmup_epochs: 3.0 # (float) warmup epochs (fractions allowed)
+warmup_epochs: 3.0 # (float) warmup epochs (fractions allowed)  default 3.0 
 warmup_momentum: 0.8 # (float) initial momentum during warmup
 warmup_bias_lr: 0.1 # (float) bias learning rate during warmup
 box: 7.5 # (float) box loss gain
@@ -138,32 +138,121 @@ tracker: botsort.yaml # (str) tracker config file: botsort.yaml or bytetrack.yam
 
 # LoRA settings ---------------------------------------------------------------------------------------------------------
 lora_r: 0 # (int) LoRA rank (0 to disable)
-lora_alpha: 16 # (int) LoRA alpha
+lora_alpha: 32 # (int) LoRA alpha (recommended: 2 * r)
 lora_dropout: 0.05 # (float) LoRA dropout
 lora_bias: "none" # (str) LoRA bias type: "none", "all", "lora_only"
+lora_backend: "auto" # (str) LoRA backend: "auto", "peft", "fallback"
+lora_variant: "lora" # (str) Adapter variant: "lora", "loha", "dora"
+lora_include_head: False # (bool) Include YOLO detection head layers in LoRA targeting
+lora_freeze_bn: False # (bool) Freeze BatchNorm layers during LoRA training
 lora_target_modules: # (list[str], optional) LoRA target modules
 lora_save_adapters: True # (bool) Save LoRA adapters
 lora_adapter_dir: "lora_adapter" # (str) Directory name for adapters
 lora_auto_r_ratio: 0.0 # (float) Auto calculate LoRA rank based on params ratio
 lora_use_dora: False # (bool) Enable DoRA (Weight-Decomposed Low-Rank Adaptation)
-lora_type: "lora" # (str) PEFT type: "lora", "loha", "lokr"
+lora_allow_rtdetr_dora: False # (bool) Allow experimental RT-DETR + DoRA instead of auto-degrading to plain LoRA
+lora_use_rslora: True # (bool) Enable RS-LoRA scaling for better high-rank stability
+lora_init_lora_weights: True # (bool|str) LoRA init mode: True/False for standard init, or "gaussian". "pissa"/"olora" require newer PEFT.
+lora_type: "lora" # (str) PEFT type: "lora", "loha", "lokr", "adalora", "ia3", "oft", "boft", "hra"
 lora_quantization: "none" # (str) Quantization type: "none", "4bit", "8bit" (Requires bitsandbytes)
 lora_include_moe: False # (bool) Include MoE layers in auto-detection
 lora_include_attention: False # (bool) Include Attention layers in auto-detection
 lora_only_backbone: False # (bool) Only apply LoRA to backbone
+lora_only_3x3: False # (bool) Skip 1x1 convs during auto target detection
 lora_exclude_modules: # (list[str], optional) Modules to exclude
 lora_last_n: # (int, optional) Only apply to last N layers
 lora_from_layer: # (int, optional) Start applying from layer index
 lora_to_layer: # (int, optional) Stop applying at layer index
 lora_allow_depthwise: False # (bool) Allow depthwise convolution
 lora_kernels: # (list[int], optional) Filter by kernel size
+lora_skip_stem: False # (bool) Skip the first three top-level backbone layers (stem); recommended for transfer learning
+lora_min_channels: 0 # (int) Skip layers whose min(in_channels, out_channels) < this value (0 disables; try 32 to keep LoRA genuinely low-rank)
 lora_gradient_checkpointing: True # (bool) Enable gradient checkpointing for LoRA memory optimization
+lora_lr_mult: 2.0 # (float) Learning rate multiplier for LoRA params vs base (2.0 recommended)
+lora_target_r: 8 # (int) AdaLoRA target rank after allocation
+lora_init_r: 12 # (int) AdaLoRA initial rank before pruning
+lora_tinit: 0 # (int) AdaLoRA warmup steps before rank allocation starts
+lora_tfinal: 0 # (int) AdaLoRA final fine-tuning steps after rank allocation ends
+lora_delta_t: 1 # (int) AdaLoRA rank allocation interval in steps
+lora_beta1: 0.85 # (float) AdaLoRA EMA beta1 for sensitivity tracking
+lora_beta2: 0.85 # (float) AdaLoRA EMA beta2 for uncertainty tracking
+lora_orth_reg_weight: 0.5 # (float) AdaLoRA orthogonal regularization weight
+lora_total_step: 0 # (int) AdaLoRA total training steps; 0 lets trainer auto-resolve from iterations
+
+# OFT / BOFT / HRA specific (only used when lora_type=oft, boft, or hra)
+lora_oft_block_size: 0 # (int) OFT block size (>0 overrides rank r)
+lora_oft_coft: False # (bool) OFT: use constrained Cayley-Neumann rotation
+lora_oft_eps: 6.0e-5 # (float) OFT numerical eps
+lora_oft_block_share: False # (bool) OFT: share rotation across blocks
+lora_boft_block_size: 2 # (int) BOFT butterfly block size (must divide kernel dim; use 1/2 for YOLO 3x3 Conv)
+lora_boft_block_num: 0 # (int) BOFT number of blocks (0 = auto from block_size)
+lora_boft_n_butterfly_factor: 2 # (int) BOFT butterfly factor (paper default)
+lora_hra_apply_gs: False # (bool) HRA: apply Gram-Schmidt orthogonalization
+
+# LoRA Training Strategies (advanced)
+lora_layer_decay: 0.0 # (float) Layer-wise LR decay rate (0=disabled, 0.85~0.95 typical)
+lora_alpha_warmup: 0 # (int) Alpha cosine warmup epochs (0=disabled)
+lora_ortho_weight: 0.0 # (float) Orthogonal regularization weight (0=disabled, 1e-5~1e-3 typical)
+lora_ortho_frequency: 10 # (int) Compute orthogonal loss every N batches (1=every batch, 10=every 10 batches)
+lora_dropout_end: 0.15 # (float) Final dropout for dynamic schedule (must be >= lora_dropout)
+lora_dropout_start_ratio: 0.3 # (float) When to start increasing dropout (fraction of total epochs)
+
+# Few-Shot LoRA settings -----------------------------------------------------------------------------------------------
+lora_few_shot_mode: False # (bool) Enable few-shot LoRA with enhanced regularization for small datasets
+lora_few_shot_teacher: # (str, optional) Path to teacher model for knowledge distillation
+lora_few_shot_dropconnect: 0.1 # (float) DropConnect rate for few-shot LoRA (better than dropout for limited data)
+lora_few_shot_distill_weight: 0.5 # (float) Weight for distillation loss when teacher is provided
+lora_few_shot_adaptive_rank: True # (bool) Auto-adjust rank based on data scarcity in few-shot mode
+# Few-Shot LoRA: scheduling and advanced regularization
+lora_few_shot_dropconnect_schedule: "cosine" # (str) DropConnect schedule: constant/linear/cosine/exponential
+lora_few_shot_dropconnect_max: 0.3 # (float) Initial max DropConnect rate (for scheduled modes)
+lora_few_shot_dropconnect_min: 0.0 # (float) Final min DropConnect rate (for scheduled modes)
+lora_few_shot_gradient_importance_weighted: False # (bool) Use gradient-importance weighted DropConnect
+lora_few_shot_hierarchical_distill: False # (bool) Enable multi-layer hierarchical distillation
+lora_few_shot_distill_layers: # (list, optional) Layer indices for intermediate distillation e.g. [10, 13, 16]
+lora_few_shot_variational_rank: False # (bool) Enable variational rank selection (Gumbel-Softmax)
+lora_few_shot_rank_budget: 0.5 # (float) Budget ratio for rank retention in variational mode
+lora_few_shot_adaptive_temperature: False # (bool) Enable task-adaptive distillation temperature
+lora_few_shot_curriculum_sampling: False # (bool) Enable curriculum learning sampler
+# Few-Shot LoRA: distillation scheduling and response-level transfer
+lora_few_shot_distill_schedule: "cosine" # (str) Distillation weight schedule: constant/linear/cosine
+lora_few_shot_distill_weight_max: 1.0 # (float) Initial max distillation weight
+lora_few_shot_distill_weight_min: 0.1 # (float) Final min distillation weight
+lora_few_shot_use_ema_teacher: False # (bool) Use EMA teacher for progressive self-distillation
+lora_few_shot_ema_decay: 0.999 # (float) EMA teacher decay rate
+lora_few_shot_response_distill: False # (bool) Enable detection head response distillation (cls + bbox)
+lora_few_shot_response_distill_weight: 0.3 # (float) Weight for response distillation loss
+lora_few_shot_layerwise_rank: False # (bool) Enable per-layer adaptive rank based on depth/channels
+lora_few_shot_hook_cache: True # (bool) Cache hierarchical distillation hooks across batches
 
 # MoE (Mixture-of-Experts) settings -----------------------------------------------------------------------------------------
 moe_num_experts: 4 # (int) Number of experts in MoE layers (0 to use model config)
 moe_top_k: 2 # (int) Number of experts to activate per token
-moe_balance_loss: 0.01 # (float) Load balancing loss coefficient for MoE
-moe_noise_std: 1.0 # (float) Noise standard deviation for MoE routing
+moe_balance_loss: 0.1 # (float) Load balancing loss coefficient for MoE (0.01 too low → routing collapse)
+moe_noise_std: 0.5 # (float) Noise std for MoE routing (1.0 too noisy after warmup)
 moe_temperature: 1.0 # (float) Temperature for MoE routing logits
-moe_router_z_loss: 0.001 # (float) Router z-loss coefficient for MoE
+moe_router_z_loss: 0.01 # (float) Router z-loss coefficient (1e-3 too low for stability)
 moe_weight_threshold: 0.01 # (float) Weight threshold for conditional computation in MoE
+moe_expert_warmup_epochs: 3 # (int) Epochs to freeze experts while router learns (was 5, too long)
+moe_router_lr_scale: 0.5 # (float) Router LR as fraction of base LR (was 0.1, too small to correct collapse)
+moe_collapse_threshold: 0.8 # (float) If max expert usage > threshold, trigger collapse recovery
+
+# AFSS Settings -----------------------------------------------------------------------------------------
+afss: False                         # 是否開啟 AFSS 動態抽樣
+afss_refresh_rate: 5                 # 狀態刷新機制 (每 N Epoch 執行一次)
+afss_easy_thresh: 0.85               # Easy 樣本的學習充分度閾值
+afss_hard_thresh: 0.55               # Hard 樣本的學習充分度閾值
+afss_easy_ratio: 0.02                # Easy 樣本每輪保留比例 0.02
+afss_easy_forced_gap: 10             # Easy 樣本超過 10 個 epoch 未使用則強制回看
+afss_moderate_forced_gap: 3          # Moderate 樣本超過 3 個 epoch 未使用則強制回看
+afss_moderate_forced_ratio: 0.4      # Moderate 樣本每輪保留比例 0.4
+
+# IoU Settings -----------------------------------------------------------------------------------------
+iou_type: CIoU       # 選項: IoU, GIoU, DIoU, CIoU, EIoU, SIoU, WIoU, ShapeIoU, PIoU, PIoU2, mpdiou
+Inner: False         # 是否使用 Inner-IoU
+Focaleriou: False    # 是否使用 Focaler-IoU
+d: 0.00              # Focaler-IoU 參數 d
+u: 0.95              # Focaler-IoU 參數 u
+ratio: 1.15          # Inner-IoU 參數 ratio
+Lambda: 1.3          # PIoU2 參數 Lambda
+scale: 0.0           # ShapeIoU 參數 scale
